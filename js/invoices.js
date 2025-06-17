@@ -76,6 +76,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <!-- Print Button -->
       <div class="mt-4 text-right print:hidden">
         <button onclick="window.print()" class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800">Print / Save PDF</button>
+        <button id="saveInvoiceBtn" class="mt-2 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 print:hidden">Save Invoice</button>
       </div>
 
       <!-- Signature + Thank You Combined -->
@@ -90,6 +91,49 @@ document.addEventListener("DOMContentLoaded", () => {
 </div>
     </section>
   `;
+  
+document.getElementById("saveInvoiceBtn").addEventListener("click", () => {
+  const db = firebase.firestore();
+
+  const invoiceData = {
+    invoiceNumber: document.getElementById("invoiceNumber").value.trim(),
+    invoiceDate: document.getElementById("invoiceDate").value,
+    dueDate: document.getElementById("dueDate").value,
+    client: {
+      name: document.getElementById("clientName").value.trim(),
+      address: document.getElementById("clientAddress").value.trim(),
+      phone: document.getElementById("clientPhone").value.trim(),
+      email: document.getElementById("clientEmail").value.trim()
+    },
+    items: [],
+    notes: document.getElementById("invoiceNotes").value.trim(),
+    subtotal: document.getElementById("subtotal").textContent,
+    total: document.getElementById("total").textContent,
+    createdAt: new Date()
+  };
+
+  // Collect item rows
+  itemsBody.querySelectorAll("tr").forEach(row => {
+    const item = {
+      name: row.querySelector("input[type='text']").value,
+      qty: parseFloat(row.querySelector(".qty").value) || 0,
+      price: parseFloat(row.querySelector(".price").value) || 0,
+      amount: row.querySelector(".amount").textContent
+    };
+    invoiceData.items.push(item);
+  });
+
+  // Save to Firestore
+  db.collection("invoices").add(invoiceData)
+    .then(() => {
+      alert("Invoice saved successfully!");
+      document.getElementById("successSound")?.play();
+    })
+    .catch(err => {
+      console.error("Error saving invoice:", err);
+      alert("Failed to save invoice.");
+    });
+});
 
   const itemsBody = document.getElementById("invoiceItems");
 
