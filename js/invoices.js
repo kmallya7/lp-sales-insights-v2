@@ -18,7 +18,7 @@ document.addEventListener("DOMContentLoaded", () => {
       </header>
 
       <!-- Invoice Metadata Row -->
-<div class="flex flex-col lg:flex-row print:flex-row justify-between gap-6 bg-gray-50 p-4 rounded mb-6">
+<div class="flex flex-col lg:flex-row print:flex-row justify-between gap-6 bg-gray-50 print:bg-gray-200 p-6 rounded-lg border border-gray-300 print:border-gray-400 mb-6">
   <!-- Invoice Info -->
   <div class="w-full md:w-1/2 space-y-2">
     <label class="text-sm font-medium text-gray-600">Invoice #</label>
@@ -79,18 +79,33 @@ document.addEventListener("DOMContentLoaded", () => {
         <button id="saveInvoiceBtn" class="mt-2 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 print:hidden">Save Invoice</button>
       </div>
 
-      <!-- Signature + Thank You Combined -->
-<div class="mt-12 flex flex-col items-center print:flex-row print:justify-between print:items-end gap-2 w-full">
-  <div class="text-left">
+      <!-- Signature + Thank You (centered, fixed to stay on 1st page) -->
+<div class="mt-8 text-center print:block avoid-break print:mt-4 print:pb-4">
+  <div class="inline-block">
     <p class="text-sm text-gray-600 italic">Signature</p>
     <p class="text-xl mt-2 font-signature">Vaishnavi</p>
-  </div>
-  <div class="text-center text-orange-800 text-base italic font-medium">
-    Thank you for your business! ❤️
+    <p class="text-base italic text-orange-800 font-medium mt-4">Thank you for your business! ❤️</p>
   </div>
 </div>
     </section>
   `;
+
+  // Inject print-safe CSS to avoid page breaks in PDF
+const style = document.createElement("style");
+style.innerHTML = `
+  @media print {
+    .avoid-break {
+      break-inside: avoid;
+      page-break-inside: avoid;
+      page-break-before: auto;
+    }
+    .avoid-break * {
+      break-inside: avoid;
+      page-break-inside: avoid;
+    }
+  }
+`;
+document.head.appendChild(style);
   
 document.getElementById("saveInvoiceBtn").addEventListener("click", () => {
   const db = firebase.firestore();
@@ -153,12 +168,20 @@ document.getElementById("saveInvoiceBtn").addEventListener("click", () => {
   function addRow() {
     const row = document.createElement("tr");
     row.innerHTML = `
-      <td class="border p-1"><input type="text" class="w-full p-1 border rounded" placeholder="Item"></td>
-      <td class="border p-1"><input type="number" class="w-full p-1 border rounded qty" value="1"></td>
-      <td class="border p-1"><input type="number" class="w-full p-1 border rounded price" value="0"></td>
-      <td class="border p-1 text-gray-700 font-semibold amount">₹0.00</td>
-      <td class="border p-1 print:hidden"><button class="text-red-600 deleteBtn">🗑️</button></td>
-    `;
+  <td class="border p-1 text-center align-middle">
+    <input type="text" class="w-full p-1 border rounded text-center" placeholder="Item">
+  </td>
+  <td class="border p-1 text-center align-middle">
+    <input type="number" class="w-full p-1 border rounded qty text-center" value="1">
+  </td>
+  <td class="border p-1 text-center align-middle">
+    <input type="number" class="w-full p-1 border rounded price text-center" value="0">
+  </td>
+  <td class="border p-1 text-center align-middle text-gray-700 font-semibold amount">₹0.00</td>
+  <td class="border p-1 text-center align-middle print:hidden">
+    <button class="text-red-600 deleteBtn">🗑️</button>
+  </td>
+`;
 
     row.querySelector(".qty").addEventListener("input", updateTotals);
     row.querySelector(".price").addEventListener("input", updateTotals);
