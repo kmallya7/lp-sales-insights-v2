@@ -1,0 +1,199 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>LP Sales & Insights</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <style>
+    body { font-family: 'Poppins', sans-serif; }
+    .nav-link.active {
+      background-color: #fff7ed;
+      border-radius: 0.5rem;
+      font-weight: 600;
+      color: #b45309;
+    }
+    .page-section {
+      opacity: 0;
+      transform: translateY(10px);
+      transition: opacity 0.4s ease, transform 0.4s ease;
+      pointer-events: none;
+    }
+    .page-section.show {
+      opacity: 1;
+      transform: translateY(0);
+      pointer-events: auto;
+    }
+    .fade-out {
+      opacity: 0 !important;
+      transform: translateY(10px) !important;
+    }
+    button, .btn {
+      transition: background-color 0.2s, transform 0.2s ease-in-out;
+    }
+    button:hover, .btn:hover { transform: scale(1.02); }
+    button:active, .btn:active { transform: scale(0.98); }
+    #loader {
+      display: none;
+      position: fixed;
+      top: 50%; left: 50%;
+      transform: translate(-50%, -50%);
+      z-index: 50;
+    }
+    @media print {
+      body * { visibility: hidden; }
+      #invoicePrintArea, #invoicePrintArea * {
+        visibility: visible;
+      }
+      #invoicePrintArea {
+        position: absolute;
+        left: 0; top: 0;
+        width: 100%;
+        padding: 20px;
+      }
+      aside, .nav-link, .bg-white.shadow-sm.border-b,
+      #addItemBtn, .deleteBtn,
+      button[onclick="printInvoice()"] {
+        display: none !important;
+      }
+    }
+  </style>
+  <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+<style>
+  .font-signature {
+    font-family: 'Great Vibes', cursive;
+  }
+</style>
+  <audio id="successSound" src="assets/ding.wav" preload="auto"></audio>
+</head>
+<body class="bg-gray-100">
+  <div id="loader">
+    <svg class="animate-spin h-8 w-8 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+    </svg>
+  </div>
+
+  <div class="w-full flex justify-end items-center px-6 py-3 bg-white shadow-sm border-b">
+    <p id="greetingText" class="text-sm text-gray-600 font-medium"></p>
+  </div>
+
+  <div class="flex min-h-screen">
+    <aside class="w-64 bg-white shadow-md p-4">
+      <div class="flex items-center space-x-2 mb-6">
+        <span class="text-2xl">🧁</span>
+        <div>
+          <h2 class="text-xl font-bold text-gray-900">Lush Patisserie</h2>
+          <p class="text-sm text-gray-500">Sales & Insights</p>
+        </div>
+      </div>
+      <nav id="sidebarNav" class="space-y-3">
+        <a href="#batchCalculator" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2">🧮<span>Batch Calculator</span></a>
+        <a href="#dailyLog" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2">📒<span>Daily Logs</span></a>
+        <a href="#dashboard" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2">📊<span>Dashboard</span></a>
+        <a href="#invoice" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2">🧾<span>Invoices</span></a>
+        <a href="#fixedExpenses" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2">⚙️<span>Fixed Expenses</span></a>
+        <a href="#inventory" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2">📦<span>Inventory</span></a>
+        <a href="#export" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2">📤<span>Export Data</span></a>
+        <a href="#clients" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2">👥<span>Clients</span></a>
+      </nav>
+    </aside>
+
+    <main class="flex-1 p-6 space-y-10">
+      <div id="dashboard" class="page-section"></div>
+      <div id="batchCalculator" class="page-section hidden"></div>
+      <div id="dailyLog" class="page-section hidden"></div>
+      <div id="fixedExpenses" class="page-section hidden"></div>
+      <div id="inventory" class="page-section hidden"></div>
+      <div id="export" class="page-section hidden"></div>
+      <div id="clients" class="page-section hidden"></div>
+      <div id="invoice" class="page-section hidden">
+  <div id="invoicePrintArea"></div>
+</div>
+      </div>
+    </main>
+  </div>
+
+  <script>
+    function getGreeting() {
+      const hour = new Date().getHours();
+      if (hour < 12) return "Good morning";
+      if (hour < 18) return "Good afternoon";
+      return "Good evening";
+    }
+
+    document.addEventListener("DOMContentLoaded", () => {
+      const greetingEl = document.getElementById("greetingText");
+      if (greetingEl) greetingEl.textContent = `${getGreeting()}, Karthick!`;
+    });
+  </script>
+
+  <script src="js/firebase.js"></script>
+  <script src="js/batch.js"></script>
+  <script src="js/dailyLog.js"></script>
+  <script src="js/dashboard.js"></script>
+  <script src="js/inventory.js"></script>
+  <script src="js/clients.js"></script>
+  <script src="js/invoices.js"></script>
+
+  <script>
+    const sections = ["dashboard", "batchCalculator", "dailyLog", "fixedExpenses", "inventory", "export", "clients", "invoice"];
+
+    function toggleLoader(show) {
+      const loader = document.getElementById("loader");
+      loader.style.display = show ? "block" : "none";
+    }
+
+    function setActiveNav(target) {
+      document.querySelectorAll(".nav-link").forEach(link => link.classList.remove("active"));
+      document.querySelector(`.nav-link[href='#${target}']`)?.classList.add("active");
+    }
+
+    function showSection(target) {
+      toggleLoader(true);
+      sections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.classList.contains("hidden")) {
+          el.classList.remove("show");
+          el.classList.add("fade-out");
+          setTimeout(() => {
+            el.classList.add("hidden");
+            el.classList.remove("fade-out");
+          }, 300);
+        }
+      });
+      const targetEl = document.getElementById(target);
+      if (targetEl) {
+        targetEl.classList.remove("hidden");
+        setTimeout(() => {
+          targetEl.classList.add("show");
+          toggleLoader(false);
+        }, 300);
+      } else {
+        toggleLoader(false);
+      }
+    }
+
+    document.querySelectorAll("aside a").forEach(link => {
+      link.addEventListener("click", e => {
+        e.preventDefault();
+        const target = link.getAttribute("href").substring(1);
+        showSection(target);
+        setActiveNav(target);
+        if (target === "dashboard" && typeof loadDashboard === "function") loadDashboard();
+      });
+    });
+
+    window.addEventListener("DOMContentLoaded", () => {
+      const initial = "dashboard";
+      showSection(initial);
+      setActiveNav(initial);
+      if (typeof loadDashboard === "function") loadDashboard();
+    });
+  </script>
+</body>
+</html>
