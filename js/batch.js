@@ -14,7 +14,10 @@ document.addEventListener("DOMContentLoaded", () => {
             <input type="number" id="cost" placeholder="Cost per Unit (₹)" class="w-full p-2 border rounded" required />
             <input type="number" id="price" placeholder="Selling Price per Unit (₹)" class="w-full p-2 border rounded" required />
             <input type="number" id="qty" placeholder="Quantity per Batch" class="w-full p-2 border rounded" required />
-            <button type="submit" class="bg-black text-white px-4 py-2 rounded w-full">Calculate & Save</button>
+            <div class="flex gap-3">
+              <button type="submit" class="bg-black text-white px-4 py-2 rounded w-full">Calculate & Save</button>
+              <button type="button" id="reset-btn" class="bg-gray-200 text-gray-800 px-4 py-2 rounded w-full">Reset</button>
+            </div>
           </form>
         </div>
         <div>
@@ -25,36 +28,24 @@ document.addEventListener("DOMContentLoaded", () => {
                 <p class="text-sm font-medium text-blue-700">Total Revenue</p>
                 <p id="revenue" class="text-xl font-bold text-blue-900">₹0.00</p>
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-blue-600">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-              </svg>
             </div>
             <div class="bg-red-100 p-4 rounded shadow flex justify-between items-center">
               <div>
                 <p class="text-sm font-medium text-red-700">Total Cost</p>
                 <p id="costs" class="text-xl font-bold text-red-900">₹0.00</p>
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-red-700">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-              </svg>
             </div>
-            <div id="grossProfitTile" class="bg-green-100 p-4 rounded shadow relative flex justify-between items-center">
+            <div id="grossProfitTile" class="bg-green-100 p-4 rounded shadow flex justify-between items-center">
               <div>
                 <p class="text-sm font-medium text-green-700">Gross Profit</p>
                 <p id="profit" class="text-xl font-bold text-green-900">₹0.00</p>
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-green-900">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-              </svg>
             </div>
             <div class="bg-purple-100 p-4 rounded shadow flex justify-between items-center">
               <div>
                 <p class="text-sm font-medium text-purple-700">Profit Margin</p>
                 <p id="margin" class="text-xl font-bold text-purple-900">0.00%</p>
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-pruple-900">
-                <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-              </svg>
             </div>
           </div>
         </div>
@@ -72,6 +63,16 @@ document.addEventListener("DOMContentLoaded", () => {
   `;
 
   const db = window.db;
+
+  const resetFormAndResults = () => {
+    document.getElementById("batch-form").reset();
+    document.getElementById("revenue").innerText = `₹0.00`;
+    document.getElementById("costs").innerText = `₹0.00`;
+    document.getElementById("profit").innerText = `₹0.00`;
+    document.getElementById("margin").innerText = `0.00%`;
+  };
+
+  document.getElementById("reset-btn").addEventListener("click", resetFormAndResults);
 
   document.getElementById("batch-form").addEventListener("submit", async (e) => {
     e.preventDefault();
@@ -136,6 +137,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("cost").value = data.cost;
     document.getElementById("price").value = data.price;
     document.getElementById("qty").value = data.qty;
+    resetFormAndResults(); // Clear old results when applying
   };
 
   window.deletePreset = async (id) => {
@@ -151,7 +153,7 @@ function launchConfettiAndSound() {
   if (window.confetti && tile) {
     const rect = tile.getBoundingClientRect();
     window.confetti({
-      particleCount: 120,
+      particleCount: 100,
       spread: 70,
       origin: {
         x: (rect.left + rect.width / 2) / window.innerWidth,
