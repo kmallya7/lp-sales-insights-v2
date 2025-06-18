@@ -1,8 +1,30 @@
+// js/monthlyDashboard.js
+
+function animateValue(element, start, end, duration = 1000, prefix = "₹") {
+  if (start === end) {
+    element.innerText = prefix + end.toFixed(2);
+    return;
+  }
+  const range = end - start;
+  let startTime = null;
+  function step(timestamp) {
+    if (!startTime) startTime = timestamp;
+    const progress = Math.min((timestamp - startTime) / duration, 1);
+    const value = start + range * progress;
+    element.innerText = prefix + value.toFixed(2);
+    if (progress < 1) {
+      requestAnimationFrame(step);
+    } else {
+      element.innerText = prefix + end.toFixed(2);
+    }
+  }
+  requestAnimationFrame(step);
+}
+
 window.loadDashboard = async function () {
   const container = document.getElementById("dashboard");
   if (!container) return;
 
-  // Initial dashboard structure
   container.innerHTML = `
     <section class="bg-white p-6 rounded shadow max-w-7xl mx-auto">
       <h2 class="text-2xl font-bold mb-4 text-text flex items-center">
@@ -10,7 +32,7 @@ window.loadDashboard = async function () {
       </h2>
       <p class="text-sm text-gray-500 mb-6">View your monthly financial summary</p>
 
-      <div class="flex items-center gap-4 mb-6">
+      <div class="flex flex-wrap items-center gap-4 mb-6">
         <label class="text-sm text-gray-600">Month:
           <select id="filter-month" class="border p-2 rounded">
             ${[...Array(12).keys()].map(m => `<option value="${m+1}">${new Date(0, m).toLocaleString('default', { month: 'long' })}</option>`).join('')}
@@ -19,70 +41,142 @@ window.loadDashboard = async function () {
         <label class="text-sm text-gray-600">Year:
           <input id="filter-year" type="number" class="border p-2 rounded w-24" value="${new Date().getFullYear()}" />
         </label>
+        <button id="prev-month" class="bg-gray-200 text-gray-700 px-3 py-2 rounded hover:bg-gray-300" title="Previous Month">◀</button>
+        <button id="next-month" class="bg-gray-200 text-gray-700 px-3 py-2 rounded hover:bg-gray-300" title="Next Month">▶</button>
         <button id="apply-filters" class="bg-black text-white px-4 py-2 rounded hover:bg-gray-800">Apply</button>
+        <button id="export-csv" class="bg-blue-100 text-blue-700 px-4 py-2 rounded hover:bg-blue-200">Export CSV</button>
       </div>
 
+      <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6" id="summary-cards"></div>
+
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div class="bg-blue-100 p-4 rounded flex justify-between items-center">
-          <div>
-            <p class="text-sm font-medium text-blue-700">Total Revenue</p>
-            <p id="dash-revenue" class="text-xl font-bold text-blue-900">₹0.00</p>
+        <div class="bg-white p-4 rounded shadow">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="text-sm font-semibold text-gray-600">Revenue Trend</h3>
+            <button id="toggle-trend" class="text-xs text-blue-600 hover:underline">Hide</button>
           </div>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-blue-600">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-          </svg>
+          <div class="w-full h-64" id="trendChart-container">
+            <canvas id="trendChart" class="w-full h-full" aria-label="Revenue Trend Bar Chart" role="img"></canvas>
+          </div>
         </div>
-        <div class="bg-red-100 p-4 rounded flex justify-between items-center">
-          <div>
-            <p class="text-sm font-medium text-red-700">Total Cost</p>
-            <p id="dash-cost" class="text-xl font-bold text-red-900">₹0.00</p>
+        <div class="bg-white p-4 rounded shadow">
+          <div class="flex justify-between items-center mb-2">
+            <h3 class="text-sm font-semibold text-gray-600">Cost Breakdown</h3>
+            <button id="toggle-cost" class="text-xs text-blue-600 hover:underline">Hide</button>
           </div>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-red-600">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-          </svg>
-        </div>
-        <div class="bg-green-100 p-4 rounded flex justify-between items-center">
-          <div>
-            <p class="text-sm font-medium text-green-700">Gross Profit</p>
-            <p id="dash-gross" class="text-xl font-bold text-green-900">₹0.00</p>
+          <div class="w-full h-64 flex items-center justify-center" id="costChart-container">
+            <canvas id="costChart" class="w-full h-full max-w-[300px]" aria-label="Cost Breakdown Pie Chart" role="img"></canvas>
           </div>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-green-600">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-          </svg>
-        </div>
-        <div class="bg-purple-100 p-4 rounded flex justify-between items-center">
-          <div>
-            <p class="text-sm font-medium text-purple-700">Net Profit</p>
-            <p id="dash-net" class="text-xl font-bold text-purple-900">₹0.00</p>
-          </div>
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-purple-600">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-          </svg>
         </div>
       </div>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
         <div class="bg-white p-4 rounded shadow">
-          <h3 class="text-sm font-semibold text-gray-600 mb-2">Revenue Trend</h3>
-          <div class="w-full h-64">
-            <canvas id="trendChart" class="w-full h-full"></canvas>
-          </div>
+          <h4 class="font-semibold mb-2">Top 3 Best-Selling Items</h4>
+          <table class="w-full text-sm border rounded">
+            <thead>
+              <tr class="bg-gray-100">
+                <th class="border p-1">Item</th>
+                <th class="border p-1">Qty Sold</th>
+                <th class="border p-1">Revenue (₹)</th>
+              </tr>
+            </thead>
+            <tbody id="top-sellers-tbody"></tbody>
+          </table>
         </div>
         <div class="bg-white p-4 rounded shadow">
-          <h3 class="text-sm font-semibold text-gray-600 mb-2">Cost Breakdown</h3>
-          <div class="w-full h-64 flex items-center justify-center">
-            <canvas id="costChart" class="w-full h-full max-w-[300px]"></canvas>
-          </div>
+          <h4 class="font-semibold mb-2">Top Clients</h4>
+          <table class="w-full text-sm border rounded">
+            <thead>
+              <tr class="bg-gray-100">
+                <th class="border p-1">Client</th>
+                <th class="border p-1">Orders</th>
+                <th class="border p-1">Revenue (₹)</th>
+              </tr>
+            </thead>
+            <tbody id="top-clients-tbody"></tbody>
+          </table>
         </div>
+      </div>
+
+      <div class="bg-white p-4 rounded shadow mb-6">
+        <h4 class="font-semibold mb-2">Expense Breakdown</h4>
+        <table class="w-full text-sm border rounded">
+          <thead>
+            <tr class="bg-gray-100">
+              <th class="border p-1">Category</th>
+              <th class="border p-1">Amount (₹)</th>
+            </tr>
+          </thead>
+          <tbody id="expense-breakdown-tbody"></tbody>
+        </table>
+      </div>
+
+      <div class="bg-white p-4 rounded shadow">
+        <h4 class="font-semibold mb-2">Summary Table</h4>
+        <table class="w-full text-sm border rounded">
+          <thead>
+            <tr class="bg-gray-100">
+              <th class="border p-1">Metric</th>
+              <th class="border p-1">Value (₹)</th>
+            </tr>
+          </thead>
+          <tbody id="summary-table-tbody"></tbody>
+        </table>
       </div>
     </section>
   `;
 
   document.getElementById("filter-month").value = new Date().getMonth() + 1;
+
+  document.getElementById("prev-month").addEventListener("click", () => {
+    let m = parseInt(document.getElementById("filter-month").value);
+    let y = parseInt(document.getElementById("filter-year").value);
+    m--;
+    if (m < 1) { m = 12; y--; }
+    document.getElementById("filter-month").value = m;
+    document.getElementById("filter-year").value = y;
+    loadDashboardData(m, y);
+  });
+  document.getElementById("next-month").addEventListener("click", () => {
+    let m = parseInt(document.getElementById("filter-month").value);
+    let y = parseInt(document.getElementById("filter-year").value);
+    m++;
+    if (m > 12) { m = 1; y++; }
+    document.getElementById("filter-month").value = m;
+    document.getElementById("filter-year").value = y;
+    loadDashboardData(m, y);
+  });
+
   document.getElementById("apply-filters").addEventListener("click", () => {
     const m = parseInt(document.getElementById("filter-month").value);
     const y = parseInt(document.getElementById("filter-year").value);
     loadDashboardData(m, y);
+  });
+
+  document.getElementById("export-csv").addEventListener("click", () => {
+    exportDashboardCSV();
+  });
+
+  document.getElementById("toggle-trend").addEventListener("click", function() {
+    const el = document.getElementById("trendChart-container");
+    if (el.style.display === "none") {
+      el.style.display = "";
+      this.innerText = "Hide";
+    } else {
+      el.style.display = "none";
+      this.innerText = "Show";
+    }
+  });
+  document.getElementById("toggle-cost").addEventListener("click", function() {
+    const el = document.getElementById("costChart-container");
+    if (el.style.display === "none") {
+      el.style.display = "";
+      this.innerText = "Hide";
+    } else {
+      el.style.display = "none";
+      this.innerText = "Show";
+    }
   });
 
   await loadDashboardData(new Date().getMonth() + 1, new Date().getFullYear());
@@ -90,35 +184,204 @@ window.loadDashboard = async function () {
 
 async function loadDashboardData(month, year) {
   const datePrefix = `${year}-${String(month).padStart(2, '0')}`;
-  const logs = await window.db.collection("dailyLogs")
+  const logsSnap = await window.db.collection("dailyLogs")
     .where("date", ">=", `${datePrefix}-01`)
     .where("date", "<=", `${datePrefix}-31`)
     .get();
 
   let totalRevenue = 0, totalIngredients = 0, totalPackaging = 0;
-
-  logs.forEach(doc => {
+  let allItems = [], clientMap = {};
+  logsSnap.forEach(doc => {
     const d = doc.data();
-    totalRevenue += d.revenue || 0;
-    totalIngredients += d.ingredients || 0;
-    totalPackaging += d.packaging || 0;
+    if (d.items && Array.isArray(d.items)) {
+      d.items.forEach(item => {
+        allItems.push(item);
+        totalRevenue += item.revenue || 0;
+        totalIngredients += item.ingredients || 0;
+        totalPackaging += item.packaging || 0;
+      });
+    }
+    if (d.client) {
+      if (!clientMap[d.client]) clientMap[d.client] = { orders: 0, revenue: 0 };
+      clientMap[d.client].orders += 1;
+      if (d.items && Array.isArray(d.items)) {
+        d.items.forEach(item => {
+          clientMap[d.client].revenue += item.revenue || 0;
+        });
+      }
+    }
+  });
+
+  let prevMonth = month - 1, prevYear = year;
+  if (prevMonth < 1) { prevMonth = 12; prevYear--; }
+  const prevPrefix = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+  const prevSnap = await window.db.collection("dailyLogs")
+    .where("date", ">=", `${prevPrefix}-01`)
+    .where("date", "<=", `${prevPrefix}-31`)
+    .get();
+  let prevRevenue = 0, prevCost = 0, prevProfit = 0;
+  prevSnap.forEach(doc => {
+    const d = doc.data();
+    if (d.items && Array.isArray(d.items)) {
+      d.items.forEach(item => {
+        prevRevenue += item.revenue || 0;
+        prevCost += (item.ingredients || 0) + (item.packaging || 0);
+        prevProfit += (item.revenue || 0) - ((item.ingredients || 0) + (item.packaging || 0));
+      });
+    }
   });
 
   const grossProfit = totalRevenue - (totalIngredients + totalPackaging);
-  const netProfit = grossProfit; // Extend this later with fixed expenses
+  const netProfit = grossProfit;
 
-  document.getElementById("dash-revenue").innerText = `₹${totalRevenue.toFixed(2)}`;
-  document.getElementById("dash-cost").innerText = `₹${(totalIngredients + totalPackaging).toFixed(2)}`;
-  document.getElementById("dash-gross").innerText = `₹${grossProfit.toFixed(2)}`;
-  document.getElementById("dash-net").innerText = `₹${netProfit.toFixed(2)}`;
+  function pctChange(current, prev) {
+    if (prev === 0) return current === 0 ? "0%" : "▲ 100%";
+    const pct = ((current - prev) / Math.abs(prev)) * 100;
+    return (pct >= 0 ? "▲ " : "▼ ") + Math.abs(pct).toFixed(1) + "%";
+  }
+
+  document.getElementById("summary-cards").innerHTML = `
+    <div class="summary-card bg-blue-100 p-4 rounded flex flex-col items-start justify-between cursor-pointer">
+      <div class="flex items-center justify-between w-full">
+        <div>
+          <p class="text-sm font-medium text-blue-700">Total Revenue</p>
+          <p class="text-xl font-bold text-blue-900 flex items-center">
+            <span id="dash-revenue">${"₹" + totalRevenue.toFixed(2)}</span>
+            <span class="ml-2 text-xs ${totalRevenue - prevRevenue >= 0 ? 'text-green-600' : 'text-red-600'}">${pctChange(totalRevenue, prevRevenue)}</span>
+          </p>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-blue-600">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
+        </svg>
+      </div>
+    </div>
+    <div class="summary-card bg-red-100 p-4 rounded flex flex-col items-start justify-between cursor-pointer">
+      <div class="flex items-center justify-between w-full">
+        <div>
+          <p class="text-sm font-medium text-red-700">Total Cost</p>
+          <p class="text-xl font-bold text-red-900 flex items-center">
+            <span id="dash-cost">${"₹" + (totalIngredients + totalPackaging).toFixed(2)}</span>
+            <span class="ml-2 text-xs ${totalIngredients + totalPackaging - prevCost >= 0 ? 'text-red-600' : 'text-green-600'}">${pctChange(totalIngredients + totalPackaging, prevCost)}</span>
+          </p>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-red-700">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
+        </svg>
+      </div>
+    </div>
+    <div class="summary-card bg-green-100 p-4 rounded flex flex-col items-start justify-between cursor-pointer">
+      <div class="flex items-center justify-between w-full">
+        <div>
+          <p class="text-sm font-medium text-green-700">Gross Profit</p>
+          <p class="text-xl font-bold text-green-900 flex items-center">
+            <span id="dash-gross">${"₹" + grossProfit.toFixed(2)}</span>
+            <span class="ml-2 text-xs ${grossProfit - prevProfit >= 0 ? 'text-green-600' : 'text-red-600'}">${pctChange(grossProfit, prevProfit)}</span>
+          </p>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-green-700">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
+        </svg>
+      </div>
+    </div>
+    <div class="summary-card bg-purple-100 p-4 rounded flex flex-col items-start justify-between cursor-pointer">
+      <div class="flex items-center justify-between w-full">
+        <div>
+          <p class="text-sm font-medium text-purple-700">Net Profit</p>
+          <p class="text-xl font-bold text-purple-900 flex items-center">
+            <span id="dash-net">${"₹" + netProfit.toFixed(2)}</span>
+          </p>
+        </div>
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-purple-700">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
+        </svg>
+      </div>
+    </div>
+  `;
+
+  // Animate on hover
+  document.querySelectorAll('.summary-card').forEach(card => {
+    card.addEventListener('mouseenter', () => {
+      if (card.querySelector('#dash-revenue')) {
+        animateValue(card.querySelector('#dash-revenue'), 0, totalRevenue);
+      }
+      if (card.querySelector('#dash-cost')) {
+        animateValue(card.querySelector('#dash-cost'), 0, totalIngredients + totalPackaging);
+      }
+      if (card.querySelector('#dash-gross')) {
+        animateValue(card.querySelector('#dash-gross'), 0, grossProfit);
+      }
+      if (card.querySelector('#dash-net')) {
+        animateValue(card.querySelector('#dash-net'), 0, netProfit);
+      }
+    });
+  });
+
+  // Top 3 best-selling items
+  const itemMap = {};
+  allItems.forEach(item => {
+    if (!itemMap[item.name]) itemMap[item.name] = { qty: 0, revenue: 0 };
+    itemMap[item.name].qty += item.qty || 0;
+    itemMap[item.name].revenue += item.revenue || 0;
+  });
+  const topItems = Object.entries(itemMap)
+    .sort((a, b) => b[1].qty - a[1].qty)
+    .slice(0, 3);
+
+  document.getElementById("top-sellers-tbody").innerHTML = topItems.map(([name, stats]) => `
+    <tr>
+      <td class="border p-1">${name}</td>
+      <td class="border p-1">${stats.qty}</td>
+      <td class="border p-1">₹${stats.revenue.toFixed(2)}</td>
+    </tr>
+  `).join('');
+
+  const topClients = Object.entries(clientMap)
+    .sort((a, b) => b[1].revenue - a[1].revenue)
+    .slice(0, 3);
+
+  document.getElementById("top-clients-tbody").innerHTML = topClients.map(([name, stats]) => `
+    <tr>
+      <td class="border p-1">${name}</td>
+      <td class="border p-1">${stats.orders}</td>
+      <td class="border p-1">₹${stats.revenue.toFixed(2)}</td>
+    </tr>
+  `).join('');
+
+  document.getElementById("expense-breakdown-tbody").innerHTML = `
+    <tr>
+      <td class="border p-1">Ingredients</td>
+      <td class="border p-1">₹${totalIngredients.toFixed(2)}</td>
+    </tr>
+    <tr>
+      <td class="border p-1">Packaging</td>
+      <td class="border p-1">₹${totalPackaging.toFixed(2)}</td>
+    </tr>
+    <tr>
+      <td class="border p-1 font-semibold">Gross Profit</td>
+      <td class="border p-1 font-semibold">₹${grossProfit.toFixed(2)}</td>
+    </tr>
+  `;
+
+  document.getElementById("summary-table-tbody").innerHTML = `
+    <tr><td class="border p-1">Total Revenue</td><td class="border p-1">₹${totalRevenue.toFixed(2)}</td></tr>
+    <tr><td class="border p-1">Total Cost</td><td class="border p-1">₹${(totalIngredients + totalPackaging).toFixed(2)}</td></tr>
+    <tr><td class="border p-1">Gross Profit</td><td class="border p-1">₹${grossProfit.toFixed(2)}</td></tr>
+    <tr><td class="border p-1">Net Profit</td><td class="border p-1">₹${netProfit.toFixed(2)}</td></tr>
+    <tr><td class="border p-1">Ingredients</td><td class="border p-1">₹${totalIngredients.toFixed(2)}</td></tr>
+    <tr><td class="border p-1">Packaging</td><td class="border p-1">₹${totalPackaging.toFixed(2)}</td></tr>
+  `;
 
   renderCostChart(totalIngredients, totalPackaging, grossProfit);
-  renderTrendChart(logs);
+  renderTrendChart(logsSnap);
+
+  document.getElementById("trendChart").setAttribute("aria-label", "Bar chart showing daily revenue trend for the selected month.");
+  document.getElementById("costChart").setAttribute("aria-label", "Pie chart showing cost breakdown for the selected month.");
 }
 
 function renderCostChart(ingredients, packaging, profit) {
   const ctx = document.getElementById("costChart").getContext("2d");
-  new Chart(ctx, {
+  if (window.costChartInstance) window.costChartInstance.destroy();
+  window.costChartInstance = new Chart(ctx, {
     type: 'pie',
     data: {
       labels: ["Ingredients", "Packaging", "Gross Profit"],
@@ -142,26 +405,43 @@ function renderCostChart(ingredients, packaging, profit) {
             boxWidth: 15,
             padding: 20
           }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return `${context.label}: ₹${context.parsed.toFixed(2)}`;
+            }
+          }
         }
       }
     }
   });
 }
 
-function renderTrendChart(logs) {
+function renderTrendChart(logsSnap) {
   const dailyTotals = {};
-  logs.forEach(doc => {
+  logsSnap.forEach(doc => {
     const d = doc.data();
     const date = d.date;
     if (!dailyTotals[date]) dailyTotals[date] = 0;
-    dailyTotals[date] += d.revenue || 0;
+    if (d.items && Array.isArray(d.items)) {
+      d.items.forEach(item => {
+        dailyTotals[date] += item.revenue || 0;
+      });
+    }
   });
-  const labels = Object.keys(dailyTotals).sort();
-  const data = labels.map(date => dailyTotals[date]);
 
+  // Format dates as "18 Jun 2025"
+  const rawDates = Object.keys(dailyTotals).sort();
+  const labels = rawDates.map(dateStr => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short', year: 'numeric' });
+  });
+  const data = rawDates.map(date => dailyTotals[date]);
   const peakIndex = data.indexOf(Math.max(...data));
   const ctx = document.getElementById("trendChart").getContext("2d");
-  new Chart(ctx, {
+  if (window.trendChartInstance) window.trendChartInstance.destroy();
+  window.trendChartInstance = new Chart(ctx, {
     type: 'bar',
     data: {
       labels,
@@ -195,4 +475,59 @@ function renderTrendChart(logs) {
       }
     }
   });
+
+  // Add a simple custom legend below the chart
+  const legendHtml = `
+    <div class="flex items-center gap-4 mt-2 text-xs">
+      <span class="flex items-center"><span style="display:inline-block;width:16px;height:10px;background:#f97316;margin-right:4px;border-radius:2px"></span>Highest Revenue Day</span>
+      <span class="flex items-center"><span style="display:inline-block;width:16px;height:10px;background:#60a5fa;margin-right:4px;border-radius:2px"></span>Other Days</span>
+    </div>
+  `;
+  const chartContainer = document.getElementById("trendChart-container");
+  let legendDiv = chartContainer.querySelector('.custom-legend');
+  if (!legendDiv) {
+    legendDiv = document.createElement('div');
+    legendDiv.className = 'custom-legend';
+    chartContainer.appendChild(legendDiv);
+  }
+  legendDiv.innerHTML = legendHtml;
+}
+
+async function exportDashboardCSV() {
+  const month = parseInt(document.getElementById("filter-month").value);
+  const year = parseInt(document.getElementById("filter-year").value);
+  const datePrefix = `${year}-${String(month).padStart(2, '0')}`;
+  const logsSnap = await window.db.collection("dailyLogs")
+    .where("date", ">=", `${datePrefix}-01`)
+    .where("date", "<=", `${datePrefix}-31`)
+    .get();
+
+  let csv = "Date,Client,Item,Qty,Revenue,Ingredients,Packaging,Profit,Notes\n";
+  logsSnap.forEach(doc => {
+    const d = doc.data();
+    (d.items || []).forEach(item => {
+      const profit = (item.revenue || 0) - ((item.ingredients || 0) + (item.packaging || 0));
+      csv += [
+        d.date,
+        `"${d.client || ""}"`,
+        `"${item.name || ""}"`,
+        item.qty || 0,
+        item.revenue || 0,
+        item.ingredients || 0,
+        item.packaging || 0,
+        profit,
+        `"${d.notes || ""}"`
+      ].join(",") + "\n";
+    });
+  });
+
+  const blob = new Blob([csv], { type: "text/csv" });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url;
+  a.download = `dashboard_${year}_${String(month).padStart(2, '0')}.csv`;
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
+  URL.revokeObjectURL(url);
 }

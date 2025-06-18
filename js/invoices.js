@@ -18,29 +18,28 @@ document.addEventListener("DOMContentLoaded", () => {
       </header>
 
       <!-- Invoice Metadata Row -->
-<div class="flex flex-col lg:flex-row print:flex-row justify-between gap-6 bg-gray-50 print:bg-gray-200 p-6 rounded-lg border border-gray-300 print:border-gray-400 mb-6">
-  <!-- Invoice Info -->
-  <div class="w-full md:w-1/2 space-y-2">
-    <label class="text-sm font-medium text-gray-600">Invoice #</label>
-    <input type="text" id="invoiceNumber" class="w-full p-2 border rounded" placeholder="INV-2025-001">
+      <div class="flex flex-col lg:flex-row print:flex-row justify-between gap-6 bg-gray-50 print:bg-gray-200 p-6 rounded-lg border border-gray-300 print:border-gray-400 mb-6">
+        <!-- Invoice Info -->
+        <div class="w-full md:w-1/2 space-y-2">
+          <label class="text-sm font-medium text-gray-600">Invoice #</label>
+          <input type="text" id="invoiceNumber" class="w-full p-2 border rounded" placeholder="INV-2025-001">
 
-    <label class="text-sm font-medium text-gray-600">Invoice Date</label>
-    <input type="date" id="invoiceDate" class="w-full p-2 border rounded">
+          <label class="text-sm font-medium text-gray-600">Invoice Date</label>
+          <input type="date" id="invoiceDate" class="w-full p-2 border rounded">
 
-    <label class="text-sm font-medium text-gray-600">Due Date</label>
-    <input type="date" id="dueDate" class="w-full p-2 border rounded">
-  </div>
+          <label class="text-sm font-medium text-gray-600">Due Date</label>
+          <input type="date" id="dueDate" class="w-full p-2 border rounded">
+        </div>
 
-  <!-- Bill To -->
-  <div class="w-full md:w-1/2 space-y-2">
-    <label class="text-sm font-medium text-gray-600">Bill To</label>
-    <input type="text" id="clientName" class="w-full p-2 border rounded" placeholder="Client Name">
-    <textarea id="clientAddress" class="w-full p-2 border rounded" placeholder="Client Address"></textarea>
-    <input type="text" id="clientPhone" class="w-full p-2 border rounded" placeholder="Client Phone">
-    <input type="email" id="clientEmail" class="w-full p-2 border rounded" placeholder="Client Email">
-  </div>
-</div>
-
+        <!-- Bill To -->
+        <div class="w-full md:w-1/2 space-y-2">
+          <label class="text-sm font-medium text-gray-600">Bill To</label>
+          <input type="text" id="clientName" class="w-full p-2 border rounded" placeholder="Client Name">
+          <textarea id="clientAddress" class="w-full p-2 border rounded" placeholder="Client Address"></textarea>
+          <input type="text" id="clientPhone" class="w-full p-2 border rounded" placeholder="Client Phone">
+          <input type="email" id="clientEmail" class="w-full p-2 border rounded" placeholder="Client Email">
+        </div>
+      </div>
 
       <!-- Items Table -->
       <table class="w-full text-sm border mb-4">
@@ -61,16 +60,16 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="flex flex-col md:flex-row justify-between gap-6 mb-6">
         <textarea id="invoiceNotes" class="w-full md:w-2/3 p-2 border rounded" placeholder="Notes: payment terms, delivery info, etc."></textarea>
         <div class="bg-yellow-50 print:bg-yellow-100 p-4 rounded shadow-sm md:w-1/3 space-y-2 border border-yellow-200 print:border-yellow-400">
-  <div class="flex justify-between text-sm text-gray-800">
-    <span>Subtotal:</span>
-    <span id="subtotal">₹0.00</span>
-  </div>
-  <hr class="border-gray-300">
-  <div class="flex justify-between text-xl font-bold text-gray-900">
-    <span>Invoice Total:</span>
-    <span id="total">₹0.00</span>
-  </div>
-</div>
+          <div class="flex justify-between text-sm text-gray-800">
+            <span>Subtotal:</span>
+            <span id="subtotal">₹0.00</span>
+          </div>
+          <hr class="border-gray-300">
+          <div class="flex justify-between text-xl font-bold text-gray-900">
+            <span>Invoice Total:</span>
+            <span id="total">₹0.00</span>
+          </div>
+        </div>
       </div>
 
       <!-- Print Button -->
@@ -80,76 +79,40 @@ document.addEventListener("DOMContentLoaded", () => {
       </div>
 
       <!-- Signature + Thank You (centered, fixed to stay on 1st page) -->
-<div class="mt-8 text-center print:block avoid-break print:mt-4 print:pb-4">
-  <div class="inline-block">
-    <p class="text-sm text-gray-600 italic">Signature</p>
-    <p class="text-xl mt-2 font-signature">Vaishnavi</p>
-    <p class="text-base italic text-orange-800 font-medium mt-4">Thank you for your business! ❤️</p>
-  </div>
-</div>
+      <div class="mt-8 text-center print:block avoid-break print:mt-4 print:pb-4">
+        <div class="inline-block">
+          <p class="text-sm text-gray-600 italic">Signature</p>
+          <p class="text-xl mt-2 font-signature">Vaishnavi</p>
+          <p class="text-base italic text-orange-800 font-medium mt-4">Thank you for your business! ❤️</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- All Invoices List -->
+    <section id="allInvoicesSection" class="bg-white p-6 rounded shadow max-w-5xl mx-auto mt-10">
+      <h2 class="text-xl font-bold mb-4 text-orange-900">All Invoices</h2>
+      <div id="invoicesList" class="overflow-x-auto"></div>
     </section>
   `;
 
-  // Inject print-safe CSS to avoid page breaks in PDF
-const style = document.createElement("style");
-style.innerHTML = `
-  @media print {
-    .avoid-break {
-      break-inside: avoid;
-      page-break-inside: avoid;
-      page-break-before: auto;
+  // Print-safe CSS
+  const style = document.createElement("style");
+  style.innerHTML = `
+    @media print {
+      .avoid-break {
+        break-inside: avoid;
+        page-break-inside: avoid;
+        page-break-before: auto;
+      }
+      .avoid-break * {
+        break-inside: avoid;
+        page-break-inside: avoid;
+      }
     }
-    .avoid-break * {
-      break-inside: avoid;
-      page-break-inside: avoid;
-    }
-  }
-`;
-document.head.appendChild(style);
-  
-document.getElementById("saveInvoiceBtn").addEventListener("click", () => {
+  `;
+  document.head.appendChild(style);
+
   const db = firebase.firestore();
-
-  const invoiceData = {
-    invoiceNumber: document.getElementById("invoiceNumber").value.trim(),
-    invoiceDate: document.getElementById("invoiceDate").value,
-    dueDate: document.getElementById("dueDate").value,
-    client: {
-      name: document.getElementById("clientName").value.trim(),
-      address: document.getElementById("clientAddress").value.trim(),
-      phone: document.getElementById("clientPhone").value.trim(),
-      email: document.getElementById("clientEmail").value.trim()
-    },
-    items: [],
-    notes: document.getElementById("invoiceNotes").value.trim(),
-    subtotal: document.getElementById("subtotal").textContent,
-    total: document.getElementById("total").textContent,
-    createdAt: new Date()
-  };
-
-  // Collect item rows
-  itemsBody.querySelectorAll("tr").forEach(row => {
-    const item = {
-      name: row.querySelector("input[type='text']").value,
-      qty: parseFloat(row.querySelector(".qty").value) || 0,
-      price: parseFloat(row.querySelector(".price").value) || 0,
-      amount: row.querySelector(".amount").textContent
-    };
-    invoiceData.items.push(item);
-  });
-
-  // Save to Firestore
-  db.collection("invoices").add(invoiceData)
-    .then(() => {
-      alert("Invoice saved successfully!");
-      document.getElementById("successSound")?.play();
-    })
-    .catch(err => {
-      console.error("Error saving invoice:", err);
-      alert("Failed to save invoice.");
-    });
-});
-
   const itemsBody = document.getElementById("invoiceItems");
 
   function updateTotals() {
@@ -165,40 +128,169 @@ document.getElementById("saveInvoiceBtn").addEventListener("click", () => {
     document.getElementById("total").textContent = `₹${subtotal.toFixed(2)}`;
   }
 
-  function addRow() {
+  function addRow(item = {}) {
     const row = document.createElement("tr");
     row.innerHTML = `
-  <td class="border p-1 text-center align-middle">
-    <input type="text" class="w-full p-1 border rounded text-center" placeholder="Item">
-  </td>
-  <td class="border p-1 text-center align-middle">
-    <input type="number" class="w-full p-1 border rounded qty text-center" value="1">
-  </td>
-  <td class="border p-1 text-center align-middle">
-    <input type="number" class="w-full p-1 border rounded price text-center" value="0">
-  </td>
-  <td class="border p-1 text-center align-middle text-gray-700 font-semibold amount">₹0.00</td>
-  <td class="border p-1 text-center align-middle print:hidden">
-    <button class="text-red-600 deleteBtn">🗑️</button>
-  </td>
-`;
-
+      <td class="border p-1 text-center align-middle">
+        <input type="text" class="w-full p-1 border rounded text-center" placeholder="Item" value="${item.name || ""}">
+      </td>
+      <td class="border p-1 text-center align-middle">
+        <input type="number" class="w-full p-1 border rounded qty text-center" value="${item.qty || 1}">
+      </td>
+      <td class="border p-1 text-center align-middle">
+        <input type="number" class="w-full p-1 border rounded price text-center" value="${item.price || 0}">
+      </td>
+      <td class="border p-1 text-center align-middle text-gray-700 font-semibold amount">₹${item.amount || "0.00"}</td>
+      <td class="border p-1 text-center align-middle print:hidden">
+        <button class="text-red-600 deleteBtn">🗑️</button>
+      </td>
+    `;
     row.querySelector(".qty").addEventListener("input", updateTotals);
     row.querySelector(".price").addEventListener("input", updateTotals);
     row.querySelector(".deleteBtn").addEventListener("click", () => {
       row.remove();
       updateTotals();
     });
-
     itemsBody.appendChild(row);
     updateTotals();
   }
 
-  document.getElementById("addItemBtn").addEventListener("click", addRow);
+  document.getElementById("addItemBtn").addEventListener("click", () => addRow());
   addRow();
 
   const today = new Date();
   const formattedDate = today.toISOString().split("T")[0];
   document.getElementById("invoiceDate").value = formattedDate;
   document.getElementById("dueDate").value = formattedDate;
+
+  document.getElementById("saveInvoiceBtn").addEventListener("click", () => {
+    const invoiceData = {
+      invoiceNumber: document.getElementById("invoiceNumber").value.trim(),
+      invoiceDate: document.getElementById("invoiceDate").value,
+      dueDate: document.getElementById("dueDate").value,
+      client: {
+        name: document.getElementById("clientName").value.trim(),
+        address: document.getElementById("clientAddress").value.trim(),
+        phone: document.getElementById("clientPhone").value.trim(),
+        email: document.getElementById("clientEmail").value.trim()
+      },
+      items: [],
+      notes: document.getElementById("invoiceNotes").value.trim(),
+      subtotal: document.getElementById("subtotal").textContent,
+      total: document.getElementById("total").textContent,
+      createdAt: new Date()
+    };
+
+    itemsBody.querySelectorAll("tr").forEach(row => {
+      const item = {
+        name: row.querySelector("input[type='text']").value,
+        qty: parseFloat(row.querySelector(".qty").value) || 0,
+        price: parseFloat(row.querySelector(".price").value) || 0,
+        amount: row.querySelector(".amount").textContent
+      };
+      invoiceData.items.push(item);
+    });
+
+    db.collection("invoices").add(invoiceData)
+      .then(() => {
+        alert("Invoice saved successfully!");
+        document.getElementById("successSound")?.play();
+        loadAllInvoices();
+      })
+      .catch(err => {
+        console.error("Error saving invoice:", err);
+        alert("Failed to save invoice.");
+      });
+  });
+
+  // Load all invoices and display in a table
+  async function loadAllInvoices() {
+    const invoicesList = document.getElementById("invoicesList");
+    invoicesList.innerHTML = "Loading...";
+
+    const snapshot = await db.collection("invoices").orderBy("createdAt", "desc").get();
+    if (snapshot.empty) {
+      invoicesList.innerHTML = "<p class='text-gray-500'>No invoices found.</p>";
+      return;
+    }
+
+    let html = `
+  <table class="w-full text-sm border rounded">
+    <thead>
+      <tr class="bg-gray-100">
+        <th class="border p-1 text-center">Invoice #</th>
+        <th class="border p-1 text-center">Date</th>
+        <th class="border p-1 text-center">Client</th>
+        <th class="border p-1 text-center">Total</th>
+        <th class="border p-1 text-center">Actions</th>
+      </tr>
+    </thead>
+    <tbody>
+`;
+
+snapshot.forEach(doc => {
+  const d = doc.data();
+  html += `
+    <tr>
+      <td class="border p-1 text-center">${d.invoiceNumber || ""}</td>
+      <td class="border p-1 text-center">${d.invoiceDate || ""}</td>
+      <td class="border p-1 text-center">${d.client?.name || ""}</td>
+      <td class="border p-1 text-center">${d.total || ""}</td>
+      <td class="border p-1 text-center">
+        <button class="text-blue-600 viewInvoiceBtn" data-id="${doc.id}">View</button>
+        <button class="text-black printInvoiceBtn" data-id="${doc.id}">Print</button>
+      </td>
+    </tr>
+  `;
+});
+
+html += "</tbody></table>";
+invoicesList.innerHTML = html;
+
+
+    html += "</tbody></table>";
+    invoicesList.innerHTML = html;
+
+    document.querySelectorAll(".viewInvoiceBtn").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        const id = btn.getAttribute("data-id");
+        await showInvoiceDetails(id);
+      });
+    });
+    document.querySelectorAll(".printInvoiceBtn").forEach(btn => {
+      btn.addEventListener("click", async (e) => {
+        const id = btn.getAttribute("data-id");
+        await showInvoiceDetails(id, true);
+        setTimeout(() => window.print(), 500);
+      });
+    });
+  }
+
+  // Show invoice details in the form
+  async function showInvoiceDetails(invoiceId, silentPrint = false) {
+    const doc = await db.collection("invoices").doc(invoiceId).get();
+    if (!doc.exists) return alert("Invoice not found.");
+    const d = doc.data();
+
+    document.getElementById("invoiceNumber").value = d.invoiceNumber || "";
+    document.getElementById("invoiceDate").value = d.invoiceDate || "";
+    document.getElementById("dueDate").value = d.dueDate || "";
+    document.getElementById("clientName").value = d.client?.name || "";
+    document.getElementById("clientAddress").value = d.client?.address || "";
+    document.getElementById("clientPhone").value = d.client?.phone || "";
+    document.getElementById("clientEmail").value = d.client?.email || "";
+    document.getElementById("invoiceNotes").value = d.notes || "";
+
+    // Clear and fill items
+    itemsBody.innerHTML = "";
+    (d.items || []).forEach(item => addRow(item));
+    updateTotals();
+
+    if (silentPrint) {
+      setTimeout(() => window.print(), 500);
+    }
+  }
+
+  // Load all invoices on page load
+  loadAllInvoices();
 });

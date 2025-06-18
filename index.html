@@ -16,6 +16,7 @@
       border-radius: 0.5rem;
       font-weight: 600;
       color: #b45309;
+      border-left: 4px solid #f59e42;
     }
     .page-section {
       opacity: 0;
@@ -61,13 +62,50 @@
         display: none !important;
       }
     }
+    /* Sidebar improvements */
+    .sidebar-collapsed {
+      width: 4rem !important;
+      min-width: 4rem !important;
+      max-width: 4rem !important;
+      transition: width 0.3s;
+    }
+    .sidebar-collapsed .sidebar-label {
+      display: none !important;
+    }
+    .sidebar-collapsed .nav-link {
+      justify-content: center;
+    }
+    .sidebar-collapsed #quickAddBtn {
+      left: 5.5rem !important;
+    }
+    @media (max-width: 768px) {
+      #sidebar {
+        position: fixed;
+        z-index: 40;
+        left: 0; top: 0; bottom: 0;
+        height: 100vh;
+        transition: transform 0.3s;
+        transform: translateX(-100%);
+      }
+      #sidebar.open {
+        transform: translateX(0);
+      }
+      #sidebarToggle {
+        display: block !important;
+      }
+    }
+    @media (min-width: 769px) {
+      #sidebarToggle {
+        display: none !important;
+      }
+    }
   </style>
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
-<style>
-  .font-signature {
-    font-family: 'Great Vibes', cursive;
-  }
-</style>
+  <style>
+    .font-signature {
+      font-family: 'Great Vibes', cursive;
+    }
+  </style>
   <audio id="successSound" src="assets/ding.wav" preload="auto"></audio>
 </head>
 <body class="bg-gray-100">
@@ -83,27 +121,49 @@
   </div>
 
   <div class="flex min-h-screen">
-    <aside class="w-64 bg-white shadow-md p-4">
+    <!-- Sidebar -->
+    <aside id="sidebar" class="w-64 bg-white shadow-md p-4 flex flex-col h-screen fixed left-0 top-0 bottom-0 transition-all duration-300 overflow-y-auto">
+      <!-- Logo & Brand -->
       <div class="flex items-center space-x-2 mb-6">
-        <span class="text-2xl">🧁</span>
-        <div>
+        <button id="sidebarToggle" class="md:hidden text-2xl focus:outline-none" aria-label="Toggle sidebar">☰</button>
+        <img id="brandLogo" src="https://placehold.co/40x40?text=LP" alt="Lush Patisserie" class="h-8 w-8 rounded-full bg-gray-200" />
+        <div class="sidebar-label">
           <h2 class="text-xl font-bold text-gray-900">Lush Patisserie</h2>
           <p class="text-sm text-gray-500">Sales & Insights</p>
         </div>
       </div>
-      <nav id="sidebarNav" class="space-y-3">
-        <a href="#batchCalculator" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2">🧮<span>Batch Calculator</span></a>
-        <a href="#dailyLog" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2">📒<span>Daily Logs</span></a>
-        <a href="#dashboard" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2">📊<span>Dashboard</span></a>
-        <a href="#invoice" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2">🧾<span>Invoices</span></a>
-        <a href="#fixedExpenses" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2">⚙️<span>Fixed Expenses</span></a>
-        <a href="#inventory" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2">📦<span>Inventory</span></a>
-        <a href="#export" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2">📤<span>Export Data</span></a>
-        <a href="#clients" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2">👥<span>Clients</span></a>
+      <!-- Navigation -->
+      <nav id="sidebarNav" class="space-y-1 flex-1">
+        <div class="text-xs text-gray-400 mt-2 mb-1 sidebar-label">Operations</div>
+       <a href="#batchCalculator" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Batch Calculator">
+  🧮 <span class="sidebar-label">Batch Calculator</span>
+</a>
+        <a href="#dailyLog" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Daily Logs">📒<span class="sidebar-label">Daily Logs</span></a>
+        <a href="#dashboard" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Dashboard">📊<span class="sidebar-label">Dashboard</span></a>
+        <a href="#invoice" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2 group relative" data-tooltip="Invoices">
+          🧾<span class="sidebar-label">Invoices</span>
+          <span id="invoiceBadge" class="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5 absolute right-2 top-2 hidden">1</span>
+        </a>
+        <div class="border-t my-2"></div>
+        <div class="text-xs text-gray-400 mt-2 mb-1 sidebar-label">Management</div>
+        <a href="#fixedExpenses" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Fixed Expenses">⚙️<span class="sidebar-label">Fixed Expenses</span></a>
+        <a href="#inventory" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Inventory">📦<span class="sidebar-label">Inventory</span></a>
+        <a href="#export" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Export Data">📤<span class="sidebar-label">Export Data</span></a>
+        <a href="#clients" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Clients">👥<span class="sidebar-label">Clients</span></a>
       </nav>
+      <!-- Quick Add Button -->
+      <button id="quickAddBtn" class="fixed bottom-8 left-72 z-50 bg-orange-600 text-white rounded-full shadow-lg w-12 h-12 flex items-center justify-center text-3xl hover:bg-orange-700 transition-all duration-200" title="Quick Add" style="display:none;">+</button>
+      <!-- User Profile & Dark Mode -->
+      <div class="mt-auto flex items-center justify-between pt-4 border-t">
+        <div class="flex items-center space-x-2">
+          <img src="https://placehold.co/32x32?text=U" alt="User" class="h-8 w-8 rounded-full bg-gray-200" />
+          <span class="sidebar-label text-sm font-medium text-gray-700">Vaishnavi</span>
+        </div>
+        <button id="toggleDark" class="text-gray-500 text-xl ml-2" title="Toggle dark mode">🌙</button>
+      </div>
     </aside>
 
-    <main class="flex-1 p-6 space-y-10">
+    <main class="flex-1 p-6 space-y-10 ml-64">
       <div id="dashboard" class="page-section"></div>
       <div id="batchCalculator" class="page-section hidden"></div>
       <div id="dailyLog" class="page-section hidden"></div>
@@ -112,8 +172,7 @@
       <div id="export" class="page-section hidden"></div>
       <div id="clients" class="page-section hidden"></div>
       <div id="invoice" class="page-section hidden">
-  <div id="invoicePrintArea"></div>
-</div>
+        <div id="invoicePrintArea"></div>
       </div>
     </main>
   </div>
@@ -178,7 +237,7 @@
       }
     }
 
-    document.querySelectorAll("aside a").forEach(link => {
+    document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
       link.addEventListener("click", e => {
         e.preventDefault();
         const target = link.getAttribute("href").substring(1);
@@ -193,6 +252,83 @@
       showSection(initial);
       setActiveNav(initial);
       if (typeof loadDashboard === "function") loadDashboard();
+    });
+
+    // Sidebar toggle/collapse
+    const sidebar = document.getElementById("sidebar");
+    const sidebarToggle = document.getElementById("sidebarToggle");
+    let isCollapsed = false;
+
+    sidebarToggle?.addEventListener("click", () => {
+      if (window.innerWidth < 769) {
+        sidebar.classList.toggle("open");
+      } else {
+        isCollapsed = !isCollapsed;
+        sidebar.classList.toggle("sidebar-collapsed", isCollapsed);
+        document.getElementById("quickAddBtn").style.display = isCollapsed ? "none" : "block";
+      }
+    });
+
+    // Tooltips for icons when collapsed
+    document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
+      link.addEventListener("mouseenter", function () {
+        if (sidebar.classList.contains("sidebar-collapsed")) {
+          const tooltip = document.createElement("div");
+          tooltip.className = "fixed left-16 bg-black text-white text-xs rounded px-2 py-1 z-50";
+          tooltip.style.top = (link.getBoundingClientRect().top + window.scrollY) + "px";
+          tooltip.innerText = link.getAttribute("data-tooltip");
+          tooltip.id = "sidebar-tooltip";
+          document.body.appendChild(tooltip);
+        }
+      });
+      link.addEventListener("mouseleave", function () {
+        document.getElementById("sidebar-tooltip")?.remove();
+      });
+    });
+
+    // Quick Add Button (example: opens invoice form)
+    const quickAddBtn = document.getElementById("quickAddBtn");
+    quickAddBtn.style.display = "block";
+    quickAddBtn.addEventListener("click", () => {
+      showSection("invoice");
+      setActiveNav("invoice");
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    });
+
+    // Example: show badge for new invoices (set to 1 for demo)
+    document.getElementById("invoiceBadge").style.display = "inline-block";
+
+    // Dark mode toggle
+    const darkBtn = document.getElementById("toggleDark");
+    darkBtn.addEventListener("click", () => {
+      document.body.classList.toggle("dark");
+      if (document.body.classList.contains("dark")) {
+        document.body.classList.add("bg-gray-900", "text-white");
+        sidebar.classList.add("bg-gray-900");
+      } else {
+        document.body.classList.remove("bg-gray-900", "text-white");
+        sidebar.classList.remove("bg-gray-900");
+      }
+    });
+
+    // Keyboard navigation (Tab/Arrow)
+    sidebar.addEventListener("keydown", e => {
+      const links = Array.from(document.querySelectorAll("#sidebarNav .nav-link"));
+      const idx = links.indexOf(document.activeElement);
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        links[(idx + 1) % links.length].focus();
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        links[(idx - 1 + links.length) % links.length].focus();
+      }
+    });
+
+    // Responsive: close sidebar on mobile nav click
+    document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
+      link.addEventListener("click", () => {
+        if (window.innerWidth < 769) sidebar.classList.remove("open");
+      });
     });
   </script>
 </body>
