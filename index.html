@@ -9,14 +9,25 @@
   <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/src/dom-to-image.min.js"></script>
+
+
   <style>
     body { font-family: 'Poppins', sans-serif; }
     .nav-link.active {
       background-color: #fff7ed;
       border-radius: 0.5rem;
       font-weight: 600;
-      color: #b45309;
-      border-left: 4px solid #f59e42;
+      color: #ea580c;
+      border-left: 4px solid #fdba74;
+      box-shadow: 0 2px 8px rgba(253,186,116,0.08);
+    }
+    .nav-link {
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+    }
+    .nav-link:hover {
+      background: #fef3c7;
+      color: #ea580c;
     }
     .page-section {
       opacity: 0;
@@ -108,7 +119,7 @@
   </style>
   <audio id="successSound" src="assets/ding.wav" preload="auto"></audio>
 </head>
-<body class="bg-gray-100">
+<body class="bg-gray-50">
   <div id="loader">
     <svg class="animate-spin h-8 w-8 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -120,9 +131,9 @@
     <p id="greetingText" class="text-sm text-gray-600 font-medium"></p>
   </div>
 
-  <div class="flex min-h-screen">
+  <div class="flex min-h-screen bg-gray-50">
     <!-- Sidebar -->
-    <aside id="sidebar" class="w-64 bg-white shadow-md p-4 flex flex-col h-screen fixed left-0 top-0 bottom-0 transition-all duration-300 overflow-y-auto">
+    <aside id="sidebar" class="w-64 bg-gray-100 border-r border-orange-100 shadow-md p-4 flex flex-col h-screen fixed left-0 top-0 bottom-0 transition-all duration-300 overflow-y-auto">
       <!-- Logo & Brand -->
       <div class="flex items-center space-x-2 mb-6">
         <button id="sidebarToggle" class="md:hidden text-2xl focus:outline-none" aria-label="Toggle sidebar">☰</button>
@@ -135,26 +146,38 @@
       <!-- Navigation -->
       <nav id="sidebarNav" class="space-y-1 flex-1">
         <div class="text-xs text-gray-400 mt-2 mb-1 sidebar-label">Operations</div>
-       <a href="#batchCalculator" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Batch Calculator">
-  🧮 <span class="sidebar-label">Batch Calculator</span>
-</a>
-        <a href="#dailyLog" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Daily Logs">📒<span class="sidebar-label">Daily Logs</span></a>
-        <a href="#dashboard" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Dashboard">📊<span class="sidebar-label">Dashboard</span></a>
-        <a href="#invoice" class="nav-link flex items-center space-x-2 text-gray-700 hover:text-orange-600 px-3 py-2 group relative" data-tooltip="Invoices">
-          🧾<span class="sidebar-label">Invoices</span>
+        <a href="#batchCalculator" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Batch Calculator">
+          🧮 <span class="sidebar-label">Batch Calculator</span>
+        </a>
+        <a href="#dailyLog" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Daily Logs">
+          📒 <span class="sidebar-label">Daily Logs</span>
+        </a>
+        <a href="#dashboard" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Dashboard">
+          📊 <span class="sidebar-label">Dashboard</span>
+        </a>
+        <a href="#invoice" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group relative" data-tooltip="Invoices">
+          🧾 <span class="sidebar-label">Invoices</span>
           <span id="invoiceBadge" class="ml-2 bg-red-500 text-white text-xs rounded-full px-2 py-0.5 absolute right-2 top-2 hidden">1</span>
         </a>
         <div class="border-t my-2"></div>
         <div class="text-xs text-gray-400 mt-2 mb-1 sidebar-label">Management</div>
-        <a href="#fixedExpenses" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Fixed Expenses">⚙️<span class="sidebar-label">Fixed Expenses</span></a>
-        <a href="#inventory" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Inventory">📦<span class="sidebar-label">Inventory</span></a>
-        <a href="#export" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Export Data">📤<span class="sidebar-label">Export Data</span></a>
-        <a href="#clients" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Clients">👥<span class="sidebar-label">Clients</span></a>
+        <a href="#fixedExpenses" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Fixed Expenses">
+          ⚙️ <span class="sidebar-label">Fixed Expenses</span>
+        </a>
+        <a href="#inventory" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Inventory">
+          📦 <span class="sidebar-label">Inventory</span>
+        </a>
+        <a href="#export" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Export Data">
+          📤 <span class="sidebar-label">Export Data</span>
+        </a>
+        <a href="#clients" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Clients">
+          👥 <span class="sidebar-label">Clients</span>
+        </a>
       </nav>
       <!-- Quick Add Button -->
       <button id="quickAddBtn" class="fixed bottom-8 left-72 z-50 bg-orange-600 text-white rounded-full shadow-lg w-12 h-12 flex items-center justify-center text-3xl hover:bg-orange-700 transition-all duration-200" title="Quick Add" style="display:none;">+</button>
       <!-- User Profile & Dark Mode -->
-      <div class="mt-auto flex items-center justify-between pt-4 border-t">
+      <div class="mt-auto flex items-center justify-between pt-4 border-t border-orange-100">
         <div class="flex items-center space-x-2">
           <img src="https://placehold.co/32x32?text=U" alt="User" class="h-8 w-8 rounded-full bg-gray-200" />
           <span class="sidebar-label text-sm font-medium text-gray-700">Vaishnavi</span>
@@ -162,8 +185,17 @@
         <button id="toggleDark" class="text-gray-500 text-xl ml-2" title="Toggle dark mode">🌙</button>
       </div>
     </aside>
+    <div id="authSection" class="flex items-center gap-2 ml-auto mb-4">
+  <button id="loginBtn" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Sign in with Google</button>
+  <div id="userInfo" class="hidden items-center gap-2">
+    <img id="userPhoto" class="h-8 w-8 rounded-full" src="" alt="User" />
+    <span id="userName" class="text-sm font-medium"></span>
+    <button id="logoutBtn" class="bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Logout</button>
+  </div>
+</div>
 
-    <main class="flex-1 p-6 space-y-10 ml-64">
+
+    <main class="flex-1 p-6 space-y-10 ml-64 bg-gray-50">
       <div id="dashboard" class="page-section"></div>
       <div id="batchCalculator" class="page-section hidden"></div>
       <div id="dailyLog" class="page-section hidden"></div>
@@ -198,6 +230,44 @@
   <script src="js/inventory.js"></script>
   <script src="js/clients.js"></script>
   <script src="js/invoices.js"></script>
+
+  <script>
+window.addEventListener("DOMContentLoaded", () => {
+  const loginBtn = document.getElementById("loginBtn");
+  const logoutBtn = document.getElementById("logoutBtn");
+  const userInfo = document.getElementById("userInfo");
+  const userPhoto = document.getElementById("userPhoto");
+  const userName = document.getElementById("userName");
+
+  if (loginBtn) {
+    loginBtn.onclick = () => {
+      window.auth.signInWithPopup(window.googleProvider);
+    };
+  }
+  if (logoutBtn) {
+    logoutBtn.onclick = () => {
+      window.auth.signOut();
+    };
+  }
+
+  window.auth.onAuthStateChanged(user => {
+    if (user) {
+      loginBtn.style.display = "none";
+      userInfo.style.display = "flex";
+      userPhoto.src = user.photoURL || "";
+      userName.textContent = user.displayName || user.email;
+      // Optionally: show/hide app sections based on login
+    } else {
+      loginBtn.style.display = "inline-block";
+      userInfo.style.display = "none";
+      userPhoto.src = "";
+      userName.textContent = "";
+      // Optionally: hide app sections if not logged in
+    }
+  });
+});
+</script>
+
 
   <script>
     const sections = ["dashboard", "batchCalculator", "dailyLog", "fixedExpenses", "inventory", "export", "clients", "invoice"];

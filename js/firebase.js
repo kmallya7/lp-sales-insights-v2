@@ -13,3 +13,7 @@ firebase.initializeApp(firebaseConfig);
 
 // Attach Firestore to the global window object
 window.db = firebase.firestore();
+
+// Attach Auth and Google provider to the global window object
+window.auth = firebase.auth();
+window.googleProvider = new firebase.auth.GoogleAuthProvider();
