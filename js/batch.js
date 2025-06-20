@@ -28,24 +28,36 @@ document.addEventListener("DOMContentLoaded", () => {
                 <p class="text-sm font-medium text-blue-700">Total Revenue</p>
                 <p id="revenue" class="text-xl font-bold text-blue-900">₹0.00</p>
               </div>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-blue-600">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
+            </svg>
             </div>
             <div class="bg-red-100 p-4 rounded shadow flex justify-between items-center">
               <div>
                 <p class="text-sm font-medium text-red-700">Total Cost</p>
                 <p id="costs" class="text-xl font-bold text-red-900">₹0.00</p>
               </div>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-red-700">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
+            </svg>
             </div>
             <div id="grossProfitTile" class="bg-green-100 p-4 rounded shadow flex justify-between items-center">
               <div>
                 <p class="text-sm font-medium text-green-700">Gross Profit</p>
                 <p id="profit" class="text-xl font-bold text-green-900">₹0.00</p>
               </div>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-green-900">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
+            </svg>
             </div>
             <div class="bg-purple-100 p-4 rounded shadow flex justify-between items-center">
               <div>
                 <p class="text-sm font-medium text-purple-700">Profit Margin</p>
                 <p id="margin" class="text-xl font-bold text-purple-900">0.00%</p>
               </div>
+              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-purple-700">
+              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
+            </svg>
             </div>
           </div>
         </div>
