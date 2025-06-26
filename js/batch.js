@@ -1,3 +1,5 @@
+// batch.js
+
 document.addEventListener("DOMContentLoaded", () => {
   const batchSection = document.getElementById("batchCalculator");
   batchSection.innerHTML = `
@@ -15,7 +17,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <input type="number" id="price" placeholder="Selling Price per Unit (₹)" class="w-full p-2 border rounded" required />
             <input type="number" id="qty" placeholder="Quantity per Batch" class="w-full p-2 border rounded" required />
             <div class="flex gap-3">
-              <button type="submit" class="bg-black text-white px-4 py-2 rounded w-full">Calculate & Save</button>
+              <button type="submit" class="bg-black text-white px-4 py-2 rounded w-full">Calculate</button>
               <button type="button" id="reset-btn" class="bg-gray-200 text-gray-800 px-4 py-2 rounded w-full">Reset</button>
             </div>
           </form>
@@ -28,47 +30,32 @@ document.addEventListener("DOMContentLoaded", () => {
                 <p class="text-sm font-medium text-blue-700">Total Revenue</p>
                 <p id="revenue" class="text-xl font-bold text-blue-900">₹0.00</p>
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-blue-600">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-            </svg>
             </div>
             <div class="bg-red-100 p-4 rounded shadow flex justify-between items-center">
               <div>
                 <p class="text-sm font-medium text-red-700">Total Cost</p>
                 <p id="costs" class="text-xl font-bold text-red-900">₹0.00</p>
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-red-700">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-            </svg>
             </div>
             <div id="grossProfitTile" class="bg-green-100 p-4 rounded shadow flex justify-between items-center">
               <div>
                 <p class="text-sm font-medium text-green-700">Gross Profit</p>
                 <p id="profit" class="text-xl font-bold text-green-900">₹0.00</p>
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-green-900">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-            </svg>
             </div>
             <div class="bg-purple-100 p-4 rounded shadow flex justify-between items-center">
               <div>
                 <p class="text-sm font-medium text-purple-700">Profit Margin</p>
                 <p id="margin" class="text-xl font-bold text-purple-900">0.00%</p>
               </div>
-              <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-purple-700">
-              <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-            </svg>
             </div>
           </div>
+          <button id="save-preset-btn" class="mt-6 bg-black text-white px-4 py-2 rounded w-full">Save as Preset</button>
         </div>
       </div>
 
       <div class="mt-10">
         <h3 class="text-lg font-semibold mb-4">📌 Common Batches</h3>
-        <form id="preset-form" class="flex items-center gap-4 mb-4">
-          <input type="text" id="preset-name" placeholder="Label this batch (e.g., Brownie ₹50)" class="flex-1 p-2 border rounded" required />
-          <button type="submit" class="bg-black text-white px-4 py-2 rounded hover:bg-gray-800">Save</button>
-        </form>
         <div id="preset-list" class="grid gap-4"></div>
       </div>
     </section>
@@ -76,6 +63,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
   const db = window.db;
 
+  // Reset form and results
   const resetFormAndResults = () => {
     document.getElementById("batch-form").reset();
     document.getElementById("revenue").innerText = `₹0.00`;
@@ -86,7 +74,8 @@ document.addEventListener("DOMContentLoaded", () => {
 
   document.getElementById("reset-btn").addEventListener("click", resetFormAndResults);
 
-  document.getElementById("batch-form").addEventListener("submit", async (e) => {
+  // Calculate only (no save)
+  document.getElementById("batch-form").addEventListener("submit", (e) => {
     e.preventDefault();
     const cost = parseFloat(document.getElementById("cost").value);
     const price = parseFloat(document.getElementById("price").value);
@@ -104,25 +93,28 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("profit").innerText = `₹${profit.toFixed(2)}`;
     document.getElementById("margin").innerText = `${margin.toFixed(2)}%`;
 
-    await db.collection("batches").add({ cost, price, qty, totalRevenue, totalCost, profit, margin, createdAt: new Date() });
-    loadPresets();
-
     if (profit > 0) launchConfettiAndSound();
   });
 
-  document.getElementById("preset-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    const name = document.getElementById("preset-name").value.trim();
+  // Save as preset (only when user clicks)
+  document.getElementById("save-preset-btn").addEventListener("click", async () => {
     const cost = parseFloat(document.getElementById("cost").value);
     const price = parseFloat(document.getElementById("price").value);
     const qty = parseFloat(document.getElementById("qty").value);
-    if (!name || isNaN(cost) || isNaN(price) || isNaN(qty)) return;
+
+    if (isNaN(cost) || isNaN(price) || isNaN(qty) || cost <= 0 || price <= 0 || qty <= 0) {
+      alert("Please enter valid batch details before saving as a preset.");
+      return;
+    }
+
+    const name = prompt("Label this batch (e.g., Brownie ₹50):");
+    if (!name) return;
 
     await db.collection("batchPresets").add({ name, cost, price, qty, createdAt: new Date() });
-    document.getElementById("preset-form").reset();
     loadPresets();
   });
 
+  // Load and display presets
   async function loadPresets() {
     const presetList = document.getElementById("preset-list");
     const snapshot = await db.collection("batchPresets").orderBy("createdAt", "desc").get();

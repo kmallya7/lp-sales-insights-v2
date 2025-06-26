@@ -99,6 +99,21 @@ window.loadDashboard = async function () {
         </div>
       </div>
 
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="bg-white p-4 rounded shadow">
+          <h4 class="font-semibold mb-2">Top Clients by Revenue</h4>
+          <table class="w-full text-sm border rounded">
+            <thead>
+              <tr class="bg-gray-100">
+                <th class="border p-1">Client</th>
+                <th class="border p-1">Revenue (₹)</th>
+              </tr>
+            </thead>
+            <tbody id="revenue-per-client-tbody"></tbody>
+          </table>
+        </div>
+      </div>
+
       <div class="bg-white p-4 rounded shadow mb-6">
         <h4 class="font-semibold mb-2">Expense Breakdown</h4>
         <table class="w-full text-sm border rounded">
@@ -110,6 +125,11 @@ window.loadDashboard = async function () {
           </thead>
           <tbody id="expense-breakdown-tbody"></tbody>
         </table>
+      </div>
+
+      <div class="bg-white p-4 rounded shadow mb-6">
+        <h4 class="font-semibold mb-2">Revenue & Profit Over Time</h4>
+        <canvas id="lineChart" class="w-full h-64"></canvas>
       </div>
 
       <div class="bg-white p-4 rounded shadow">
@@ -195,7 +215,7 @@ async function loadDashboardData(month, year) {
     const d = doc.data();
     if (d.items && Array.isArray(d.items)) {
       d.items.forEach(item => {
-        allItems.push(item);
+        allItems.push({ ...item, date: d.date, client: d.client });
         totalRevenue += item.revenue || 0;
         totalIngredients += item.ingredients || 0;
         totalPackaging += item.packaging || 0;
@@ -212,6 +232,29 @@ async function loadDashboardData(month, year) {
     }
   });
 
+  // --- New Metrics ---
+  const orderCount = logsSnap.size;
+  const avgOrderValue = orderCount ? totalRevenue / orderCount : 0;
+  const repeatCustomers = Object.values(clientMap).filter(c => c.orders > 1).length;
+  const revenuePerClient = Object.entries(clientMap)
+    .map(([name, stats]) => ({ name, revenue: stats.revenue }))
+    .sort((a, b) => b.revenue - a.revenue)
+    .slice(0, 5);
+
+  // Product performance
+  const itemMap = {};
+  allItems.forEach(item => {
+    if (!itemMap[item.name]) itemMap[item.name] = { qty: 0, revenue: 0, profit: 0, category: item.category || "Uncategorized" };
+    itemMap[item.name].qty += item.qty || 0;
+    itemMap[item.name].revenue += item.revenue || 0;
+    itemMap[item.name].profit += (item.revenue || 0) - ((item.ingredients || 0) + (item.packaging || 0));
+  });
+  const itemsArr = Object.entries(itemMap).map(([name, stats]) => ({ name, ...stats }));
+  const bestSelling = itemsArr.sort((a, b) => b.qty - a.qty)[0];
+  const worstSelling = itemsArr.sort((a, b) => a.qty - b.qty)[0];
+  const mostProfitable = itemsArr.sort((a, b) => b.profit - a.profit)[0];
+
+  // Previous month for % change
   let prevMonth = month - 1, prevYear = year;
   if (prevMonth < 1) { prevMonth = 12; prevYear--; }
   const prevPrefix = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
@@ -240,6 +283,7 @@ async function loadDashboardData(month, year) {
     return (pct >= 0 ? "▲ " : "▼ ") + Math.abs(pct).toFixed(1) + "%";
   }
 
+  // --- Summary Cards ---
   document.getElementById("summary-cards").innerHTML = `
     <div class="summary-card bg-blue-100 p-4 rounded flex flex-col items-start justify-between cursor-pointer">
       <div class="flex items-center justify-between w-full">
@@ -250,9 +294,6 @@ async function loadDashboardData(month, year) {
             <span class="ml-2 text-xs ${totalRevenue - prevRevenue >= 0 ? 'text-green-600' : 'text-red-600'}">${pctChange(totalRevenue, prevRevenue)}</span>
           </p>
         </div>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-blue-600">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-        </svg>
       </div>
     </div>
     <div class="summary-card bg-red-100 p-4 rounded flex flex-col items-start justify-between cursor-pointer">
@@ -264,9 +305,6 @@ async function loadDashboardData(month, year) {
             <span class="ml-2 text-xs ${totalIngredients + totalPackaging - prevCost >= 0 ? 'text-red-600' : 'text-green-600'}">${pctChange(totalIngredients + totalPackaging, prevCost)}</span>
           </p>
         </div>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-red-700">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-        </svg>
       </div>
     </div>
     <div class="summary-card bg-green-100 p-4 rounded flex flex-col items-start justify-between cursor-pointer">
@@ -278,9 +316,6 @@ async function loadDashboardData(month, year) {
             <span class="ml-2 text-xs ${grossProfit - prevProfit >= 0 ? 'text-green-600' : 'text-red-600'}">${pctChange(grossProfit, prevProfit)}</span>
           </p>
         </div>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-green-700">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-        </svg>
       </div>
     </div>
     <div class="summary-card bg-purple-100 p-4 rounded flex flex-col items-start justify-between cursor-pointer">
@@ -291,10 +326,34 @@ async function loadDashboardData(month, year) {
             <span id="dash-net">${"₹" + netProfit.toFixed(2)}</span>
           </p>
         </div>
-        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6 text-purple-700">
-          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 18 9 11.25l4.306 4.306a11.95 11.95 0 0 1 5.814-5.518l2.74-1.22m0 0-5.94-2.281m5.94 2.28-2.28 5.941" />
-        </svg>
       </div>
+    </div>
+    <div class="summary-card bg-yellow-100 p-4 rounded flex flex-col items-start justify-between">
+      <p class="text-sm font-medium text-yellow-700">Orders</p>
+      <p class="text-xl font-bold text-yellow-900">${orderCount}</p>
+    </div>
+    <div class="summary-card bg-pink-100 p-4 rounded flex flex-col items-start justify-between">
+      <p class="text-sm font-medium text-pink-700">Avg Order Value</p>
+      <p class="text-xl font-bold text-pink-900">₹${avgOrderValue.toFixed(2)}</p>
+    </div>
+    <div class="summary-card bg-green-100 p-4 rounded flex flex-col items-start justify-between">
+      <p class="text-sm font-medium text-green-700">Repeat Customers</p>
+      <p class="text-xl font-bold text-green-900">${repeatCustomers}</p>
+    </div>
+    <div class="summary-card bg-blue-100 p-4 rounded flex flex-col items-start justify-between">
+      <p class="text-sm font-medium text-blue-700">Best Seller</p>
+      <p class="text-base font-bold text-blue-900">${bestSelling ? bestSelling.name : "N/A"}</p>
+      <p class="text-xs text-blue-700">Qty: ${bestSelling ? bestSelling.qty : 0}</p>
+    </div>
+    <div class="summary-card bg-gray-100 p-4 rounded flex flex-col items-start justify-between">
+      <p class="text-sm font-medium text-gray-700">Worst Seller</p>
+      <p class="text-base font-bold text-gray-900">${worstSelling ? worstSelling.name : "N/A"}</p>
+      <p class="text-xs text-gray-700">Qty: ${worstSelling ? worstSelling.qty : 0}</p>
+    </div>
+    <div class="summary-card bg-orange-100 p-4 rounded flex flex-col items-start justify-between">
+      <p class="text-sm font-medium text-orange-700">Most Profitable</p>
+      <p class="text-base font-bold text-orange-900">${mostProfitable ? mostProfitable.name : "N/A"}</p>
+      <p class="text-xs text-orange-700">Profit: ₹${mostProfitable ? mostProfitable.profit.toFixed(2) : 0}</p>
     </div>
   `;
 
@@ -317,28 +376,19 @@ async function loadDashboardData(month, year) {
   });
 
   // Top 3 best-selling items
-  const itemMap = {};
-  allItems.forEach(item => {
-    if (!itemMap[item.name]) itemMap[item.name] = { qty: 0, revenue: 0 };
-    itemMap[item.name].qty += item.qty || 0;
-    itemMap[item.name].revenue += item.revenue || 0;
-  });
-  const topItems = Object.entries(itemMap)
-    .sort((a, b) => b[1].qty - a[1].qty)
-    .slice(0, 3);
-
-  document.getElementById("top-sellers-tbody").innerHTML = topItems.map(([name, stats]) => `
+  const topItems = itemsArr.sort((a, b) => b.qty - a.qty).slice(0, 3);
+  document.getElementById("top-sellers-tbody").innerHTML = topItems.map(item => `
     <tr>
-      <td class="border p-1">${name}</td>
-      <td class="border p-1">${stats.qty}</td>
-      <td class="border p-1">₹${stats.revenue.toFixed(2)}</td>
+      <td class="border p-1">${item.name}</td>
+      <td class="border p-1">${item.qty}</td>
+      <td class="border p-1">₹${item.revenue.toFixed(2)}</td>
     </tr>
   `).join('');
 
+  // Top clients
   const topClients = Object.entries(clientMap)
     .sort((a, b) => b[1].revenue - a[1].revenue)
     .slice(0, 3);
-
   document.getElementById("top-clients-tbody").innerHTML = topClients.map(([name, stats]) => `
     <tr>
       <td class="border p-1">${name}</td>
@@ -347,6 +397,15 @@ async function loadDashboardData(month, year) {
     </tr>
   `).join('');
 
+  // Revenue per client table
+  document.getElementById("revenue-per-client-tbody").innerHTML = revenuePerClient.map(c => `
+    <tr>
+      <td class="border p-1">${c.name}</td>
+      <td class="border p-1">₹${c.revenue.toFixed(2)}</td>
+    </tr>
+  `).join('');
+
+  // Expense breakdown
   document.getElementById("expense-breakdown-tbody").innerHTML = `
     <tr>
       <td class="border p-1">Ingredients</td>
@@ -362,6 +421,7 @@ async function loadDashboardData(month, year) {
     </tr>
   `;
 
+  // Summary table
   document.getElementById("summary-table-tbody").innerHTML = `
     <tr><td class="border p-1">Total Revenue</td><td class="border p-1">₹${totalRevenue.toFixed(2)}</td></tr>
     <tr><td class="border p-1">Total Cost</td><td class="border p-1">₹${(totalIngredients + totalPackaging).toFixed(2)}</td></tr>
@@ -369,10 +429,19 @@ async function loadDashboardData(month, year) {
     <tr><td class="border p-1">Net Profit</td><td class="border p-1">₹${netProfit.toFixed(2)}</td></tr>
     <tr><td class="border p-1">Ingredients</td><td class="border p-1">₹${totalIngredients.toFixed(2)}</td></tr>
     <tr><td class="border p-1">Packaging</td><td class="border p-1">₹${totalPackaging.toFixed(2)}</td></tr>
+    <tr><td class="border p-1">Orders</td><td class="border p-1">${orderCount}</td></tr>
+    <tr><td class="border p-1">Avg Order Value</td><td class="border p-1">₹${avgOrderValue.toFixed(2)}</td></tr>
+    <tr><td class="border p-1">Repeat Customers</td><td class="border p-1">${repeatCustomers}</td></tr>
   `;
 
+  // Cost chart
   renderCostChart(totalIngredients, totalPackaging, grossProfit);
+
+  // Trend chart (bar)
   renderTrendChart(logsSnap);
+
+  // Line chart: Revenue & Profit Over Time
+  renderLineChart(allItems);
 
   document.getElementById("trendChart").setAttribute("aria-label", "Bar chart showing daily revenue trend for the selected month.");
   document.getElementById("costChart").setAttribute("aria-label", "Pie chart showing cost breakdown for the selected month.");
@@ -491,6 +560,51 @@ function renderTrendChart(logsSnap) {
     chartContainer.appendChild(legendDiv);
   }
   legendDiv.innerHTML = legendHtml;
+}
+
+function renderLineChart(allItems) {
+  // Prepare daily data
+  const dailyMap = {};
+  allItems.forEach(item => {
+    const date = item.date || "Unknown";
+    if (!dailyMap[date]) dailyMap[date] = { revenue: 0, profit: 0 };
+    dailyMap[date].revenue += item.revenue || 0;
+    dailyMap[date].profit += (item.revenue || 0) - ((item.ingredients || 0) + (item.packaging || 0));
+  });
+  const dates = Object.keys(dailyMap).sort();
+  const revenues = dates.map(d => dailyMap[d].revenue);
+  const profits = dates.map(d => dailyMap[d].profit);
+
+  const ctxLine = document.getElementById("lineChart").getContext("2d");
+  if (window.lineChartInstance) window.lineChartInstance.destroy();
+  window.lineChartInstance = new Chart(ctxLine, {
+    type: 'line',
+    data: {
+      labels: dates,
+      datasets: [
+        {
+          label: "Revenue",
+          data: revenues,
+          borderColor: "#60a5fa",
+          backgroundColor: "rgba(96,165,250,0.1)",
+          fill: true
+        },
+        {
+          label: "Profit",
+          data: profits,
+          borderColor: "#34d399",
+          backgroundColor: "rgba(52,211,153,0.1)",
+          fill: true
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' }
+      }
+    }
+  });
 }
 
 async function exportDashboardCSV() {

@@ -238,7 +238,6 @@ document.addEventListener("DOMContentLoaded", () => {
       downloadBtn.addEventListener("click", function() {
         const invoiceSection = document.querySelector("#invoicePrintArea > section");
         const toHide = document.querySelectorAll(".png-hide");
-        
 
         // Save original styles
         const originalMaxWidth = invoiceSection.style.maxWidth;
@@ -253,7 +252,7 @@ document.addEventListener("DOMContentLoaded", () => {
         invoiceSection.style.maxWidth = "none";
         invoiceSection.style.marginLeft = "0";
         invoiceSection.style.marginRight = "0";
-        invoiceSection.style.width = "700px"; // or whatever width looks best
+        invoiceSection.style.width = "700px";
 
         setTimeout(function() {
           window.domtoimage.toPng(invoiceSection)
@@ -293,18 +292,30 @@ document.addEventListener("DOMContentLoaded", () => {
     document.head.appendChild(script);
   }
 
-  // --- All Invoices Table (Excel-like) ---
+  // --- All Invoices Table (Sorted by Invoice Number Descending) ---
   function loadAllInvoices() {
     const invoicesList = document.getElementById("invoicesList");
     if (!invoicesList) return;
     invoicesList.innerHTML = "Loading...";
 
-    db.collection("invoices").orderBy("createdAt", "desc").get()
+    db.collection("invoices").get()
       .then(snapshot => {
         if (snapshot.empty) {
           invoicesList.innerHTML = "<p class='text-gray-500'>No invoices found.</p>";
           return;
         }
+
+        // Convert snapshot to array
+        let docs = [];
+        snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
+
+        // Sort by invoiceNumber (descending, numeric)
+        docs.sort((a, b) => {
+          // Extract number part (handles both "29" and "INV-2025-029" formats)
+          const numA = parseInt((a.invoiceNumber || "").replace(/\D/g, ""), 10) || 0;
+          const numB = parseInt((b.invoiceNumber || "").replace(/\D/g, ""), 10) || 0;
+          return numB - numA;
+        });
 
         let html = `
           <table class="w-full text-sm border rounded bg-white">
@@ -320,8 +331,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <tbody>
         `;
 
-        snapshot.forEach(doc => {
-          const d = doc.data();
+        docs.forEach(d => {
           html += `
             <tr>
               <td class="border p-2 text-center">${d.invoiceNumber || ""}</td>
@@ -329,8 +339,8 @@ document.addEventListener("DOMContentLoaded", () => {
               <td class="border p-2 text-center">${d.client?.name || ""}</td>
               <td class="border p-2 text-center">${d.total || ""}</td>
               <td class="border p-2 text-center">
-                <button class="text-blue-600 viewInvoiceBtn" data-id="${doc.id}">View</button>
-                <button class="text-blue-600 printInvoiceBtn" data-id="${doc.id}">Print</button>
+                <button class="text-blue-600 viewInvoiceBtn" data-id="${d.id}">View</button>
+                <button class="text-blue-600 printInvoiceBtn" data-id="${d.id}">Print</button>
               </td>
             </tr>
           `;
