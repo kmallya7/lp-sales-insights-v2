@@ -1,6 +1,8 @@
 // batch.js
 
+// Wait for the DOM to be fully loaded before running the script
 document.addEventListener("DOMContentLoaded", () => {
+  // Render the Batch Calculator UI with improved accessibility and helper text
   const batchSection = document.getElementById("batchCalculator");
   batchSection.innerHTML = `
     <section class="bg-white p-6 rounded shadow max-w-4xl mx-auto">
@@ -10,18 +12,37 @@ document.addEventListener("DOMContentLoaded", () => {
       <p class="text-sm text-gray-500 mb-6">Calculate profits for your pastry batches</p>
 
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <!-- Batch Details Form -->
         <div>
           <h3 class="font-semibold text-lg mb-2">Batch Details</h3>
-          <form id="batch-form" class="space-y-4">
-            <input type="number" id="cost" placeholder="Cost per Unit (₹)" class="w-full p-2 border rounded" required />
-            <input type="number" id="price" placeholder="Selling Price per Unit (₹)" class="w-full p-2 border rounded" required />
-            <input type="number" id="qty" placeholder="Quantity per Batch" class="w-full p-2 border rounded" required />
+          <form id="batch-form" class="space-y-4" autocomplete="off">
+            <div>
+              <label for="cost" class="block text-sm font-medium text-gray-700">Cost per Unit (₹)</label>
+              <input type="number" id="cost" placeholder="e.g. 20" class="w-full p-2 border rounded" min="0.01" step="0.01" required />
+              <small class="text-gray-400">Enter the cost to make one unit.</small>
+            </div>
+            <div>
+              <label for="price" class="block text-sm font-medium text-gray-700">Selling Price per Unit (₹)</label>
+              <input type="number" id="price" placeholder="e.g. 50" class="w-full p-2 border rounded" min="0.01" step="0.01" required />
+              <small class="text-gray-400">How much you sell one unit for.</small>
+            </div>
+            <div>
+              <label for="qty" class="block text-sm font-medium text-gray-700">Quantity per Batch</label>
+              <input type="number" id="qty" placeholder="e.g. 12" class="w-full p-2 border rounded" min="1" step="1" required />
+              <small class="text-gray-400">How many units in one batch.</small>
+            </div>
+            <div id="form-error" class="text-red-500 text-sm hidden"></div>
             <div class="flex gap-3">
-              <button type="submit" class="bg-black text-white px-4 py-2 rounded w-full">Calculate</button>
-              <button type="button" id="reset-btn" class="bg-gray-200 text-gray-800 px-4 py-2 rounded w-full">Reset</button>
+              <button type="submit" class="bg-black text-white px-4 py-2 rounded w-full flex items-center justify-center gap-2">
+                <span>Calculate</span>
+              </button>
+              <button type="button" id="reset-btn" class="bg-gray-200 text-gray-800 px-4 py-2 rounded w-full flex items-center justify-center gap-2">
+                <span>Reset</span>
+              </button>
             </div>
           </form>
         </div>
+        <!-- Calculation Results -->
         <div>
           <h3 class="font-semibold text-lg mb-2">Calculation Results</h3>
           <div class="grid grid-cols-2 gap-4">
@@ -37,7 +58,7 @@ document.addEventListener("DOMContentLoaded", () => {
                 <p id="costs" class="text-xl font-bold text-red-900">₹0.00</p>
               </div>
             </div>
-            <div id="grossProfitTile" class="bg-green-100 p-4 rounded shadow flex justify-between items-center">
+            <div id="grossProfitTile" class="bg-green-100 p-4 rounded shadow flex justify-between items-center transition-colors duration-300">
               <div>
                 <p class="text-sm font-medium text-green-700">Gross Profit</p>
                 <p id="profit" class="text-xl font-bold text-green-900">₹0.00</p>
@@ -50,18 +71,78 @@ document.addEventListener("DOMContentLoaded", () => {
               </div>
             </div>
           </div>
-          <button id="save-preset-btn" class="mt-6 bg-black text-white px-4 py-2 rounded w-full">Save as Preset</button>
+          <button id="save-preset-btn" class="mt-6 bg-black text-white px-4 py-2 rounded w-full flex items-center justify-center gap-2">
+            <span>Save as Preset</span>
+          </button>
+          <div id="save-loading" class="hidden mt-2 flex items-center gap-2 text-gray-500 text-sm">
+            <span>Saving...</span>
+          </div>
         </div>
       </div>
 
+      <!-- Preset List Section -->
       <div class="mt-10">
         <h3 class="text-lg font-semibold mb-4">📌 Common Batches</h3>
+        <div id="preset-loading" class="hidden flex items-center gap-2 text-gray-500 text-sm mb-2">
+          <span>Loading presets...</span>
+        </div>
         <div id="preset-list" class="grid gap-4"></div>
       </div>
     </section>
   `;
 
+  // Reference to the database (assumed to be set up elsewhere)
   const db = window.db;
+
+  // Helper functions for UI feedback
+  const showError = (msg) => {
+    const errorDiv = document.getElementById("form-error");
+    errorDiv.innerText = msg;
+    errorDiv.classList.remove("hidden");
+  };
+  const hideError = () => {
+    const errorDiv = document.getElementById("form-error");
+    errorDiv.innerText = "";
+    errorDiv.classList.add("hidden");
+  };
+  const setProfitTileColor = (profit) => {
+    const tile = document.getElementById("grossProfitTile");
+    tile.classList.remove("bg-green-100", "bg-red-100", "bg-yellow-100");
+    if (profit > 0) tile.classList.add("bg-green-100");
+    else if (profit < 0) tile.classList.add("bg-red-100");
+    else tile.classList.add("bg-yellow-100");
+  };
+
+  // Calculation logic, called on input and submit
+  const calculateAndDisplay = () => {
+    const cost = parseFloat(document.getElementById("cost").value);
+    const price = parseFloat(document.getElementById("price").value);
+    const qty = parseFloat(document.getElementById("qty").value);
+
+    if (isNaN(cost) || isNaN(price) || isNaN(qty) || cost <= 0 || price <= 0 || qty <= 0) {
+      showError("Please enter valid positive numbers for all fields.");
+      document.getElementById("revenue").innerText = `₹0.00`;
+      document.getElementById("costs").innerText = `₹0.00`;
+      document.getElementById("profit").innerText = `₹0.00`;
+      document.getElementById("margin").innerText = `0.00%`;
+      setProfitTileColor(0);
+      return false;
+    }
+    hideError();
+
+    const totalRevenue = price * qty;
+    const totalCost = cost * qty;
+    const profit = totalRevenue - totalCost;
+    const margin = totalRevenue === 0 ? 0 : (profit / totalRevenue) * 100;
+
+    document.getElementById("revenue").innerText = `₹${totalRevenue.toFixed(2)}`;
+    document.getElementById("costs").innerText = `₹${totalCost.toFixed(2)}`;
+    document.getElementById("profit").innerText = `₹${profit.toFixed(2)}`;
+    document.getElementById("margin").innerText = `${margin.toFixed(2)}%`;
+    setProfitTileColor(profit);
+
+    return { cost, price, qty, profit };
+  };
 
   // Reset form and results
   const resetFormAndResults = () => {
@@ -70,104 +151,133 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("costs").innerText = `₹0.00`;
     document.getElementById("profit").innerText = `₹0.00`;
     document.getElementById("margin").innerText = `0.00%`;
+    setProfitTileColor(0);
+    hideError();
   };
 
+  // Event listeners
   document.getElementById("reset-btn").addEventListener("click", resetFormAndResults);
 
-  // Calculate only (no save)
+  // Calculate on form submit
   document.getElementById("batch-form").addEventListener("submit", (e) => {
     e.preventDefault();
-    const cost = parseFloat(document.getElementById("cost").value);
-    const price = parseFloat(document.getElementById("price").value);
-    const qty = parseFloat(document.getElementById("qty").value);
-
-    if (cost <= 0 || price <= 0 || qty <= 0) return;
-
-    const totalRevenue = price * qty;
-    const totalCost = cost * qty;
-    const profit = totalRevenue - totalCost;
-    const margin = (profit / totalRevenue) * 100;
-
-    document.getElementById("revenue").innerText = `₹${totalRevenue.toFixed(2)}`;
-    document.getElementById("costs").innerText = `₹${totalCost.toFixed(2)}`;
-    document.getElementById("profit").innerText = `₹${profit.toFixed(2)}`;
-    document.getElementById("margin").innerText = `${margin.toFixed(2)}%`;
-
-    if (profit > 0) launchConfettiAndSound();
+    calculateAndDisplay();
   });
 
-  // Save as preset (only when user clicks)
+  // Auto-calculate on input change
+  ["cost", "price", "qty"].forEach(id => {
+    document.getElementById(id).addEventListener("input", calculateAndDisplay);
+  });
+
+  // Preset management
+  const showPresetLoading = () => {
+    document.getElementById("preset-loading").classList.remove("hidden");
+  };
+  const hidePresetLoading = () => {
+    document.getElementById("preset-loading").classList.add("hidden");
+  };
+  const showSaveLoading = () => {
+    document.getElementById("save-loading").classList.remove("hidden");
+  };
+  const hideSaveLoading = () => {
+    document.getElementById("save-loading").classList.add("hidden");
+  };
+
+  // Load and display presets
+  async function loadPresets() {
+    showPresetLoading();
+    const presetList = document.getElementById("preset-list");
+    presetList.innerHTML = "";
+    try {
+      const snapshot = await db.collection("batchPresets").orderBy("createdAt", "desc").get();
+      if (snapshot.empty) {
+        presetList.innerHTML = `<p class='text-sm text-gray-500'>No saved batches yet.</p>`;
+      } else {
+        snapshot.forEach(doc => {
+          const d = doc.data();
+          const card = document.createElement("div");
+          card.className = "bg-gray-50 p-4 rounded border hover:shadow transition flex flex-col gap-2";
+          card.innerHTML = `
+            <div class="flex justify-between items-center mb-1">
+              <span class="font-medium text-gray-800 truncate" title="${d.name}">${d.name}</span>
+              <div class="flex gap-2">
+                <button class="text-sm text-blue-600 hover:underline flex items-center gap-1" title="Apply" onclick='applyPreset(${JSON.stringify(d)})'>
+                  Apply
+                </button>
+                <button class="text-sm text-yellow-600 hover:underline flex items-center gap-1" title="Edit" onclick='editPreset("${doc.id}", ${JSON.stringify(d)})'>
+                  Edit
+                </button>
+                <button class="text-sm text-red-500 hover:underline flex items-center gap-1" title="Delete" onclick='deletePreset("${doc.id}", "${d.name}")'>
+                  Delete
+                </button>
+              </div>
+            </div>
+            <p class="text-sm text-gray-600">Cost: ₹${d.cost} | Price: ₹${d.price} | Qty: ${d.qty}</p>
+          `;
+          presetList.appendChild(card);
+        });
+      }
+    } catch (e) {
+      presetList.innerHTML = `<p class='text-sm text-red-500'>Failed to load presets.</p>`;
+    }
+    hidePresetLoading();
+  }
+
+  // Save as preset
   document.getElementById("save-preset-btn").addEventListener("click", async () => {
     const cost = parseFloat(document.getElementById("cost").value);
     const price = parseFloat(document.getElementById("price").value);
     const qty = parseFloat(document.getElementById("qty").value);
 
     if (isNaN(cost) || isNaN(price) || isNaN(qty) || cost <= 0 || price <= 0 || qty <= 0) {
-      alert("Please enter valid batch details before saving as a preset.");
+      showError("Please enter valid batch details before saving as a preset.");
       return;
     }
+    hideError();
 
     const name = prompt("Label this batch (e.g., Brownie ₹50):");
     if (!name) return;
 
+    showSaveLoading();
     await db.collection("batchPresets").add({ name, cost, price, qty, createdAt: new Date() });
+    hideSaveLoading();
     loadPresets();
   });
 
-  // Load and display presets
-  async function loadPresets() {
-    const presetList = document.getElementById("preset-list");
-    const snapshot = await db.collection("batchPresets").orderBy("createdAt", "desc").get();
-    presetList.innerHTML = snapshot.empty ? `<p class='text-sm text-gray-500'>No saved batches yet.</p>` : "";
-    snapshot.forEach(doc => {
-      const d = doc.data();
-      const card = document.createElement("div");
-      card.className = "bg-gray-50 p-4 rounded border hover:shadow transition";
-      card.innerHTML = `
-        <div class="flex justify-between items-center mb-1">
-          <span class="font-medium text-gray-800">${d.name}</span>
-          <div class="flex gap-2">
-            <button class="text-sm text-blue-600 hover:underline" onclick='applyPreset(${JSON.stringify(d)})'>Apply</button>
-            <button class="text-sm text-red-500 hover:underline" onclick='deletePreset("${doc.id}")'>Delete</button>
-          </div>
-        </div>
-        <p class="text-sm text-gray-600">Cost: ₹${d.cost} | Price: ₹${d.price} | Qty: ${d.qty}</p>
-      `;
-      presetList.appendChild(card);
-    });
-  }
-
+  // Apply preset to form
   window.applyPreset = (data) => {
     document.getElementById("cost").value = data.cost;
     document.getElementById("price").value = data.price;
     document.getElementById("qty").value = data.qty;
-    resetFormAndResults(); // Clear old results when applying
+    calculateAndDisplay();
   };
 
-  window.deletePreset = async (id) => {
+  // Delete preset with confirmation
+  window.deletePreset = async (id, name) => {
+    if (!confirm(`Are you sure you want to delete the preset "${name}"?`)) return;
     await db.collection("batchPresets").doc(id).delete();
     loadPresets();
   };
 
+  // Edit preset (name, cost, price, qty)
+  window.editPreset = async (id, data) => {
+    const newName = prompt("Edit batch label:", data.name) || data.name;
+    const newCost = parseFloat(prompt("Edit cost per unit (₹):", data.cost)) || data.cost;
+    const newPrice = parseFloat(prompt("Edit selling price per unit (₹):", data.price)) || data.price;
+    const newQty = parseInt(prompt("Edit quantity per batch:", data.qty)) || data.qty;
+    if (newCost <= 0 || newPrice <= 0 || newQty <= 0) {
+      alert("Invalid values. Edit cancelled.");
+      return;
+    }
+    await db.collection("batchPresets").doc(id).update({
+      name: newName,
+      cost: newCost,
+      price: newPrice,
+      qty: newQty
+    });
+    loadPresets();
+  };
+
+  // Initial load
   loadPresets();
 });
-
-function launchConfettiAndSound() {
-  const tile = document.getElementById("grossProfitTile");
-  if (window.confetti && tile) {
-    const rect = tile.getBoundingClientRect();
-    window.confetti({
-      particleCount: 100,
-      spread: 70,
-      origin: {
-        x: (rect.left + rect.width / 2) / window.innerWidth,
-        y: (rect.top + rect.height / 2) / window.innerHeight,
-      },
-    });
-  }
-  const sound = document.getElementById("successSound");
-  if (sound) {
-    sound.currentTime = 0;
-    sound.play();
-  }
-}

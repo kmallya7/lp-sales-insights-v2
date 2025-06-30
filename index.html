@@ -13,7 +13,9 @@
   <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
   <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/src/dom-to-image.min.js"></script>
+  
   <style>
     body { font-family: 'Poppins', sans-serif; }
     .nav-link.active {
@@ -166,31 +168,69 @@
       </div>
     </div>
     <nav id="sidebarNav" class="space-y-1 flex-1">
-      <div class="text-xs colour: #9C7A56 mt-2 mb-1 sidebar-label">Operations</div>
-      <a href="#workLog" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Work Log">
-        📒 <span class="sidebar-label">Work Log</span>
-      </a>
-      <a href="#dashboard" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Dashboard">
-        📊<span class="sidebar-label">Dashboard</span>
-      </a>
-      <a href="#invoice" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Invoices">
-        🧾<span class="sidebar-label">Invoices</span>
-      </a>
-      <div class="border-t my-2"></div>
-      <div class="text-xs colour: #9C7A56 mt-2 mb-1 sidebar-label">Management</div>
-      <a href="#fixedExpenses" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Fixed Expenses">
-        ⚙ <span class="sidebar-label">Fixed Expenses</span>
-      </a>
-      <a href="#inventory" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Inventory">
-        📦 <span class="sidebar-label">Inventory</span>
-      </a>
-      <a href="#export" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Export Data">
-        📤 <span class="sidebar-label">Export Data</span>
-      </a>
-      <a href="#clients" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Clients">
-        👥 <span class="sidebar-label">Clients</span>
-      </a>
-    </nav>
+  <div class="text-xs colour: #9C7A56 mt-2 mb-1 sidebar-label">Operations</div>
+  <a href="#workLog" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Work Log">
+    <!-- Work Log Icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
+      <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z" />
+      <path d="M5.25 5.25a3 3 0 0 0-3 3v10.5a3 3 0 0 0 3 3h10.5a3 3 0 0 0 3-3V13.5a.75.75 0 0 0-1.5 0v5.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5V8.25a1.5 1.5 0 0 1 1.5-1.5h5.25a.75.75 0 0 0 0-1.5H5.25Z" />
+    </svg>
+    <span class="sidebar-label">Work Log</span>
+  </a>
+  <a href="#dashboard" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Dashboard">
+    <!-- Chart Bar Icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M9 17V9m4 8V5m4 12v-6" />
+    </svg>
+    <span class="sidebar-label">Dashboard</span>
+  </a>
+  <a href="#invoice" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Invoices">
+    <!-- Document Text Icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8H6a2 2 0 01-2-2V6a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
+    </svg>
+    <span class="sidebar-label">Invoices</span>
+  </a>
+  <a href="#payments" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Payments">
+    <!-- Credit Card Icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <rect width="20" height="14" x="2" y="5" rx="2" stroke-width="2" stroke="currentColor" fill="none"/>
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 10h20" />
+    </svg>
+    <span class="sidebar-label">Payments</span>
+  </a>
+  <div class="border-t my-2"></div>
+  <div class="text-xs colour: #9C7A56 mt-2 mb-1 sidebar-label">Management</div>
+  <a href="#inventory" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Inventory">
+    <!-- Cube Icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0v6a8 8 0 01-16 0V7m16 0L12 11m0 0L4 7m8 4v8" />
+    </svg>
+    <span class="sidebar-label">Inventory</span>
+  </a>
+  <a href="#clients" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Clients">
+    <!-- Users Icon (your latest SVG) -->
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+    </svg>
+    <span class="sidebar-label">Clients</span>
+  </a>
+  <a href="#fixedExpenses" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Fixed Expenses">
+    <!-- Custom Fixed Expenses Icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+      <path stroke-linecap="round" stroke-linejoin="round" d="M15 8.25H9m6 3H9m3 6-3-3h1.5a3 3 0 1 0 0-6M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+    </svg>
+    <span class="sidebar-label">Fixed Expenses</span>
+  </a>
+  <a href="#export" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Export Data">
+    <!-- Arrow Up Tray Icon -->
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" />
+    </svg>
+    <span class="sidebar-label">Export Data</span>
+  </a>
+</nav>
+
     <button id="quickAddBtn" class="fixed bottom-8 left-72 z-50 bg-orange-600 text-white rounded-full shadow-lg w-12 h-12 flex items-center justify-center text-3xl hover:bg-orange-700 transition-all duration-200" title="Quick Add" style="display:none;">+</button>
   <div id="userInfo" class="hidden items-center gap-2">
       <img id="userPhoto" class="h-8 w-8 rounded-full" src="" alt="User" />
@@ -344,14 +384,16 @@
     </div>
     
     <!-- Other sections remain hidden for navigation -->
-    <div id="dashboard" class="page-section hidden"></div>
-    <div id="fixedExpenses" class="page-section hidden"></div>
-    <div id="inventory" class="page-section hidden"></div>
-    <div id="export" class="page-section hidden"></div>
-    <div id="clients" class="page-section hidden"></div>
-    <div id="invoice" class="page-section hidden">
-      <div id="invoicePrintArea"></div>
-    </div>
+   <div id="dashboard" class="page-section hidden"></div>
+<div id="fixedExpenses" class="page-section hidden"></div>
+<div id="inventory" class="page-section hidden"></div>
+<div id="export" class="page-section hidden"></div>
+<div id="clients" class="page-section hidden"></div>
+<div id="invoice" class="page-section hidden">
+  <div id="invoicePrintArea"></div>
+</div>
+<div id="payments" class="page-section hidden"></div>
+
   </main>
 
   <script>
@@ -373,62 +415,73 @@
   <script src="js/inventory.js"></script>
   <script src="js/clients.js"></script>
   <script src="js/invoices.js"></script>
+  <script src="js/payments.js"></script>
+
   <script>
-    // All sections that are toggled (except workLog, which is always visible)
-    const sections = ["workLog", "dashboard", "fixedExpenses", "inventory", "export", "clients", "invoice"];
-    function toggleLoader(show) {
-      const loader = document.getElementById("loader");
-      loader.style.display = show ? "block" : "none";
+   // All sections that are toggled (except workLog, which is always visible)
+const sections = ["workLog", "dashboard", "fixedExpenses", "inventory", "export", "clients", "invoice", "payments"];
+
+function toggleLoader(show) {
+  const loader = document.getElementById("loader");
+  loader.style.display = show ? "block" : "none";
+}
+
+function setActiveNav(target) {
+  document.querySelectorAll(".nav-link").forEach(link => link.classList.remove("active"));
+  document.querySelector(`.nav-link[href='#${target}']`)?.classList.add("active");
+}
+
+function showSection(target) {
+  toggleLoader(true);
+  sections.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && !el.classList.contains("hidden")) {
+      el.classList.remove("show");
+      el.classList.add("fade-out");
+      setTimeout(() => {
+        el.classList.add("hidden");
+        el.classList.remove("fade-out");
+      }, 400);
     }
-    function setActiveNav(target) {
-      document.querySelectorAll(".nav-link").forEach(link => link.classList.remove("active"));
-      document.querySelector(`.nav-link[href='#${target}']`)?.classList.add("active");
-    }
-    function showSection(target) {
-      toggleLoader(true);
-      sections.forEach(id => {
-        const el = document.getElementById(id);
-        if (el && !el.classList.contains("hidden")) {
-          el.classList.remove("show");
-          el.classList.add("fade-out");
-          setTimeout(() => {
-            el.classList.add("hidden");
-            el.classList.remove("fade-out");
-          }, 400);
-        }
-      });
-      const targetEl = document.getElementById(target);
-      if (targetEl) {
-        targetEl.classList.remove("hidden");
-        // Force reflow to ensure animation triggers
-        void targetEl.offsetWidth;
-        setTimeout(() => {
-          targetEl.classList.add("show");
-          toggleLoader(false);
-          // Scroll the main content area to top
-          const main = document.querySelector('main');
-          if (main) {
-            main.scrollTop = 0;
-          }
-          window.scrollTo({ top: 0, behavior: "auto" });
-        }, 30);
-      } else {
-        toggleLoader(false);
+  });
+  const targetEl = document.getElementById(target);
+  if (targetEl) {
+    targetEl.classList.remove("hidden");
+    // Force reflow to ensure animation triggers
+    void targetEl.offsetWidth;
+    setTimeout(() => {
+      targetEl.classList.add("show");
+      if (target === "payments" && typeof renderPaymentsTable === "function") {
+        renderPaymentsTable();
       }
-    }
-    document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
-      link.addEventListener("click", e => {
-        const target = link.getAttribute("href").substring(1);
-        e.preventDefault();
-        showSection(target);
-        setActiveNav(target);
-        if (target === "dashboard" && typeof loadDashboard === "function") loadDashboard();
-      });
-    });
-    window.addEventListener("DOMContentLoaded", () => {
-      setActiveNav("workLog");
-      showSection("workLog");
-    });
+      toggleLoader(false);
+      // Scroll the main content area to top
+      const main = document.querySelector('main');
+      if (main) {
+        main.scrollTop = 0;
+      }
+      window.scrollTo({ top: 0, behavior: "auto" });
+    }, 30);
+  } else {
+    toggleLoader(false);
+  }
+}
+
+document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
+  link.addEventListener("click", e => {
+    const target = link.getAttribute("href").substring(1);
+    e.preventDefault();
+    showSection(target);
+    setActiveNav(target);
+    if (target === "dashboard" && typeof loadDashboard === "function") loadDashboard();
+  });
+});
+
+window.addEventListener("DOMContentLoaded", () => {
+  setActiveNav("workLog");
+  showSection("workLog");
+});
+
     // Sidebar toggle/collapse
     const sidebar = document.getElementById("sidebar");
     const sidebarToggle = document.getElementById("sidebarToggle");

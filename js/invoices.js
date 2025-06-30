@@ -74,6 +74,18 @@ document.addEventListener("DOMContentLoaded", () => {
       </section>
       <section id="allInvoicesSection" class="bg-white p-6 rounded shadow max-w-5xl mx-auto mt-10">
         <h2 class="text-xl font-bold mb-4 text-orange-900">All Invoices</h2>
+        <form id="invoiceFilterForm" class="flex flex-wrap gap-4 mb-4 items-end">
+          <div>
+            <label class="block text-sm text-gray-700 mb-1" for="filterStartDate">From</label>
+            <input type="date" id="filterStartDate" class="p-2 border rounded" />
+          </div>
+          <div>
+            <label class="block text-sm text-gray-700 mb-1" for="filterEndDate">To</label>
+            <input type="date" id="filterEndDate" class="p-2 border rounded" />
+          </div>
+          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Filter</button>
+          <button type="button" id="clearFilterBtn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">Clear</button>
+        </form>
         <div id="invoicesList" class="overflow-x-auto"></div>
       </section>
     `;
@@ -292,26 +304,31 @@ document.addEventListener("DOMContentLoaded", () => {
     document.head.appendChild(script);
   }
 
-  // --- All Invoices Table (Sorted by Invoice Number Descending) ---
-  function loadAllInvoices() {
+  // --- All Invoices Table (with Date Filter) ---
+  function loadAllInvoices(filter = {}) {
     const invoicesList = document.getElementById("invoicesList");
     if (!invoicesList) return;
     invoicesList.innerHTML = "Loading...";
 
-    db.collection("invoices").get()
+    let query = db.collection("invoices");
+    if (filter.startDate) {
+      query = query.where("invoiceDate", ">=", filter.startDate);
+    }
+    if (filter.endDate) {
+      query = query.where("invoiceDate", "<=", filter.endDate);
+    }
+
+    query.get()
       .then(snapshot => {
         if (snapshot.empty) {
           invoicesList.innerHTML = "<p class='text-gray-500'>No invoices found.</p>";
           return;
         }
 
-        // Convert snapshot to array
         let docs = [];
         snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
 
-        // Sort by invoiceNumber (descending, numeric)
         docs.sort((a, b) => {
-          // Extract number part (handles both "29" and "INV-2025-029" formats)
           const numA = parseInt((a.invoiceNumber || "").replace(/\D/g, ""), 10) || 0;
           const numB = parseInt((b.invoiceNumber || "").replace(/\D/g, ""), 10) || 0;
           return numB - numA;
@@ -349,7 +366,6 @@ document.addEventListener("DOMContentLoaded", () => {
         html += "</tbody></table>";
         invoicesList.innerHTML = html;
 
-        // Add event listeners for View and Print
         document.querySelectorAll(".viewInvoiceBtn").forEach(btn => {
           btn.addEventListener("click", async () => {
             const id = btn.getAttribute("data-id");
@@ -394,6 +410,27 @@ document.addEventListener("DOMContentLoaded", () => {
       setTimeout(() => window.print(), 500);
     }
   }
+
+  // --- Filter Form Events ---
+  document.addEventListener("submit", function(e) {
+    if (e.target && e.target.id === "invoiceFilterForm") {
+      e.preventDefault();
+      const startDate = document.getElementById("filterStartDate").value;
+      const endDate = document.getElementById("filterEndDate").value;
+      loadAllInvoices({
+        startDate: startDate || undefined,
+        endDate: endDate || undefined
+      });
+    }
+  });
+
+  document.addEventListener("click", function(e) {
+    if (e.target && e.target.id === "clearFilterBtn") {
+      document.getElementById("filterStartDate").value = "";
+      document.getElementById("filterEndDate").value = "";
+      loadAllInvoices();
+    }
+  });
 
   // Load all invoices on page load
   loadAllInvoices();
