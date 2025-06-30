@@ -425,7 +425,7 @@ function renderSummaryCards({
       <p class="text-xl font-bold text-cyan-900">₹${profitPerClient.toFixed(2)}</p>
     </div>
     <div class="summary-card bg-amber-100 p-4 rounded flex flex-col items-start justify-between">
-      <p class="text-sm font-medium text-amber-700">Profit Percentage</p>
+      <p class="text-sm font-medium text-amber-700">Profit %</p>
       <p class="text-xl font-bold text-amber-900">${profitPercent.toFixed(1)}%</p>
     </div>
     <div class="summary-card bg-yellow-100 p-4 rounded flex flex-col items-start justify-between">
@@ -530,7 +530,7 @@ function renderSummaryTable({
     <tr><td class="border p-1">Gross Profit</td><td class="border p-1">₹${grossProfit.toFixed(2)}</td></tr>
     <tr><td class="border p-1">Actual Profit</td><td class="border p-1">₹${actualProfit.toFixed(2)}</td></tr>
     <tr><td class="border p-1">Profit per Client</td><td class="border p-1">₹${profitPerClient.toFixed(2)}</td></tr>
-    <tr><td class="border p-1">Profit Percentage</td><td class="border p-1">${profitPercent.toFixed(1)}%</td></tr>
+    <tr><td class="border p-1">Profit %</td><td class="border p-1">${profitPercent.toFixed(1)}%</td></tr>
     <tr><td class="border p-1">Ingredients</td><td class="border p-1">₹${totalIngredients.toFixed(2)}</td></tr>
     <tr><td class="border p-1">Packaging</td><td class="border p-1">₹${totalPackaging.toFixed(2)}</td></tr>
     <tr><td class="border p-1">Orders</td><td class="border p-1">${orderCount}</td></tr>
