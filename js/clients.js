@@ -1,58 +1,124 @@
 // clients.js
 
 document.addEventListener("DOMContentLoaded", () => {
-  // 1. Render the Clients Section UI (neutral, compact, scalable, aesthetic icons)
+  // 1. Render the Clients Section UI (modernized, minimal, clean)
   const clientsSection = document.getElementById("clients");
   clientsSection.innerHTML = `
-    <section class="bg-white p-5 rounded-lg shadow max-w-2xl mx-auto mt-6 border border-gray-100">
-      <div class="mb-4 flex items-center gap-2">
-        <!-- Custom Clients Icon (SVG provided by user) -->
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-6 w-6 text-gray-500">
-          <path d="M5.223 2.25c-.497 0-.974.198-1.325.55l-1.3 1.298A3.75 3.75 0 0 0 7.5 9.75c.627.47 1.406.75 2.25.75.844 0 1.624-.28 2.25-.75.626.47 1.406.75 2.25.75.844 0 1.623-.28 2.25-.75a3.75 3.75 0 0 0 4.902-5.652l-1.3-1.299a1.875 1.875 0 0 0-1.325-.549H5.223Z" />
-          <path fill-rule="evenodd" d="M3 20.25v-8.755c1.42.674 3.08.673 4.5 0A5.234 5.234 0 0 0 9.75 12c.804 0 1.568-.182 2.25-.506a5.234 5.234 0 0 0 2.25.506c.804 0 1.567-.182 2.25-.506 1.42.674 3.08.675 4.5.001v8.755h.75a.75.75 0 0 1 0 1.5H2.25a.75.75 0 0 1 0-1.5H3Zm3-6a.75.75 0 0 1 .75-.75h3a.75.75 0 0 1 .75.75v3a.75.75 0 0 1-.75.75h-3a.75.75 0 0 1-.75-.75v-3Zm8.25-.75a.75.75 0 0 0-.75.75v5.25c0 .414.336.75.75.75h3a.75.75 0 0 0 .75-.75v-5.25a.75.75 0 0 0-.75-.75h-3Z" clip-rule="evenodd" />
-        </svg>
-        <h2 class="text-xl font-semibold text-gray-800 tracking-tight">Clients</h2>
-      </div>
-      <form id="client-form" class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-5 bg-gray-50 p-4 rounded border border-gray-100">
-        <div>
-          <label for="client-name" class="block text-xs font-medium text-gray-700 mb-1">Client Name <span class="text-red-500">*</span></label>
-          <input type="text" id="client-name" placeholder="e.g. Le Pastry" class="w-full p-2 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-gray-200" required />
-        </div>
-        <div>
-          <label for="client-contact-person" class="block text-xs font-medium text-gray-700 mb-1">Contact Person</label>
-          <input type="text" id="client-contact-person" placeholder="e.g. Priya Sharma" class="w-full p-2 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-gray-200" />
-        </div>
-        <div>
-          <label for="client-phone" class="block text-xs font-medium text-gray-700 mb-1">Phone</label>
-          <input type="text" id="client-phone" placeholder="e.g. 9876543210" class="w-full p-2 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-gray-200" />
-        </div>
-        <div>
-          <label for="client-address" class="block text-xs font-medium text-gray-700 mb-1">Address</label>
-          <input type="text" id="client-address" placeholder="e.g. 123, MG Road, Bangalore" class="w-full p-2 border border-gray-200 rounded text-sm focus:ring-2 focus:ring-gray-200" />
-        </div>
-        <div class="md:col-span-2 flex gap-2 mt-1">
-          <button type="submit" id="client-submit-btn" class="bg-neutral-800 hover:bg-neutral-900 text-white px-4 py-2 rounded font-medium transition w-full md:w-auto flex-1 flex items-center justify-center gap-2 text-sm">
-            <!-- Plus Icon (Heroicons Outline) -->
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+    <section class="bg-white p-7 rounded-2xl shadow-lg max-w-3xl mx-auto mt-8 border border-gray-200">
+      <div class="mb-6 flex items-center gap-3">
+        <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-gradient-to-br from-gray-900 to-gray-700 shadow text-white">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+          </svg>
+        </span>
+        <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Clients</h2>
+        <div class="ml-4 flex items-center">
+          <div class="relative w-12 h-12">
+            <svg id="clients-ring" width="48" height="48" viewBox="0 0 48 48">
+              <circle cx="24" cy="24" r="20" fill="none" stroke="#e5e7eb" stroke-width="6"/>
+              <circle id="clients-ring-bar" cx="24" cy="24" r="20" fill="none" stroke="#6366f1" stroke-width="6" stroke-linecap="round"
+                stroke-dasharray="125.66" stroke-dashoffset="125.66" />
             </svg>
-            <span>Add Client</span>
-          </button>
-          <button type="button" id="client-cancel-btn" class="hidden bg-gray-100 hover:bg-gray-200 text-gray-700 px-4 py-2 rounded font-medium transition w-full md:w-auto flex-1 text-sm">
-            Cancel
+            <span id="clients-count" class="absolute inset-0 flex items-center justify-center text-lg font-bold text-gray-900">0</span>
+          </div>
+        </div>
+        <button id="show-add-client-form" class="ml-auto bg-gradient-to-br from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 text-base shadow transition">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          <span>Add Client</span>
+        </button>
+      </div>
+      <div id="client-list" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+    </section>
+    <div id="client-form-overlay" class="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center hidden">
+      <form id="client-form" class="bg-white rounded-2xl shadow-2xl border border-gray-200 p-8 w-full max-w-lg relative animate-fade-in">
+        <button type="button" id="client-cancel-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold">&times;</button>
+        <h3 class="text-xl font-bold mb-6 text-gray-900 flex items-center gap-2">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+            <line x1="12" y1="5" x2="12" y2="19"/>
+            <line x1="5" y1="12" x2="19" y2="12"/>
+          </svg>
+          <span id="client-form-title">Add Client</span>
+        </h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label for="client-name" class="block text-xs font-semibold text-gray-700 mb-1">Client Name <span class="text-red-500">*</span></label>
+            <input type="text" id="client-name" placeholder="e.g. Le Pastry" class="w-full p-2.5 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" required />
+          </div>
+          <div>
+            <label for="client-contact-person" class="block text-xs font-semibold text-gray-700 mb-1">Contact Person</label>
+            <input type="text" id="client-contact-person" placeholder="e.g. Priya Sharma" class="w-full p-2.5 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" />
+          </div>
+          <div>
+            <label for="client-phone" class="block text-xs font-semibold text-gray-700 mb-1">Phone</label>
+            <input type="text" id="client-phone" placeholder="e.g. 9876543210" class="w-full p-2.5 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" />
+          </div>
+          <div>
+            <label for="client-address" class="block text-xs font-semibold text-gray-700 mb-1">Address</label>
+            <input type="text" id="client-address" placeholder="e.g. 123, MG Road, Bangalore" class="w-full p-2.5 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" />
+          </div>
+        </div>
+        <div class="flex gap-2 mt-7">
+          <button type="submit" id="client-submit-btn" class="bg-gradient-to-br from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold transition w-full flex items-center justify-center gap-2 text-base shadow">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+              <line x1="12" y1="5" x2="12" y2="19"/>
+              <line x1="5" y1="12" x2="19" y2="12"/>
+            </svg>
+            <span id="client-submit-label">Add Client</span>
           </button>
         </div>
       </form>
-      <div id="client-list" class="divide-y divide-gray-100"></div>
-    </section>
+    </div>
+    <style>
+      @keyframes fade-in { from { opacity: 0; transform: translateY(30px);} to { opacity: 1; transform: none; } }
+      .animate-fade-in { animation: fade-in 0.2s ease; }
+      #client-list .client-card { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); }
+      #client-list .client-card:hover { box-shadow: 0 6px 24px 0 rgba(60,72,88,0.10); border-color: #6366f1; }
+    </style>
   `;
 
   // 2. Initialize variables
   const db = window.db;
   let editingClientId = null;
 
-  // 3. Handle form submission for adding/updating clients
-  document.getElementById("client-form").addEventListener("submit", async (e) => {
+  // 3. Show/Hide Overlay Add Client Form
+  const addBtn = document.getElementById("show-add-client-form");
+  const overlay = document.getElementById("client-form-overlay");
+  const form = document.getElementById("client-form");
+  const cancelBtn = document.getElementById("client-cancel-btn");
+  const formTitle = document.getElementById("client-form-title");
+  const submitLabel = document.getElementById("client-submit-label");
+
+  addBtn.addEventListener("click", () => {
+    overlay.classList.remove("hidden");
+    form.reset();
+    editingClientId = null;
+    formTitle.textContent = "Add Client";
+    submitLabel.textContent = "Add Client";
+  });
+
+  cancelBtn.addEventListener("click", () => {
+    overlay.classList.add("hidden");
+    form.reset();
+    editingClientId = null;
+    formTitle.textContent = "Add Client";
+    submitLabel.textContent = "Add Client";
+  });
+
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+      overlay.classList.add("hidden");
+      form.reset();
+      editingClientId = null;
+      formTitle.textContent = "Add Client";
+      submitLabel.textContent = "Add Client";
+    }
+  });
+
+  // 4. Handle form submission for adding/updating clients
+  form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
     const name = document.getElementById("client-name").value.trim();
@@ -68,13 +134,6 @@ document.addEventListener("DOMContentLoaded", () => {
     if (editingClientId) {
       await db.collection("clients").doc(editingClientId).update({ name, contactPerson, phone, address });
       editingClientId = null;
-      document.getElementById("client-submit-btn").innerHTML = `
-        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-        </svg>
-        <span>Add Client</span>
-      `;
-      document.getElementById("client-cancel-btn").classList.add("hidden");
       showToast("Client updated!", "success");
     } else {
       await db.collection("clients").add({ name, contactPerson, phone, address, createdAt: new Date() });
@@ -82,56 +141,71 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     e.target.reset();
+    overlay.classList.add("hidden");
     loadClients();
   });
 
-  // 4. Handle cancel button (for edit mode)
-  document.getElementById("client-cancel-btn").addEventListener("click", () => {
-    editingClientId = null;
-    document.getElementById("client-form").reset();
-    document.getElementById("client-submit-btn").innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-      </svg>
-      <span>Add Client</span>
-    `;
-    document.getElementById("client-cancel-btn").classList.add("hidden");
-  });
-
-  // 5. Load and display all clients
+  // 5. Load and display all clients as cards, and update number ring
   async function loadClients() {
     const list = document.getElementById("client-list");
     const snapshot = await db.collection("clients").orderBy("createdAt", "desc").get();
     list.innerHTML = "";
 
+    // Number ring update
+    const count = snapshot.size;
+    updateClientsRing(count);
+
     if (snapshot.empty) {
-      list.innerHTML = `<div class="text-center text-gray-400 py-8 text-sm">No clients yet. Add your first client above.</div>`;
+      list.innerHTML = `<div class="text-center text-gray-400 py-12 text-base col-span-2">No clients yet.<br><span class="text-gray-300">Click <b>Add Client</b> to get started.</span></div>`;
       return;
     }
-
-    // Responsive grid for many clients, scrollable if >8
-    const wrapper = document.createElement("div");
-    wrapper.className = "flex flex-col gap-0 max-h-[60vh] overflow-y-auto";
 
     for (const doc of snapshot.docs) {
       const c = doc.data();
       const id = doc.id;
 
+      // Card style with modern icons (Lucide)
       const card = document.createElement("div");
-      card.className = "flex items-center justify-between py-3 px-1 bg-white hover:bg-gray-50 transition group";
+      card.className = "client-card rounded-xl border border-gray-200 p-6 flex flex-col gap-4 relative group transition hover:shadow-lg";
 
       card.innerHTML = `
-        <div class="flex-1 min-w-0">
-          <div class="font-medium text-gray-900 truncate text-base">${c.name}</div>
-          <div class="flex flex-wrap gap-3 text-xs text-gray-500 mt-0.5">
-            <span>${c.contactPerson ? `<span class="font-normal">${c.contactPerson}</span>` : "-"}</span>
-            <span>${c.phone ? `<span class="font-normal">${c.phone}</span>` : "-"}</span>
-            <span>${c.address ? `<span class="font-normal">${c.address}</span>` : "-"}</span>
+        <div class="flex items-center gap-4">
+          <div class="bg-indigo-50 rounded-full p-2 flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <rect x="3" y="3" width="18" height="18" rx="2" />
+              <path d="M9 21V9h6v12" />
+              <path d="M9 12h6" />
+            </svg>
+          </div>
+          <div>
+            <div class="font-semibold text-lg text-gray-900">${c.name}</div>
+            <div class="flex flex-wrap gap-3 mt-1 text-sm text-gray-700">
+              <span class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <circle cx="12" cy="8" r="4" />
+                  <path d="M4 20c0-4 8-4 8-4s8 0 8 4" />
+                </svg>
+                ${c.contactPerson ? `<span>${c.contactPerson}</span>` : "-"}
+              </span>
+              <span class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path d="M22 16.92V19a2 2 0 0 1-2.18 2A19.72 19.72 0 0 1 3 5.18 2 2 0 0 1 5 3h2.09a2 2 0 0 1 2 1.72c.13 1.13.37 2.23.72 3.28a2 2 0 0 1-.45 2.11l-1.27 1.27a16 16 0 0 0 6.29 6.29l1.27-1.27a2 2 0 0 1 2.11-.45c1.05.35 2.15.59 3.28.72a2 2 0 0 1 1.72 2z"/>
+                </svg>
+                ${c.phone ? `<span>${c.phone}</span>` : "-"}
+              </span>
+              <span class="flex items-center gap-1">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+                  <path d="M12 21s-6-5.686-6-10A6 6 0 0 1 18 11c0 4.314-6 10-6 10z"/>
+                  <circle cx="12" cy="11" r="2"/>
+                </svg>
+                ${c.address ? `<span>${c.address}</span>` : "-"}
+              </span>
+            </div>
           </div>
         </div>
-        <div class="flex gap-1 ml-2">
+        <div class="flex gap-2 absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition">
           <button
-            class="edit-btn p-1 rounded hover:bg-gray-200 transition"
+            class="edit-btn p-1.5 rounded hover:bg-indigo-100 transition"
             title="Edit"
             data-id="${id}"
             data-name="${escapeStr(c.name)}"
@@ -139,28 +213,27 @@ document.addEventListener("DOMContentLoaded", () => {
             data-phone="${escapeStr(c.phone)}"
             data-address="${escapeStr(c.address)}"
           >
-            <!-- Heroicons: Pencil Square -->
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-500 group-hover:text-neutral-800" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M16.862 3.487a2.25 2.25 0 1 1 3.182 3.182l-9.193 9.193a2.25 2.25 0 0 1-1.06.592l-3.25.813a.375.375 0 0 1-.456-.456l.813-3.25a2.25 2.25 0 0 1 .592-1.06l9.193-9.193Z" />
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M19.5 6.75l-1.5-1.5" />
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <path d="M12 20h9" />
+              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z" />
             </svg>
           </button>
           <button
-            class="delete-btn p-1 rounded hover:bg-gray-200 transition"
+            class="delete-btn p-1.5 rounded hover:bg-red-100 transition"
             title="Delete"
             data-id="${id}"
           >
-            <!-- Heroicons: Trash -->
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-gray-400 group-hover:text-red-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M6 7.5V6.75A2.25 2.25 0 0 1 8.25 4.5h7.5A2.25 2.25 0 0 1 18 6.75V7.5m-9 0h9m-9 0v10.125A2.625 2.625 0 0 0 8.625 20.25h6.75A2.625 2.625 0 0 0 18 17.625V7.5m-9 0h9m-3 3v6m-3-6v6" />
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400 hover:text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
+              <polyline points="3 6 5 6 21 6" />
+              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+              <line x1="10" y1="11" x2="10" y2="17" />
+              <line x1="14" y1="11" x2="14" y2="17" />
             </svg>
           </button>
         </div>
       `;
-      wrapper.appendChild(card);
+      list.appendChild(card);
     }
-
-    list.appendChild(wrapper);
 
     // Attach event listeners for edit and delete buttons
     document.querySelectorAll(".edit-btn").forEach(btn => {
@@ -189,19 +262,14 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 7. Edit client handler (switches form to edit mode)
   function editClient(id, name, contactPerson, phone, address) {
+    overlay.classList.remove("hidden");
     document.getElementById("client-name").value = name;
     document.getElementById("client-contact-person").value = contactPerson;
     document.getElementById("client-phone").value = phone;
     document.getElementById("client-address").value = address;
-    document.getElementById("client-submit-btn").innerHTML = `
-      <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
-      </svg>
-      <span>Update Client</span>
-    `;
-    document.getElementById("client-cancel-btn").classList.remove("hidden");
+    formTitle.textContent = "Edit Client";
+    submitLabel.textContent = "Update Client";
     editingClientId = id;
-    window.scrollTo({ top: 0, behavior: "smooth" });
   }
 
   // 8. Delete client handler with confirmation and feedback
@@ -219,17 +287,17 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!toast) {
       toast = document.createElement("div");
       toast.id = "toast-message";
-      toast.className = "fixed top-6 right-6 z-50 px-5 py-2 rounded shadow-lg text-white font-medium text-sm transition opacity-0 pointer-events-none";
+      toast.className = "fixed top-6 right-6 z-50 px-5 py-2.5 rounded-lg shadow-lg text-white font-semibold text-base transition opacity-0 pointer-events-none";
       document.body.appendChild(toast);
     }
     toast.textContent = message;
     toast.className =
-      "fixed top-6 right-6 z-50 px-5 py-2 rounded shadow-lg text-white font-medium text-sm transition " +
+      "fixed top-6 right-6 z-50 px-5 py-2.5 rounded-lg shadow-lg text-white font-semibold text-base transition " +
       (type === "success"
         ? "bg-green-600"
         : type === "error"
         ? "bg-red-600"
-        : "bg-gray-700");
+        : "bg-gray-800");
     toast.style.opacity = "1";
     toast.style.pointerEvents = "auto";
     setTimeout(() => {
@@ -238,6 +306,21 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 2000);
   }
 
-  // 10. Initial load of clients when the page is ready
+  // 10. Number ring update function
+  function updateClientsRing(count) {
+    const max = 20;
+    const percent = Math.min(count / max, 1);
+    const circle = document.getElementById("clients-ring-bar");
+    const circumference = 2 * Math.PI * 20;
+    const offset = circumference * (1 - percent);
+    if (circle) {
+      circle.setAttribute("stroke-dasharray", circumference.toFixed(2));
+      circle.setAttribute("stroke-dashoffset", offset.toFixed(2));
+    }
+    const countSpan = document.getElementById("clients-count");
+    if (countSpan) countSpan.textContent = count;
+  }
+
+  // 11. Initial load of clients when the page is ready
   loadClients();
 });

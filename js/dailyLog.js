@@ -1,11 +1,12 @@
 // js/dailyLogs.js
 
 /**
- * Daily Logs Manager Script (Date Display as "30-Jun-2025")
+ * Daily Logs Manager Script (Month & Date Picker + Client Search)
  * 
- * - The "Entries for" date and all date displays now show as "30-Jun-2025" (DD-MMM-YYYY)
- * - The date picker remains a native input, but the display is formatted
- * - All other UI/UX improvements from previous versions are preserved
+ * - By default, shows both the current month and current date entries.
+ * - Entries can be filtered by month (using a month picker), by date (using a date picker), and by client name.
+ * - The "Entries for" header updates based on the filter.
+ * - The client search box filters by client name within the selected month or date.
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -24,15 +25,15 @@ document.addEventListener("DOMContentLoaded", () => {
     <!-- Summary Cards Layer -->
     <section class="max-w-5xl mx-auto mt-6 mb-6">
       <div class="flex flex-col sm:flex-row gap-4">
-        <div class="flex-1 bg-blue-50 p-4 rounded shadow flex flex-col items-center">
+        <div class="flex-1 bg-blue-100 p-4 rounded shadow flex flex-col items-center">
           <span class="text-sm text-blue-700 font-medium">Revenue</span>
           <span id="summary-revenue" class="text-xl font-bold text-blue-900 mt-1">₹0.00</span>
         </div>
-        <div class="flex-1 bg-red-50 p-4 rounded shadow flex flex-col items-center">
+        <div class="flex-1 bg-red-100 p-4 rounded shadow flex flex-col items-center">
           <span class="text-sm text-red-700 font-medium">Cost</span>
           <span id="summary-cost" class="text-xl font-bold text-red-900 mt-1">₹0.00</span>
         </div>
-        <div class="flex-1 bg-green-50 p-4 rounded shadow flex flex-col items-center">
+        <div class="flex-1 bg-green-100 p-4 rounded shadow flex flex-col items-center">
           <span class="text-sm text-green-700 font-medium">Profit</span>
           <span id="summary-profit" class="text-xl font-bold text-green-900 mt-1">₹0.00</span>
         </div>
@@ -102,24 +103,28 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="bg-white rounded shadow p-4">
         <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-3">
           <div class="flex items-center gap-3 flex-wrap">
-            <h3 class="text-base font-bold">Entries for <span id="log-date-display">[Date]</span></h3>
-            <label for="summary-date" class="text-sm text-gray-600 ml-2 font-medium">View Date:</label>
+            <h3 class="text-base font-bold">Entries for <span id="log-date-display">[Filter]</span></h3>
+            <label for="summary-month" class="text-sm text-gray-600 ml-2 font-medium">View Month:</label>
+            <input type="month" id="summary-month" class="p-2 border rounded text-sm" />
+            <label for="summary-date" class="text-sm text-gray-600 ml-2 font-medium">or Date:</label>
             <input type="date" id="summary-date" class="p-2 border rounded text-sm" />
           </div>
           <div class="flex gap-2">
-            <button id="show-latest-entries" class="text-sm text-blue-600 hover:underline font-medium">Latest 10</button>
-            <button id="hide-entries" class="text-sm text-gray-600 hover:underline font-medium hidden">Hide</button>
+            <input type="text" id="client-search" placeholder="Search by client name..." class="p-2 border rounded text-sm" style="min-width:180px;" />
           </div>
         </div>
-        <div id="log-entries" class="text-sm text-gray-700 bg-gray-50 p-2 rounded border overflow-x-auto">No entries found for this date. Add your first entry above!</div>
+        <div id="log-entries" class="text-sm text-gray-700 bg-gray-50 p-2 rounded border overflow-x-auto">No entries found. Add your first entry above!</div>
       </div>
     </section>
   `;
 
   // --- 2. State Variables ---
   let editingId = null;
-  let showingLatest = false;
+  let lastSelectedMonth = null;
   let lastSelectedDate = null;
+  let allMonthEntries = [];
+  let allDateEntries = [];
+  let currentFilter = "month"; // or "date"
   const db = window.db;
 
   // --- 3. Helper: Add a new item row to the items table ---
@@ -198,9 +203,9 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // --- 10. Helper: Render entries as a table (for entries list) ---
-  function renderEntriesTable(entries) {
+  function renderEntriesTable(entries, emptyMsg) {
     if (!entries.length) {
-      return "No entries found for this date. Add your first entry above!";
+      return emptyMsg || "No entries found. Add your first entry above!";
     }
     let html = `
       <div class="overflow-x-auto">
@@ -246,15 +251,55 @@ document.addEventListener("DOMContentLoaded", () => {
     return html;
   }
 
-  // --- 11. Load and display summary and entries for a given date ---
+  // --- 11. Load and display summary and entries for a given month ---
+  async function loadMonthlySummary(monthStr) {
+    lastSelectedMonth = monthStr;
+    lastSelectedDate = null;
+    currentFilter = "month";
+    const [year, month] = monthStr.split("-");
+    document.getElementById("log-date-display").innerText = `${month ? new Date(`${year}-${month}-01`).toLocaleString('default', { month: 'short' }) : ""} ${year}`;
+    document.getElementById("summary-month").value = monthStr;
+    document.getElementById("summary-date").value = "";
+
+    const startDate = `${year}-${month}-01`;
+    const endDate = new Date(year, parseInt(month, 10), 0);
+    const endDateStr = `${year}-${month}-${String(endDate.getDate()).padStart(2, "0")}`;
+
+    const snapshot = await db.collection("dailyLogs")
+      .where("date", ">=", startDate)
+      .where("date", "<=", endDateStr)
+      .get();
+
+    let totalRevenue = 0, totalCost = 0, totalProfit = 0;
+    const entries = [];
+    snapshot.forEach(doc => {
+      const d = doc.data();
+      if (d.items && Array.isArray(d.items)) {
+        d.items.forEach(item => {
+          totalRevenue += item.revenue || 0;
+          totalCost += (item.ingredients || 0) + (item.packaging || 0);
+          totalProfit += (item.revenue || 0) - ((item.ingredients || 0) + (item.packaging || 0));
+        });
+      }
+      entries.push({ docId: doc.id, d });
+    });
+
+    allMonthEntries = entries;
+    document.getElementById("summary-revenue").innerText = `₹${totalRevenue.toFixed(2)}`;
+    document.getElementById("summary-cost").innerText = `₹${totalCost.toFixed(2)}`;
+    document.getElementById("summary-profit").innerText = `₹${totalProfit.toFixed(2)}`;
+    document.getElementById("log-entries").innerHTML = renderEntriesTable(entries, "No entries found for this month. Add your first entry above!");
+    filterEntriesByClient();
+  }
+
+  // --- 12. Load and display summary and entries for a given date ---
   async function loadDailySummary(date) {
     lastSelectedDate = date;
-    showingLatest = false;
+    lastSelectedMonth = null;
+    currentFilter = "date";
     document.getElementById("log-date-display").innerText = formatDisplayDate(date);
     document.getElementById("summary-date").value = date;
-    document.getElementById("hide-entries").classList.add("hidden");
-    document.getElementById("show-latest-entries").classList.remove("hidden");
-    document.getElementById("log-entries").style.display = "";
+    document.getElementById("summary-month").value = date.slice(0, 7);
 
     const snapshot = await db.collection("dailyLogs").where("date", "==", date).get();
 
@@ -272,37 +317,44 @@ document.addEventListener("DOMContentLoaded", () => {
       entries.push({ docId: doc.id, d });
     });
 
+    allDateEntries = entries;
     document.getElementById("summary-revenue").innerText = `₹${totalRevenue.toFixed(2)}`;
     document.getElementById("summary-cost").innerText = `₹${totalCost.toFixed(2)}`;
     document.getElementById("summary-profit").innerText = `₹${totalProfit.toFixed(2)}`;
-    document.getElementById("log-entries").innerHTML = renderEntriesTable(entries);
+    document.getElementById("log-entries").innerHTML = renderEntriesTable(entries, "No entries found for this date. Add your first entry above!");
+    filterEntriesByClient();
   }
 
-  // --- 12. Load and display the latest N entries (across all dates) ---
-  async function loadRecentEntries(limit = 10) {
-    showingLatest = true;
-    document.getElementById("log-date-display").innerText = "Recent Entries";
-    document.getElementById("hide-entries").classList.remove("hidden");
-    document.getElementById("show-latest-entries").classList.add("hidden");
-    document.getElementById("log-entries").style.display = "";
-
-    const snapshot = await db.collection("dailyLogs").orderBy("date", "desc").limit(limit).get();
-    const entries = [];
-    snapshot.forEach(doc => {
-      const d = doc.data();
-      entries.push({ docId: doc.id, d });
+  // --- 13. Filter entries by client name in the current view ---
+  function filterEntriesByClient() {
+    const search = (document.getElementById("client-search")?.value || "").trim().toLowerCase();
+    const table = document.querySelector("#log-entries table");
+    if (!table) return;
+    const rows = table.querySelectorAll("tbody tr");
+    rows.forEach(row => {
+      const clientCell = row.querySelector("td");
+      if (!clientCell) return;
+      const client = clientCell.textContent.trim().toLowerCase();
+      row.style.display = client.includes(search) ? "" : "none";
     });
-    document.getElementById("log-entries").innerHTML = renderEntriesTable(entries);
   }
+  document.getElementById("client-search").addEventListener("input", filterEntriesByClient);
 
-  // --- 13. Event: Hide entries list (show/hide toggle) ---
-  document.getElementById("hide-entries").addEventListener("click", () => {
-    document.getElementById("log-entries").style.display = "none";
-    document.getElementById("hide-entries").classList.add("hidden");
-    document.getElementById("show-latest-entries").classList.remove("hidden");
+  // --- 14. Event: Change summary month picker (loads summary for selected month) ---
+  document.getElementById("summary-month").addEventListener("change", (e) => {
+    if (e.target.value) {
+      loadMonthlySummary(e.target.value);
+    }
   });
 
-  // --- 14. Event: Form submit (add or update entry) ---
+  // --- 15. Event: Change summary date picker (loads summary for selected date) ---
+  document.getElementById("summary-date").addEventListener("change", (e) => {
+    if (e.target.value) {
+      loadDailySummary(e.target.value);
+    }
+  });
+
+  // --- 16. Event: Form submit (add or update entry) ---
   document.getElementById("daily-log-form").addEventListener("submit", async (e) => {
     e.preventDefault();
     const date = document.getElementById("log-date").value;
@@ -341,26 +393,24 @@ document.addEventListener("DOMContentLoaded", () => {
     addItemRow();
     const today = new Date().toISOString().split("T")[0];
     document.getElementById("log-date").value = today;
-    document.getElementById("summary-date").value = today;
-    loadDailySummary(today);
+    // After adding, reload the current filter
+    if (currentFilter === "date") {
+      loadDailySummary(today);
+    } else {
+      const monthStr = today.slice(0, 7);
+      loadMonthlySummary(monthStr);
+    }
   });
 
-  // --- 15. Event: Change summary date picker (loads summary for selected date) ---
-  document.getElementById("summary-date").addEventListener("change", (e) => {
-    loadDailySummary(e.target.value);
-  });
-
-  // --- 16. Event: Show latest entries button ---
-  document.getElementById("show-latest-entries").addEventListener("click", () => {
-    document.getElementById("log-entries").style.display = "";
-    loadRecentEntries(10);
-  });
-
-  // --- 17. On page load: set today's date and load today's entries ---
+  // --- 17. On page load: set today's date and load this month's and today's entries ---
   const today = new Date().toISOString().split("T")[0];
+  const thisMonth = today.slice(0, 7);
   document.getElementById("log-date").value = today;
+  document.getElementById("summary-month").value = thisMonth;
   document.getElementById("summary-date").value = today;
   addItemRow();
+  // Show both month and date entries by default
+  loadMonthlySummary(thisMonth);
   loadDailySummary(today);
 
   // --- 18. Expose edit and delete functions globally for table buttons ---
@@ -380,10 +430,14 @@ document.addEventListener("DOMContentLoaded", () => {
   window.deleteEntry = async function (id, date) {
     if (!confirm("Are you sure you want to delete this entry?")) return;
     await db.collection("dailyLogs").doc(id).delete();
-    if (showingLatest) {
-      loadRecentEntries(10);
-    } else {
+    // After delete, reload the current filter
+    if (currentFilter === "date" && date) {
       loadDailySummary(date);
+    } else if (currentFilter === "month" && date) {
+      loadMonthlySummary(date.slice(0, 7));
+    } else {
+      loadMonthlySummary(thisMonth);
+      loadDailySummary(today);
     }
   };
 });

@@ -1,5 +1,3 @@
-// invoices.js
-
 document.addEventListener("DOMContentLoaded", () => {
   // Render the invoice form
   const invoicePrintArea = document.getElementById("invoicePrintArea");
@@ -76,14 +74,13 @@ document.addEventListener("DOMContentLoaded", () => {
         <h2 class="text-xl font-bold mb-4 text-orange-900">All Invoices</h2>
         <form id="invoiceFilterForm" class="flex flex-wrap gap-4 mb-4 items-end">
           <div>
-            <label class="block text-sm text-gray-700 mb-1" for="filterStartDate">From</label>
-            <input type="date" id="filterStartDate" class="p-2 border rounded" />
+            <label class="block text-sm text-gray-700 mb-1" for="filterMonth">Month</label>
+            <select id="filterMonth" class="p-2 border rounded"></select>
           </div>
           <div>
-            <label class="block text-sm text-gray-700 mb-1" for="filterEndDate">To</label>
-            <input type="date" id="filterEndDate" class="p-2 border rounded" />
+            <label class="block text-sm text-gray-700 mb-1" for="filterYear">Year</label>
+            <select id="filterYear" class="p-2 border rounded"></select>
           </div>
-          <button type="submit" class="bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700">Filter</button>
           <button type="button" id="clearFilterBtn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">Clear</button>
         </form>
         <div id="invoicesList" class="overflow-x-auto"></div>
@@ -104,6 +101,20 @@ document.addEventListener("DOMContentLoaded", () => {
         break-inside: avoid;
         page-break-inside: avoid;
       }
+    }
+    #filterMonth, #filterYear {
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      padding: 0.25rem 0.5rem;
+      font-size: 1rem;
+      color: #1f2937;
+      background: #fff;
+      outline: none;
+      transition: border 0.2s;
+    }
+    #filterMonth:focus, #filterYear:focus {
+      border-color: #fb923c;
+      box-shadow: 0 0 0 1px #fb923c;
     }
   `;
   document.head.appendChild(style);
@@ -304,81 +315,170 @@ document.addEventListener("DOMContentLoaded", () => {
     document.head.appendChild(script);
   }
 
-  // --- All Invoices Table (with Date Filter) ---
+  // --- All Invoices Table (with Month/Year Filter, Delete, No Search) ---
+  let allInvoicesDocs = []; // Store all loaded invoices for sorting
+
+  function renderInvoicesTable(docs) {
+    const invoicesList = document.getElementById("invoicesList");
+    if (!invoicesList) return;
+
+    let html = `
+      <div class="flex flex-wrap gap-4 mb-2 items-center">
+        <label class="text-sm text-gray-700">Sort by:
+          <select id="sortInvoicesBy" class="p-1 border rounded ml-1">
+            <option value="invoiceNumber-desc">Invoice # (desc)</option>
+            <option value="invoiceNumber-asc">Invoice # (asc)</option>
+            <option value="invoiceDate-desc">Date (newest)</option>
+            <option value="invoiceDate-asc">Date (oldest)</option>
+            <option value="client-asc">Client (A-Z)</option>
+            <option value="client-desc">Client (Z-A)</option>
+            <option value="total-desc">Total (high-low)</option>
+            <option value="total-asc">Total (low-high)</option>
+          </select>
+        </label>
+      </div>
+      <table class="w-full text-sm border rounded bg-white">
+        <thead>
+          <tr class="bg-gray-100">
+            <th class="border p-2 text-center font-semibold">Invoice #</th>
+            <th class="border p-2 text-center font-semibold">Date</th>
+            <th class="border p-2 text-center font-semibold">Client</th>
+            <th class="border p-2 text-center font-semibold">Total</th>
+            <th class="border p-2 text-center font-semibold">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    docs.forEach(d => {
+      html += `
+        <tr>
+          <td class="border p-2 text-center">${d.invoiceNumber || ""}</td>
+          <td class="border p-2 text-center">${d.invoiceDate || ""}</td>
+          <td class="border p-2 text-center">${d.client?.name || ""}</td>
+          <td class="border p-2 text-center">${d.total || ""}</td>
+          <td class="border p-2 text-center">
+            <button class="text-blue-600 viewInvoiceBtn" data-id="${d.id}">View</button>
+            <button class="text-blue-600 printInvoiceBtn" data-id="${d.id}">Print</button>
+            <button class="text-red-600 deleteInvoiceBtn" data-id="${d.id}">Delete</button>
+          </td>
+        </tr>
+      `;
+    });
+
+    html += "</tbody></table>";
+    invoicesList.innerHTML = html;
+
+    // Attach event listeners
+    document.querySelectorAll(".viewInvoiceBtn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        await showInvoiceDetails(id);
+      });
+    });
+    document.querySelectorAll(".printInvoiceBtn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        await showInvoiceDetails(id, true);
+        setTimeout(() => window.print(), 500);
+      });
+    });
+    document.querySelectorAll(".deleteInvoiceBtn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        if (confirm("Are you sure you want to delete this invoice?")) {
+          await deleteInvoice(id);
+        }
+      });
+    });
+
+    // Sorting
+    document.getElementById("sortInvoicesBy").addEventListener("change", function() {
+      sortAndRenderInvoices();
+    });
+  }
+
+  function sortAndRenderInvoices() {
+    let docs = [...allInvoicesDocs];
+    const sortVal = document.getElementById("sortInvoicesBy")?.value || "invoiceNumber-desc";
+
+    // Sorting
+    docs.sort((a, b) => {
+      switch (sortVal) {
+        case "invoiceNumber-asc":
+          return (a.invoiceNumber || "").localeCompare(b.invoiceNumber || "", undefined, { numeric: true });
+        case "invoiceNumber-desc":
+          return (b.invoiceNumber || "").localeCompare(a.invoiceNumber || "", undefined, { numeric: true });
+        case "invoiceDate-asc":
+          return (a.invoiceDate || "").localeCompare(b.invoiceDate || "");
+        case "invoiceDate-desc":
+          return (b.invoiceDate || "").localeCompare(a.invoiceDate || "");
+        case "client-asc":
+          return (a.client?.name || "").localeCompare(b.client?.name || "");
+        case "client-desc":
+          return (b.client?.name || "").localeCompare(a.client?.name || "");
+        case "total-asc":
+          return parseFloat((a.total || "0").replace(/[^\d.]/g, "")) - parseFloat((b.total || "0").replace(/[^\d.]/g, ""));
+        case "total-desc":
+          return parseFloat((b.total || "0").replace(/[^\d.]/g, "")) - parseFloat((a.total || "0").replace(/[^\d.]/g, ""));
+        default:
+          return 0;
+      }
+    });
+
+    renderInvoicesTable(docs);
+    if (document.getElementById("sortInvoicesBy")) document.getElementById("sortInvoicesBy").value = sortVal;
+  }
+
+  async function deleteInvoice(id) {
+    try {
+      await db.collection("invoices").doc(id).delete();
+      alert("Invoice deleted.");
+      loadAllInvoices(); // reload
+    } catch (err) {
+      alert("Failed to delete invoice.");
+      console.error(err);
+    }
+  }
+
   function loadAllInvoices(filter = {}) {
     const invoicesList = document.getElementById("invoicesList");
     if (!invoicesList) return;
     invoicesList.innerHTML = "Loading...";
 
     let query = db.collection("invoices");
-    if (filter.startDate) {
-      query = query.where("invoiceDate", ">=", filter.startDate);
+    let filterMonth = filter.month;
+    let filterYear = filter.year;
+
+    // If no filter, show current month by default
+    if (!filterMonth || !filterYear) {
+      const now = new Date();
+      filterMonth = String(now.getMonth() + 1).padStart(2, "0");
+      filterYear = String(now.getFullYear());
+      // Set dropdowns to current month/year
+      if (document.getElementById("filterMonth")) document.getElementById("filterMonth").value = filterMonth;
+      if (document.getElementById("filterYear")) document.getElementById("filterYear").value = filterYear;
     }
-    if (filter.endDate) {
-      query = query.where("invoiceDate", "<=", filter.endDate);
-    }
+
+    // Always filter by month and year (default to current)
+    const start = `${filterYear}-${filterMonth}-01`;
+    const endDate = new Date(parseInt(filterYear), parseInt(filterMonth), 0); // last day of month
+    const end = `${filterYear}-${filterMonth}-${String(endDate.getDate()).padStart(2, "0")}`;
+    query = query.where("invoiceDate", ">=", start).where("invoiceDate", "<=", end);
 
     query.get()
       .then(snapshot => {
         if (snapshot.empty) {
           invoicesList.innerHTML = "<p class='text-gray-500'>No invoices found.</p>";
+          allInvoicesDocs = [];
           return;
         }
 
         let docs = [];
         snapshot.forEach(doc => docs.push({ id: doc.id, ...doc.data() }));
 
-        docs.sort((a, b) => {
-          const numA = parseInt((a.invoiceNumber || "").replace(/\D/g, ""), 10) || 0;
-          const numB = parseInt((b.invoiceNumber || "").replace(/\D/g, ""), 10) || 0;
-          return numB - numA;
-        });
-
-        let html = `
-          <table class="w-full text-sm border rounded bg-white">
-            <thead>
-              <tr class="bg-gray-100">
-                <th class="border p-2 text-center font-semibold">Invoice #</th>
-                <th class="border p-2 text-center font-semibold">Date</th>
-                <th class="border p-2 text-center font-semibold">Client</th>
-                <th class="border p-2 text-center font-semibold">Total</th>
-                <th class="border p-2 text-center font-semibold">Actions</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
-
-        docs.forEach(d => {
-          html += `
-            <tr>
-              <td class="border p-2 text-center">${d.invoiceNumber || ""}</td>
-              <td class="border p-2 text-center">${d.invoiceDate || ""}</td>
-              <td class="border p-2 text-center">${d.client?.name || ""}</td>
-              <td class="border p-2 text-center">${d.total || ""}</td>
-              <td class="border p-2 text-center">
-                <button class="text-blue-600 viewInvoiceBtn" data-id="${d.id}">View</button>
-                <button class="text-blue-600 printInvoiceBtn" data-id="${d.id}">Print</button>
-              </td>
-            </tr>
-          `;
-        });
-
-        html += "</tbody></table>";
-        invoicesList.innerHTML = html;
-
-        document.querySelectorAll(".viewInvoiceBtn").forEach(btn => {
-          btn.addEventListener("click", async () => {
-            const id = btn.getAttribute("data-id");
-            await showInvoiceDetails(id);
-          });
-        });
-        document.querySelectorAll(".printInvoiceBtn").forEach(btn => {
-          btn.addEventListener("click", async () => {
-            const id = btn.getAttribute("data-id");
-            await showInvoiceDetails(id, true);
-            setTimeout(() => window.print(), 500);
-          });
-        });
+        allInvoicesDocs = docs;
+        sortAndRenderInvoices();
       })
       .catch(err => {
         invoicesList.innerHTML = "<p class='text-red-500'>Failed to load invoices.</p>";
@@ -412,26 +512,64 @@ document.addEventListener("DOMContentLoaded", () => {
   }
 
   // --- Filter Form Events ---
-  document.addEventListener("submit", function(e) {
-    if (e.target && e.target.id === "invoiceFilterForm") {
-      e.preventDefault();
-      const startDate = document.getElementById("filterStartDate").value;
-      const endDate = document.getElementById("filterEndDate").value;
+  document.addEventListener("change", function(e) {
+    if (e.target && (e.target.id === "filterMonth" || e.target.id === "filterYear")) {
+      const month = document.getElementById("filterMonth").value;
+      const year = document.getElementById("filterYear").value;
       loadAllInvoices({
-        startDate: startDate || undefined,
-        endDate: endDate || undefined
+        month: month || undefined,
+        year: year || undefined
       });
     }
   });
 
   document.addEventListener("click", function(e) {
     if (e.target && e.target.id === "clearFilterBtn") {
-      document.getElementById("filterStartDate").value = "";
-      document.getElementById("filterEndDate").value = "";
-      loadAllInvoices();
+      // Reset to current month/year
+      const now = new Date();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const year = String(now.getFullYear());
+      document.getElementById("filterMonth").value = month;
+      document.getElementById("filterYear").value = year;
+      loadAllInvoices({ month, year });
     }
   });
 
-  // Load all invoices on page load
+  // --- Populate Month/Year Dropdowns ---
+  function populateMonthDropdown() {
+    const monthSelect = document.getElementById("filterMonth");
+    if (!monthSelect) return;
+    const months = [
+      "01", "02", "03", "04", "05", "06",
+      "07", "08", "09", "10", "11", "12"
+    ];
+    const monthNames = [
+      "January", "February", "March", "April", "May", "June",
+      "July", "August", "September", "October", "November", "December"
+    ];
+    let html = "";
+    for (let i = 0; i < 12; i++) {
+      html += `<option value="${months[i]}">${monthNames[i]}</option>`;
+    }
+    monthSelect.innerHTML = html;
+    // Set current month as default
+    const now = new Date();
+    monthSelect.value = String(now.getMonth() + 1).padStart(2, "0");
+  }
+  function populateYearDropdown() {
+    const yearSelect = document.getElementById("filterYear");
+    if (!yearSelect) return;
+    const currentYear = new Date().getFullYear();
+    let html = "";
+    for (let y = currentYear; y >= currentYear - 10; y--) {
+      html += `<option value="${y}">${y}</option>`;
+    }
+    yearSelect.innerHTML = html;
+    yearSelect.value = currentYear;
+  }
+  populateMonthDropdown();
+  populateYearDropdown();
+
+  // Load all invoices on page load (current month)
   loadAllInvoices();
 });
