@@ -19,21 +19,22 @@
   <style>
     body { font-family: 'Poppins', sans-serif; }
     .nav-link.active {
-      background-color: #FAD6A5;
+      background-color: #C8AFF0;
       border-radius: 0.5rem;
       font-weight: 600;
-      color: #ea580c;
+      color: #000;
       border-left: 4px solid #fdba74;
       box-shadow: 0 2px 8px rgba(253,186,116,0.08);
     }
     .nav-link {
-      transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s; 
     }
     .nav-link:hover {
-      border-radius: 0.9rem;
-      background: #FFE5C2;
-      color: #ea580c;
-    }
+  border-radius: 0.9rem;
+  background: #C8AFF0;
+  color: #000;   /* black text on hover */
+}
+
     button, .btn {
       transition: background-color 0.2s, transform 0.2s ease-in-out;
     }
@@ -158,7 +159,7 @@
   </div>
 
   <!-- Sidebar -->
-  <aside id="sidebar" class="w-64 bg-gray-200 border-r border-orange-100 shadow-md p-4 flex flex-col h-screen fixed left-0 top-0 bottom-0 transition-all duration-300 overflow-y-auto z-40">
+  <aside id="sidebar" style="background-color: #F7F5F2;" class="w-64 border-r border-orange-100 shadow-md p-4 flex flex-col h-screen fixed left-0 top-0 bottom-0 transition-all duration-300 overflow-y-auto z-40">
     <div class="flex items-center space-x-2 mb-6">
       <button id="sidebarToggle" class="md:hidden text-2xl focus:outline-none" aria-label="Toggle sidebar">☰</button>
       <img id="brandLogo" src="assets/LP Logo.png" alt="Lush Patisserie" class="h-10 w-10 rounded-full bg-gray-100" />
@@ -169,7 +170,7 @@
     </div>
     <nav id="sidebarNav" class="space-y-1 flex-1">
   <div class="text-xs colour: #9C7A56 mt-2 mb-1 sidebar-label">Operations</div>
-  <a href="#workLog" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Work Log">
+  <a href="#workLog" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Work Log">
     <!-- Work Log Icon -->
     <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
       <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z" />
@@ -177,21 +178,21 @@
     </svg>
     <span class="sidebar-label">Work Log</span>
   </a>
-  <a href="#dashboard" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Dashboard">
+  <a href="#dashboard" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Dashboard">
     <!-- Chart Bar Icon -->
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M9 17V9m4 8V5m4 12v-6" />
     </svg>
     <span class="sidebar-label">Dashboard</span>
   </a>
-  <a href="#invoice" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Invoices">
+  <a href="#invoice" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Invoices">
     <!-- Document Text Icon -->
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8H6a2 2 0 01-2-2V6a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
     </svg>
     <span class="sidebar-label">Invoices</span>
   </a>
-  <a href="#payments" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Payments">
+  <a href="#payments" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Payments">
     <!-- Credit Card Icon -->
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <rect width="20" height="14" x="2" y="5" rx="2" stroke-width="2" stroke="currentColor" fill="none"/>
@@ -199,30 +200,37 @@
     </svg>
     <span class="sidebar-label">Payments</span>
   </a>
+  <a href="#orders" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Orders">
+  <!-- Orders Icon -->
+  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
+    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+  </svg>
+  <span class="sidebar-label">Orders</span>
+</a>
   <div class="border-t my-2"></div>
   <div class="text-xs colour: #9C7A56 mt-2 mb-1 sidebar-label">Management</div>
-  <a href="#inventory" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Inventory">
+  <a href="#inventory" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Inventory">
     <!-- Cube Icon -->
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0v6a8 8 0 01-16 0V7m16 0L12 11m0 0L4 7m8 4v8" />
     </svg>
     <span class="sidebar-label">Inventory</span>
   </a>
-  <a href="#clients" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Clients">
+  <a href="#clients" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Clients">
     <!-- Users Icon (your latest SVG) -->
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
       <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
     </svg>
     <span class="sidebar-label">Clients</span>
   </a>
-  <a href="#fixedExpenses" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Fixed Expenses">
+  <a href="#fixedExpenses" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Fixed Expenses">
     <!-- Custom Fixed Expenses Icon -->
     <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
       <path stroke-linecap="round" stroke-linejoin="round" d="M15 8.25H9m6 3H9m3 6-3-3h1.5a3 3 0 1 0 0-6M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
     </svg>
     <span class="sidebar-label">Fixed Expenses</span>
   </a>
-  <a href="#export" class="nav-link flex items-center gap-2 text-gray-700 hover:text-orange-600 px-3 py-2 group" data-tooltip="Export Data">
+  <a href="#export" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Export Data">
     <!-- Arrow Up Tray Icon -->
     <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" />
@@ -249,7 +257,7 @@
       <div class="flex flex-col gap-8 w-full max-w-full px-2 md:px-8 py-6 md:py-10">
 
         <!-- Batch Calculator -->
-        <section id="batchCalculator" class="flex-1 min-w-0 w-full bg-white rounded-xl shadow p-4 md:p-10 mb-8 lg:mb-0">
+        <section id="batchCalculator" class="flex-1 min-w-0 w-full bg-[#F7F6F5] rounded-xl shadow p-4 md:p-10 mb-8 lg:mb-0">
           <h2 class="text-2xl font-bold mb-4 text-orange-700">Batch Calculator</h2>
           <form class="space-y-8">
             <div>
@@ -315,7 +323,7 @@
         </section>
 
         <!-- Daily Logs -->
-        <section id="dailyLog" class="flex-1 min-w-0 w-full bg-white rounded-xl shadow p-4 md:p-10">
+        <section id="dailyLog" class="flex-1 min-w-0 w-full bg-[#F7F6F5] rounded-xl shadow p-4 md:p-10">
           <h2 class="text-2xl font-bold mb-4 text-orange-700">Daily Logs</h2>
           <form class="space-y-8">
             <div>
@@ -393,6 +401,7 @@
   <div id="invoicePrintArea"></div>
 </div>
 <div id="payments" class="page-section hidden"></div>
+<div id="orders" class="page-section hidden"></div>
 
   </main>
 
@@ -416,10 +425,12 @@
   <script src="js/clients.js"></script>
   <script src="js/invoices.js"></script>
   <script src="js/payments.js"></script>
+  <script src="js/orders.js"></script>
+
 
   <script>
    // All sections that are toggled (except workLog, which is always visible)
-const sections = ["workLog", "dashboard", "fixedExpenses", "inventory", "export", "clients", "invoice", "payments"];
+const sections = ["workLog", "dashboard", "fixedExpenses", "inventory", "export", "clients", "invoice", "payments", "orders"];
 
 function toggleLoader(show) {
   const loader = document.getElementById("loader");

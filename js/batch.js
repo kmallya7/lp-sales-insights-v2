@@ -1,6 +1,26 @@
 // batch.js
 
-// Wait for the DOM to be fully loaded before running the script
+// --- Dropdown logic: Place this at the top or bottom of your file, but OUTSIDE the DOMContentLoaded handler ---
+
+window.toggleDropdown = function(id) {
+  // Close any open dropdowns first
+  document.querySelectorAll('[id^="dropdown-"]').forEach(el => {
+    if (el.id !== `dropdown-${id}`) el.classList.add('hidden');
+  });
+  // Toggle the clicked dropdown
+  const dropdown = document.getElementById(`dropdown-${id}`);
+  if (dropdown) dropdown.classList.toggle('hidden');
+};
+
+// Optional: Close dropdowns when clicking outside
+document.addEventListener('click', function(event) {
+  if (!event.target.closest('.relative')) {
+    document.querySelectorAll('[id^="dropdown-"]').forEach(el => el.classList.add('hidden'));
+  }
+});
+
+// --- Main UI logic ---
+
 document.addEventListener("DOMContentLoaded", () => {
   // Render the Batch Calculator UI with improved accessibility and helper text
   const batchSection = document.getElementById("batchCalculator");
@@ -86,7 +106,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <div id="preset-loading" class="hidden flex items-center gap-2 text-gray-500 text-sm mb-2">
           <span>Loading presets...</span>
         </div>
-        <div id="preset-list" class="grid gap-4"></div>
+        <div id="preset-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4"></div>
       </div>
     </section>
   `;
@@ -196,24 +216,47 @@ document.addEventListener("DOMContentLoaded", () => {
         snapshot.forEach(doc => {
           const d = doc.data();
           const card = document.createElement("div");
-          card.className = "bg-gray-50 p-4 rounded border hover:shadow transition flex flex-col gap-2";
+          card.className = "bg-white p-4 rounded-lg border shadow hover:shadow-lg transition flex flex-col gap-2 h-full cursor-pointer group";
           card.innerHTML = `
-            <div class="flex justify-between items-center mb-1">
-              <span class="font-medium text-gray-800 truncate" title="${d.name}">${d.name}</span>
-              <div class="flex gap-2">
-                <button class="text-sm text-blue-600 hover:underline flex items-center gap-1" title="Apply" onclick='applyPreset(${JSON.stringify(d)})'>
-                  Apply
+            <div class="flex justify-between items-start mb-2">
+              <span class="font-semibold text-gray-800 truncate group-hover:underline" title="${d.name}">${d.name}</span>
+              <div class="relative">
+                <button onclick="toggleDropdown('${doc.id}'); event.stopPropagation();" class="p-1 rounded hover:bg-gray-200 focus:outline-none" title="More actions" aria-haspopup="true" aria-expanded="false">
+                  <!-- Three dots icon -->
+                  <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <circle cx="12" cy="5" r="1.5"/>
+                    <circle cx="12" cy="12" r="1.5"/>
+                    <circle cx="12" cy="19" r="1.5"/>
+                  </svg>
                 </button>
-                <button class="text-sm text-yellow-600 hover:underline flex items-center gap-1" title="Edit" onclick='editPreset("${doc.id}", ${JSON.stringify(d)})'>
-                  Edit
-                </button>
-                <button class="text-sm text-red-500 hover:underline flex items-center gap-1" title="Delete" onclick='deletePreset("${doc.id}", "${d.name}")'>
-                  Delete
-                </button>
+                <div id="dropdown-${doc.id}" class="hidden absolute right-0 mt-2 w-40 bg-white border rounded shadow-lg z-10">
+                  <button class="flex items-center w-full px-4 py-2 text-sm text-yellow-600 hover:bg-yellow-50" onclick='editPreset("${doc.id}", ${JSON.stringify(d)}); closeDropdown("${doc.id}"); event.stopPropagation();'>
+                    <!-- Pencil icon -->
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13z"/>
+                    </svg>
+                    Edit
+                  </button>
+                  <button class="flex items-center w-full px-4 py-2 text-sm text-red-500 hover:bg-red-50" onclick='deletePreset("${doc.id}", "${d.name}"); closeDropdown("${doc.id}"); event.stopPropagation();'>
+                    <!-- Trash icon -->
+                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                    </svg>
+                    Delete
+                  </button>
+                </div>
               </div>
             </div>
-            <p class="text-sm text-gray-600">Cost: ₹${d.cost} | Price: ₹${d.price} | Qty: ${d.qty}</p>
+            <div class="text-sm text-gray-600 flex flex-col gap-1">
+              <span>Cost: <span class="font-medium text-gray-800">₹${d.cost}</span></span>
+              <span>Price: <span class="font-medium text-gray-800">₹${d.price}</span></span>
+              <span>Qty: <span class="font-medium text-gray-800">${d.qty}</span></span>
+            </div>
           `;
+          // Apply the batch when clicking anywhere on the card except the dropdown button
+          card.addEventListener('click', () => {
+            window.applyPreset(d);
+          });
           presetList.appendChild(card);
         });
       }
@@ -276,6 +319,12 @@ document.addEventListener("DOMContentLoaded", () => {
       qty: newQty
     });
     loadPresets();
+  };
+
+  // Helper to close dropdown after action
+  window.closeDropdown = function(id) {
+    const dropdown = document.getElementById(`dropdown-${id}`);
+    if (dropdown) dropdown.classList.add('hidden');
   };
 
   // Initial load
