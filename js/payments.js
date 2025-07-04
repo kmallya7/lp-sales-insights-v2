@@ -74,48 +74,48 @@ document.addEventListener("DOMContentLoaded", () => {
     // --- 5. Month/Year Picker UI ---
     const [year, month] = selectedMonthYear.split("-");
     let monthPickerHtml = `
-      <form id="month-filter-form" class="mb-6 flex flex-wrap gap-4 items-center">
-        <label class="font-medium text-gray-700">Show for:</label>
-        <input type="month" id="month-filter" name="month" value="${selectedMonthYear}" class="border rounded px-3 py-2 focus:ring-2 focus:ring-orange-200" />
+      <form id="month-filter-form" class="mb-4 flex flex-wrap gap-3 items-center">
+        <label class="font-medium text-gray-700 text-[13px]">Show for:</label>
+        <input type="month" id="month-filter" name="month" value="${selectedMonthYear}" class="border rounded px-2 py-1 focus:ring-2 focus:ring-[#C8AFF0] text-[13px]" />
       </form>
     `;
 
-    // --- 6. Card Stack HTML ---
+    // --- 6. Card Stack HTML (smaller, sleeker) ---
     let cardStackHtml = `
-      <div class="flex flex-wrap gap-4 mb-8">
-        <div class="flex-1 min-w-[180px] bg-gradient-to-r from-orange-200 to-orange-100 rounded-xl shadow p-6 flex flex-col items-center">
-          <div class="text-2xl font-bold text-orange-700 mb-1">₹${totalOutstanding.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
-          <div class="text-sm text-orange-900 font-medium">Amount Yet to Receive</div>
+      <div class="flex flex-wrap gap-3 mb-6">
+        <div class="flex-1 min-w-[140px] rounded-lg shadow p-4 flex flex-col items-center" style="background: rgba(200, 175, 240, 0.8);">
+          <div class="text-lg font-bold text-black mb-1">₹${totalOutstanding.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
+          <div class="text-xs font-medium text-black">Amount Yet to Receive</div>
         </div>
-        <div class="flex-1 min-w-[180px] bg-gradient-to-r from-green-200 to-green-100 rounded-xl shadow p-6 flex flex-col items-center">
-          <div class="text-2xl font-bold text-green-700 mb-1">₹${totalReceived.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
-          <div class="text-sm text-green-900 font-medium">Amount Received</div>
+        <div class="flex-1 min-w-[140px] rounded-lg shadow p-4 flex flex-col items-center" style="background: rgba(185, 251, 192, 0.8);">
+          <div class="text-lg font-bold text-green-700 mb-1">₹${totalReceived.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
+          <div class="text-xs font-medium text-black">Amount Received</div>
         </div>
-        <div class="flex-1 min-w-[180px] bg-gradient-to-r from-gray-200 to-gray-100 rounded-xl shadow p-6 flex flex-col items-center">
-          <div class="text-2xl font-bold text-gray-700 mb-1">${closedCount}</div>
-          <div class="text-sm text-gray-900 font-medium">Closed Accounts</div>
+        <div class="flex-1 min-w-[140px] rounded-lg shadow p-4 flex flex-col items-center" style="background: rgba(243, 240, 255, 0.8);">
+          <div class="text-lg font-bold text-black mb-1">${closedCount}</div>
+          <div class="text-xs font-medium text-black">Closed Accounts</div>
         </div>
       </div>
     `;
 
-    // --- 7. Table HTML ---
+    // --- 7. Table HTML (smaller, sleeker) ---
     let html = `
-      <div class="max-w-4xl mx-auto py-8">
-        <h2 class="text-3xl font-bold mb-6 text-orange-700 flex items-center gap-2">
+      <div class="max-w-3xl mx-auto py-6 text-[13px]">
+        <h2 class="text-xl font-bold mb-4 text-black flex items-center gap-2">
           <span>💸</span> Payments Tracker
         </h2>
         ${monthPickerHtml}
         ${cardStackHtml}
-        <div class="overflow-x-auto rounded-xl shadow-lg bg-white">
-          <table class="min-w-full text-sm text-gray-800">
+        <div class="overflow-x-auto rounded-lg shadow-lg bg-white">
+          <table class="min-w-full text-xs text-gray-800">
             <thead>
-              <tr class="bg-gradient-to-r from-orange-100 to-orange-200 text-orange-900 uppercase text-xs tracking-wider">
-                <th class="p-4 text-left">Client</th>
-                <th class="p-4 text-right">Total Sales (₹)</th>
-                <th class="p-4 text-right">Total Paid (₹)</th>
-                <th class="p-4 text-right">Outstanding (₹)</th>
-                <th class="p-4 text-center">Log Payment</th>
-                <th class="p-4 text-center">History</th>
+              <tr style="background: rgba(200, 175, 240, 0.8);" class="uppercase text-[11px] tracking-wider text-black">
+                <th class="p-3 text-left">Client</th>
+                <th class="p-3 text-right">Total Sales (₹)</th>
+                <th class="p-3 text-right">Total Paid (₹)</th>
+                <th class="p-3 text-right">Outstanding (₹)</th>
+                <th class="p-3 text-center">Log Payment</th>
+                <th class="p-3 text-center">History</th>
               </tr>
             </thead>
             <tbody>
@@ -124,26 +124,26 @@ document.addEventListener("DOMContentLoaded", () => {
     if (sortedClients.length === 0) {
       html += `
         <tr>
-          <td colspan="6" class="p-8 text-center text-gray-400">No client sales or payments found for this month.</td>
+          <td colspan="6" class="p-6 text-center text-gray-400">No client sales or payments found for this month.</td>
         </tr>
       `;
     } else {
       sortedClients.forEach((data, idx) => {
         html += `
-          <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-orange-50'} hover:bg-orange-100 transition">
-            <td class="p-4 font-semibold">${data.client}</td>
-            <td class="p-4 text-right">₹${data.sales.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
-            <td class="p-4 text-right text-green-700 font-semibold">₹${data.paid.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
-            <td class="p-4 text-right ${data.outstanding > 0 ? 'text-red-600 font-bold' : 'text-gray-500'}">
+          <tr class="${idx % 2 === 0 ? 'bg-white' : 'bg-[#F6F2FF]'} hover:bg-[#E9E0FA] transition">
+            <td class="p-3 font-semibold text-black">${data.client}</td>
+            <td class="p-3 text-right text-black">₹${data.sales.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+            <td class="p-3 text-right text-green-700 font-semibold">₹${data.paid.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+            <td class="p-3 text-right ${data.outstanding > 0 ? 'text-red-600 font-bold' : 'text-gray-500'}">
               ₹${data.outstanding.toLocaleString(undefined, {minimumFractionDigits:2})}
             </td>
-            <td class="p-4 text-center">
-              <button class="log-payment-btn bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg shadow hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 transition" data-client="${data.client}">
+            <td class="p-3 text-center">
+              <button class="log-payment-btn bg-[#C8AFF0] text-black px-3 py-1 rounded-md shadow hover:bg-[#b39ddb] focus:outline-none focus:ring-2 focus:ring-[#C8AFF0] transition text-xs" data-client="${data.client}">
                 + Payment
               </button>
             </td>
-            <td class="p-4 text-center">
-              <button class="show-history-btn text-blue-600 hover:underline font-medium" data-client="${data.client}">
+            <td class="p-3 text-center">
+              <button class="show-history-btn text-black hover:underline font-medium text-xs" data-client="${data.client}">
                 View
               </button>
             </td>
@@ -199,26 +199,26 @@ document.addEventListener("DOMContentLoaded", () => {
     const defaultDateStr = defaultDate.toISOString().split('T')[0];
 
     modal.innerHTML = `
-      <div class="bg-white rounded-xl shadow-xl p-8 w-full max-w-md relative animate-fadeIn">
-        <button class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold" id="close-payment-form" title="Close">&times;</button>
-        <h3 class="text-xl font-bold mb-4 text-blue-700">Log Payment for <span class="text-orange-700">${client}</span></h3>
-        <form id="log-payment-form" class="space-y-4">
+      <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-sm relative animate-fadeIn border-2 border-[#C8AFF0] text-[13px]">
+        <button class="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl font-bold" id="close-payment-form" title="Close">&times;</button>
+        <h3 class="text-lg font-bold mb-3 text-black">Log Payment for <span class="text-[#C8AFF0]">${client}</span></h3>
+        <form id="log-payment-form" class="space-y-3">
           <input type="hidden" name="client" value="${client}" />
           <div>
-            <label class="block text-sm font-medium mb-1" for="payment-date">Date</label>
-            <input type="date" name="date" id="payment-date" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-200" required value="${defaultDateStr}" />
+            <label class="block text-xs font-medium mb-1 text-black" for="payment-date">Date</label>
+            <input type="date" name="date" id="payment-date" class="w-full p-1 border rounded focus:ring-2 focus:ring-[#C8AFF0] text-[13px]" required value="${defaultDateStr}" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1" for="payment-amount">Amount (₹)</label>
-            <input type="number" name="amount" id="payment-amount" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-200" placeholder="Amount" required min="1" />
+            <label class="block text-xs font-medium mb-1 text-black" for="payment-amount">Amount (₹)</label>
+            <input type="number" name="amount" id="payment-amount" class="w-full p-1 border rounded focus:ring-2 focus:ring-[#C8AFF0] text-[13px]" placeholder="Amount" required min="1" />
           </div>
           <div>
-            <label class="block text-sm font-medium mb-1" for="payment-notes">Notes (optional)</label>
-            <input type="text" name="notes" id="payment-notes" class="w-full p-2 border rounded focus:ring-2 focus:ring-blue-200" placeholder="Notes" />
+            <label class="block text-xs font-medium mb-1 text-black" for="payment-notes">Notes (optional)</label>
+            <input type="text" name="notes" id="payment-notes" class="w-full p-1 border rounded focus:ring-2 focus:ring-[#C8AFF0] text-[13px]" placeholder="Notes" />
           </div>
-          <div class="flex gap-2 mt-4">
-            <button type="submit" class="flex-1 bg-gradient-to-r from-blue-500 to-blue-600 text-white px-4 py-2 rounded-lg shadow hover:from-blue-600 hover:to-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-300 transition">Save</button>
-            <button type="button" id="cancel-payment-form" class="flex-1 bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition">Cancel</button>
+          <div class="flex gap-2 mt-3">
+            <button type="submit" class="flex-1 bg-[#C8AFF0] text-black px-3 py-1 rounded-md shadow hover:bg-[#b39ddb] focus:outline-none focus:ring-2 focus:ring-[#C8AFF0] transition text-xs">Save</button>
+            <button type="button" id="cancel-payment-form" class="flex-1 bg-gray-200 text-black px-3 py-1 rounded-md hover:bg-gray-300 transition text-xs">Cancel</button>
           </div>
         </form>
       </div>
@@ -249,29 +249,29 @@ document.addEventListener("DOMContentLoaded", () => {
   function showPaymentHistory(client, payments) {
     const modal = document.getElementById('payment-history-modal');
     let html = `
-      <div class="bg-white rounded-xl shadow-xl p-8 w-full max-w-lg relative animate-fadeIn">
-        <button class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold" id="close-history-modal" title="Close">&times;</button>
-        <h3 class="text-xl font-bold mb-4 text-blue-700">Payment History for <span class="text-orange-700">${client}</span></h3>
+      <div class="bg-white rounded-lg shadow-xl p-6 w-full max-w-md relative animate-fadeIn border-2 border-[#C8AFF0] text-[13px]">
+        <button class="absolute top-2 right-2 text-gray-400 hover:text-gray-700 text-xl font-bold" id="close-history-modal" title="Close">&times;</button>
+        <h3 class="text-lg font-bold mb-3 text-black">Payment History for <span class="text-[#C8AFF0]">${client}</span></h3>
         <div class="overflow-x-auto">
-          <table class="min-w-full text-sm text-gray-800 mb-4">
+          <table class="min-w-full text-xs text-gray-800 mb-3">
             <thead>
-              <tr class="bg-gradient-to-r from-orange-100 to-orange-200 text-orange-900 uppercase text-xs tracking-wider">
-                <th class="p-3 text-left">Date</th>
-                <th class="p-3 text-right">Amount (₹)</th>
-                <th class="p-3 text-left">Notes</th>
+              <tr style="background: rgba(200, 175, 240, 0.8);" class="uppercase text-[11px] tracking-wider text-black">
+                <th class="p-2 text-left">Date</th>
+                <th class="p-2 text-right">Amount (₹)</th>
+                <th class="p-2 text-left">Notes</th>
               </tr>
             </thead>
             <tbody>
     `;
     if (!payments || payments.length === 0) {
-      html += `<tr><td colspan="3" class="p-6 text-center text-gray-400">No payments logged.</td></tr>`;
+      html += `<tr><td colspan="3" class="p-4 text-center text-gray-400">No payments logged.</td></tr>`;
     } else {
       payments.sort((a, b) => (a.date > b.date ? -1 : 1)).forEach(p => {
         html += `
-          <tr class="hover:bg-orange-50 transition">
-            <td class="p-3">${p.date}</td>
-            <td class="p-3 text-right text-green-700 font-semibold">₹${p.amount.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
-            <td class="p-3">${p.notes || ''}</td>
+          <tr class="hover:bg-[#F6F2FF] transition">
+            <td class="p-2 text-black">${p.date}</td>
+            <td class="p-2 text-right text-green-700 font-semibold">₹${p.amount.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
+            <td class="p-2 text-black">${p.notes || ''}</td>
           </tr>
         `;
       });
@@ -281,7 +281,7 @@ document.addEventListener("DOMContentLoaded", () => {
           </table>
         </div>
         <div class="flex justify-end">
-          <button id="close-history-modal-btn" class="bg-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-300 transition">Close</button>
+          <button id="close-history-modal-btn" class="bg-gray-200 text-black px-3 py-1 rounded-md hover:bg-gray-300 transition text-xs">Close</button>
         </div>
       </div>
     `;
@@ -302,6 +302,25 @@ document.addEventListener("DOMContentLoaded", () => {
       to   { opacity: 1; transform: scale(1);}
     }
     .animate-fadeIn { animation: fadeIn 0.2s; }
+    /* Sleeker font size for all payments section */
+    #payments, #payments * {
+      font-size: 13px !important;
+      line-height: 1.3 !important;
+    }
+    #payments h2, #payments h3 {
+      font-size: 1.1rem !important;
+    }
+    #payments table th, #payments table td {
+      white-space: nowrap;
+    }
+    @media (max-width: 600px) {
+      #payments, #payments * {
+        font-size: 12px !important;
+      }
+      #payments h2, #payments h3 {
+        font-size: 1rem !important;
+      }
+    }
   `;
   document.head.appendChild(style);
 

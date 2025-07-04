@@ -1,8 +1,33 @@
+// invoices.js
+
+// ===============================
+// INVOICE GENERATOR APP MAIN FILE
+// ===============================
+//
+// This file renders the invoice generator UI, handles all logic for
+// adding/editing/saving invoices, and manages the "All Invoices" list.
+//
+// --- SECTIONS ---
+// 1. Render Invoice Generator UI
+// 2. Add/Remove Invoice Items
+// 3. Calculate Totals
+// 4. Save Invoice to Firestore
+// 5. Download as PNG (dom-to-image)
+// 6. Print Invoice
+// 7. All Invoices Table (view, print, delete, filter, sort)
+// 8. Utility: Populate Month/Year Dropdowns
+// 9. Initial Load
+//
+// Make sure Firebase is initialized before this script runs!
+// ===============================
+
 document.addEventListener("DOMContentLoaded", () => {
-  // Render the invoice form
+  // 1. RENDER INVOICE GENERATOR UI
+  // ------------------------------
   const invoicePrintArea = document.getElementById("invoicePrintArea");
   if (invoicePrintArea) {
     invoicePrintArea.innerHTML = `
+      <!-- Invoice Generator Section -->
       <section class="bg-white p-6 rounded shadow max-w-5xl mx-auto">
         <header class="flex justify-between items-start mb-6">
           <div>
@@ -57,19 +82,24 @@ document.addEventListener("DOMContentLoaded", () => {
             </div>
           </div>
         </div>
-        <div class="mt-4 text-right print:hidden png-hide">
-          <button id="downloadPngBtn" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 ml-2 png-hide">Download as PNG</button>
-          <button onclick="window.print()" class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 png-hide">Print / Save PDF</button>
-          <button id="saveInvoiceBtn" class="mt-2 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 print:hidden png-hide">Save Invoice</button>
-        </div>
         <div class="mt-8 text-center print:block avoid-break print:mt-4 print:pb-4">
           <div class="inline-block">
             <p class="text-sm text-gray-600 italic">Signature</p>
             <p class="text-xl mt-2 font-signature">Vaishnavi</p>
+            <p class="text-xs text-gray-500">Owner</p>
             <p class="text-base italic text-orange-800 font-medium mt-4">Thank you for your business! ❤️</p>
           </div>
         </div>
       </section>
+      <!-- Invoice Actions Section (Save/Print/PNG) -->
+      <section id="invoiceActionsSection" class="bg-white p-6 rounded shadow max-w-5xl mx-auto my-6 flex flex-col items-center print:hidden png-hide">
+        <div class="flex flex-col sm:flex-row gap-4 justify-center w-full">
+          <button id="downloadPngBtn" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 png-hide">Download as PNG</button>
+          <button id="printInvoiceBtn" class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 png-hide">Print / Save PDF</button>
+          <button id="saveInvoiceBtn" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 print:hidden png-hide">Save Invoice</button>
+        </div>
+      </section>
+      <!-- All Invoices Section -->
       <section id="allInvoicesSection" class="bg-white p-6 rounded shadow max-w-5xl mx-auto mt-10">
         <h2 class="text-xl font-bold mb-4 text-orange-900">All Invoices</h2>
         <form id="invoiceFilterForm" class="flex flex-wrap gap-4 mb-4 items-end">
@@ -88,7 +118,9 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
   }
 
-  // Print-safe CSS
+  // 1A. ADD PRINT-SAFE AND RESPONSIVE CSS
+  // -------------------------------------
+  // These styles help with print layout and responsive design.
   const style = document.createElement("style");
   style.innerHTML = `
     @media print {
@@ -163,22 +195,12 @@ document.addEventListener("DOMContentLoaded", () => {
   `;
   document.head.appendChild(centerInvoiceStyle);
 
+  // 2. ADD/REMOVE INVOICE ITEMS
+  // ---------------------------
   const db = firebase.firestore();
   const itemsBody = document.getElementById("invoiceItems");
 
-  function updateTotals() {
-    let subtotal = 0;
-    itemsBody.querySelectorAll("tr").forEach(row => {
-      const qty = parseFloat(row.querySelector(".qty").value) || 0;
-      const price = parseFloat(row.querySelector(".price").value) || 0;
-      const amt = qty * price;
-      subtotal += amt;
-      row.querySelector(".amount").textContent = `₹${amt.toFixed(2)}`;
-    });
-    document.getElementById("subtotal").textContent = `₹${subtotal.toFixed(2)}`;
-    document.getElementById("total").textContent = `₹${subtotal.toFixed(2)}`;
-  }
-
+  // Add a new row to the invoice items table
   function addRow(item = {}) {
     const row = document.createElement("tr");
     row.innerHTML = `
@@ -206,55 +228,73 @@ document.addEventListener("DOMContentLoaded", () => {
     updateTotals();
   }
 
+  // Add first row by default
   document.getElementById("addItemBtn").addEventListener("click", () => addRow());
   addRow();
 
-  const today = new Date();
-  const formattedDate = today.toISOString().split("T")[0];
-  document.getElementById("invoiceDate").value = formattedDate;
-  document.getElementById("dueDate").value = formattedDate;
-
-  document.getElementById("saveInvoiceBtn").addEventListener("click", () => {
-    const invoiceData = {
-      invoiceNumber: document.getElementById("invoiceNumber").value.trim(),
-      invoiceDate: document.getElementById("invoiceDate").value,
-      dueDate: document.getElementById("dueDate").value,
-      client: {
-        name: document.getElementById("clientName").value.trim(),
-        address: document.getElementById("clientAddress").value.trim(),
-        phone: document.getElementById("clientPhone").value.trim(),
-        email: document.getElementById("clientEmail").value.trim()
-      },
-      items: [],
-      notes: document.getElementById("invoiceNotes").value.trim(),
-      subtotal: document.getElementById("subtotal").textContent,
-      total: document.getElementById("total").textContent,
-      createdAt: new Date()
-    };
-
+  // 3. CALCULATE TOTALS
+  // -------------------
+  function updateTotals() {
+    let subtotal = 0;
     itemsBody.querySelectorAll("tr").forEach(row => {
-      const item = {
-        name: row.querySelector("input[type='text']").value,
-        qty: parseFloat(row.querySelector(".qty").value) || 0,
-        price: parseFloat(row.querySelector(".price").value) || 0,
-        amount: row.querySelector(".amount").textContent
-      };
-      invoiceData.items.push(item);
+      const qty = parseFloat(row.querySelector(".qty").value) || 0;
+      const price = parseFloat(row.querySelector(".price").value) || 0;
+      const amt = qty * price;
+      subtotal += amt;
+      row.querySelector(".amount").textContent = `₹${amt.toFixed(2)}`;
     });
+    document.getElementById("subtotal").textContent = `₹${subtotal.toFixed(2)}`;
+    document.getElementById("total").textContent = `₹${subtotal.toFixed(2)}`;
+  }
 
-    db.collection("invoices").add(invoiceData)
-      .then(() => {
-        alert("Invoice saved successfully!");
-        document.getElementById("successSound")?.play();
-        loadAllInvoices();
-      })
-      .catch(err => {
-        console.error("Error saving invoice:", err);
-        alert("Failed to save invoice.");
+  // 4. SAVE INVOICE TO FIRESTORE
+  // ----------------------------
+  // Save Invoice button (in the actions section)
+  document.addEventListener("click", function(e) {
+    if (e.target && e.target.id === "saveInvoiceBtn") {
+      const invoiceData = {
+        invoiceNumber: document.getElementById("invoiceNumber").value.trim(),
+        invoiceDate: document.getElementById("invoiceDate").value,
+        dueDate: document.getElementById("dueDate").value,
+        client: {
+          name: document.getElementById("clientName").value.trim(),
+          address: document.getElementById("clientAddress").value.trim(),
+          phone: document.getElementById("clientPhone").value.trim(),
+          email: document.getElementById("clientEmail").value.trim()
+        },
+        items: [],
+        notes: document.getElementById("invoiceNotes").value.trim(),
+        subtotal: document.getElementById("subtotal").textContent,
+        total: document.getElementById("total").textContent,
+        createdAt: new Date()
+      };
+
+      itemsBody.querySelectorAll("tr").forEach(row => {
+        const item = {
+          name: row.querySelector("input[type='text']").value,
+          qty: parseFloat(row.querySelector(".qty").value) || 0,
+          price: parseFloat(row.querySelector(".price").value) || 0,
+          amount: row.querySelector(".amount").textContent
+        };
+        invoiceData.items.push(item);
       });
+
+      db.collection("invoices").add(invoiceData)
+        .then(() => {
+          alert("Invoice saved successfully!");
+          document.getElementById("successSound")?.play();
+          loadAllInvoices();
+        })
+        .catch(err => {
+          console.error("Error saving invoice:", err);
+          alert("Failed to save invoice.");
+        });
+    }
   });
 
-  // --- PNG Download with dom-to-image, fit content, no stretch ---
+  // 5. DOWNLOAD AS PNG (dom-to-image)
+  // ---------------------------------
+  // Loads dom-to-image if not present, then sets up the download button
   const setupPngDownload = () => {
     const downloadBtn = document.getElementById("downloadPngBtn");
     if (downloadBtn && window.domtoimage) {
@@ -305,7 +345,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Wait for dom-to-image to be loaded
+  // Load dom-to-image if not already loaded
   if (window.domtoimage) {
     setupPngDownload();
   } else {
@@ -315,9 +355,20 @@ document.addEventListener("DOMContentLoaded", () => {
     document.head.appendChild(script);
   }
 
-  // --- All Invoices Table (with Month/Year Filter, Delete, No Search) ---
+  // 6. PRINT INVOICE
+  // ----------------
+  // Print button (in the actions section)
+  document.addEventListener("click", function(e) {
+    if (e.target && e.target.id === "printInvoiceBtn") {
+      window.print();
+    }
+  });
+
+  // 7. ALL INVOICES TABLE (VIEW, PRINT, DELETE, FILTER, SORT)
+  // ---------------------------------------------------------
   let allInvoicesDocs = []; // Store all loaded invoices for sorting
 
+  // Render the invoices table
   function renderInvoicesTable(docs) {
     const invoicesList = document.getElementById("invoicesList");
     if (!invoicesList) return;
@@ -369,7 +420,7 @@ document.addEventListener("DOMContentLoaded", () => {
     html += "</tbody></table>";
     invoicesList.innerHTML = html;
 
-    // Attach event listeners
+    // Attach event listeners for view, print, delete
     document.querySelectorAll(".viewInvoiceBtn").forEach(btn => {
       btn.addEventListener("click", async () => {
         const id = btn.getAttribute("data-id");
@@ -398,11 +449,11 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
+  // Sort and re-render invoices
   function sortAndRenderInvoices() {
     let docs = [...allInvoicesDocs];
     const sortVal = document.getElementById("sortInvoicesBy")?.value || "invoiceNumber-desc";
 
-    // Sorting
     docs.sort((a, b) => {
       switch (sortVal) {
         case "invoiceNumber-asc":
@@ -430,6 +481,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("sortInvoicesBy")) document.getElementById("sortInvoicesBy").value = sortVal;
   }
 
+  // Delete invoice from Firestore
   async function deleteInvoice(id) {
     try {
       await db.collection("invoices").doc(id).delete();
@@ -441,6 +493,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // Load all invoices for a given month/year
   function loadAllInvoices(filter = {}) {
     const invoicesList = document.getElementById("invoicesList");
     if (!invoicesList) return;
@@ -455,7 +508,6 @@ document.addEventListener("DOMContentLoaded", () => {
       const now = new Date();
       filterMonth = String(now.getMonth() + 1).padStart(2, "0");
       filterYear = String(now.getFullYear());
-      // Set dropdowns to current month/year
       if (document.getElementById("filterMonth")) document.getElementById("filterMonth").value = filterMonth;
       if (document.getElementById("filterYear")) document.getElementById("filterYear").value = filterYear;
     }
@@ -486,7 +538,7 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-  // Show invoice details in the form
+  // Show invoice details in the form (for view/print)
   async function showInvoiceDetails(invoiceId, silentPrint = false) {
     const doc = await db.collection("invoices").doc(invoiceId).get();
     if (!doc.exists) return alert("Invoice not found.");
@@ -511,31 +563,8 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // --- Filter Form Events ---
-  document.addEventListener("change", function(e) {
-    if (e.target && (e.target.id === "filterMonth" || e.target.id === "filterYear")) {
-      const month = document.getElementById("filterMonth").value;
-      const year = document.getElementById("filterYear").value;
-      loadAllInvoices({
-        month: month || undefined,
-        year: year || undefined
-      });
-    }
-  });
-
-  document.addEventListener("click", function(e) {
-    if (e.target && e.target.id === "clearFilterBtn") {
-      // Reset to current month/year
-      const now = new Date();
-      const month = String(now.getMonth() + 1).padStart(2, "0");
-      const year = String(now.getFullYear());
-      document.getElementById("filterMonth").value = month;
-      document.getElementById("filterYear").value = year;
-      loadAllInvoices({ month, year });
-    }
-  });
-
-  // --- Populate Month/Year Dropdowns ---
+  // 8. UTILITY: POPULATE MONTH/YEAR DROPDOWNS
+  // ------------------------------------------
   function populateMonthDropdown() {
     const monthSelect = document.getElementById("filterMonth");
     if (!monthSelect) return;
@@ -570,6 +599,39 @@ document.addEventListener("DOMContentLoaded", () => {
   populateMonthDropdown();
   populateYearDropdown();
 
+  // 9. INITIAL LOAD
+  // ---------------
+  // Set today's date for invoice and due date
+  const today = new Date();
+  const formattedDate = today.toISOString().split("T")[0];
+  document.getElementById("invoiceDate").value = formattedDate;
+  document.getElementById("dueDate").value = formattedDate;
+
   // Load all invoices on page load (current month)
   loadAllInvoices();
+
+  // --- FILTER FORM EVENTS ---
+  // When month/year dropdowns change, reload invoices
+  document.addEventListener("change", function(e) {
+    if (e.target && (e.target.id === "filterMonth" || e.target.id === "filterYear")) {
+      const month = document.getElementById("filterMonth").value;
+      const year = document.getElementById("filterYear").value;
+      loadAllInvoices({
+        month: month || undefined,
+        year: year || undefined
+      });
+    }
+  });
+
+  // Clear filter button resets to current month/year
+  document.addEventListener("click", function(e) {
+    if (e.target && e.target.id === "clearFilterBtn") {
+      const now = new Date();
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const year = String(now.getFullYear());
+      document.getElementById("filterMonth").value = month;
+      document.getElementById("filterYear").value = year;
+      loadAllInvoices({ month, year });
+    }
+  });
 });

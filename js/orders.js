@@ -4,10 +4,10 @@ document.addEventListener("DOMContentLoaded", () => {
   const ordersSection = document.getElementById("orders");
   const db = window.db; // Firestore instance
 
-  // Updated color palette with your sidebar color as primary
+  // Color palette with #C8AFF0 as theme, no glossy, each card a different color but theme is #C8AFF0
   const COLORS = {
     background: "#F6F8FA",
-    primary: "#C8AFF0", // Your sidebar color
+    primary: "#C8AFF0", // App theme color
     secondary: "#64748B",
     success: "#22C55E",
     warning: "#F59E42",
@@ -18,15 +18,23 @@ document.addEventListener("DOMContentLoaded", () => {
     badgeBaked: "#FEF9C3",
     badgeDelivered: "#DCFCE7",
     badgeCancelled: "#F3F4F6",
-    cardReceived: "#F3E8FF",
-    cardBaked: "#FEF3C7",
-    cardDelivered: "#DCFCE7",
-    cardCancelled: "#F3F4F6"
+    cardReceived: "#C8AFF0",      // Theme color
+    cardBaked: "#FDE68A",         // Soft yellow
+    cardDelivered: "#BBF7D0",     // Soft green
+    cardCancelled: "#E5E7EB"      // Soft gray
   };
 
   function getCurrentMonthYear() {
     const now = new Date();
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
+  }
+
+  function formatDate(dateStr) {
+    // Expects 'YYYY-MM-DD', returns '4-Jul-2025'
+    if (!dateStr) return "";
+    const [year, month, day] = dateStr.split("-");
+    const months = ["Jan", "Feb", "Mar", "Apr", "May", "Jun", "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+    return `${parseInt(day, 10)}-${months[parseInt(month, 10) - 1]}-${year}`;
   }
 
   function showToast(message, type = "success") {
@@ -39,10 +47,10 @@ document.addEventListener("DOMContentLoaded", () => {
       toast.style.left = "50%";
       toast.style.transform = "translateX(-50%)";
       toast.style.zIndex = "9999";
-      toast.style.padding = "18px 36px";
-      toast.style.borderRadius = "12px";
+      toast.style.padding = "12px 24px";
+      toast.style.borderRadius = "10px";
       toast.style.fontWeight = "bold";
-      toast.style.fontSize = "1.1rem";
+      toast.style.fontSize = "0.98rem";
       toast.style.boxShadow = "0 4px 24px rgba(0,0,0,0.10)";
       toast.style.letterSpacing = "0.02em";
       toast.style.transition = "opacity 0.3s";
@@ -64,7 +72,7 @@ document.addEventListener("DOMContentLoaded", () => {
       loader = document.createElement("div");
       loader.id = "orders-loader";
       loader.innerHTML = `<div style="display:flex;align-items:center;justify-content:center;height:100%;">
-        <svg class="animate-spin" style="height:40px;width:40px;color:${COLORS.primary};" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+        <svg class="animate-spin" style="height:32px;width:32px;color:${COLORS.primary};" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
           <circle class="opacity-25" cx="12" cy="12" r="10" stroke="${COLORS.primary}" stroke-width="4"></circle>
           <path class="opacity-75" fill="${COLORS.primary}" d="M4 12a8 8 0 018-8v8z"></path>
         </svg>
@@ -123,59 +131,59 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     let monthPickerHtml = `
-      <form id="orders-month-filter-form" class="mb-6 flex flex-wrap gap-4 items-center">
+      <form id="orders-month-filter-form" class="mb-4 flex flex-wrap gap-3 items-center" style="font-size:0.89rem;">
         <label class="font-medium" style="color:${COLORS.text};">Show for:</label>
-        <input type="month" id="orders-month-filter" name="month" value="${selectedMonthYear}" class="border rounded px-3 py-2 focus:ring-2 focus:ring-indigo-300 transition" style="border-color:${COLORS.secondary}; color:${COLORS.text}; background:${COLORS.background};" />
+        <input type="month" id="orders-month-filter" name="month" value="${selectedMonthYear}" class="border rounded px-2 py-1 focus:ring-2 focus:ring-indigo-300 transition" style="border-color:${COLORS.secondary}; color:${COLORS.text}; background:${COLORS.background};" />
       </form>
     `;
 
-    // Card stack with solid, glossy finish
+    // Card stack: theme color for Received, others are soft but not glossy, all text black, centered
     let cardStackHtml = `
-      <div class="flex flex-wrap gap-4 mb-8">
-        <div class="flex-1 min-w-[150px] rounded-2xl shadow-md p-6 flex flex-col items-center border border-indigo-100 hover:scale-105 transition" style="background:${COLORS.cardReceived}; box-shadow: 0 2px 12px 0 #c7d2fe;">
-          <div class="text-3xl font-extrabold mb-1" style="color:${COLORS.primary}; text-shadow: 0 2px 8px #c7d2fe99;">${statusCounts.Received}</div>
-          <div class="text-sm font-medium" style="color:${COLORS.secondary};">Received</div>
+      <div class="flex flex-wrap gap-3 mb-6" style="font-size:0.91rem;">
+        <div class="flex-1 min-w-[120px] rounded-xl shadow p-4 flex flex-col items-center border border-indigo-100 hover:scale-105 transition" style="background:${COLORS.cardReceived}; color:#000; text-align:center;">
+          <div class="text-2xl font-extrabold mb-1" style="color:#000;">${statusCounts.Received}</div>
+          <div class="text-xs font-medium" style="color:#000;">Received</div>
         </div>
-        <div class="flex-1 min-w-[150px] rounded-2xl shadow-md p-6 flex flex-col items-center border border-yellow-100 hover:scale-105 transition" style="background:${COLORS.cardBaked}; box-shadow: 0 2px 12px 0 #fde68a;">
-          <div class="text-3xl font-extrabold mb-1" style="color:${COLORS.warning}; text-shadow: 0 2px 8px #fde68a99;">${statusCounts.Baked}</div>
-          <div class="text-sm font-medium" style="color:${COLORS.secondary};">Baked</div>
+        <div class="flex-1 min-w-[120px] rounded-xl shadow p-4 flex flex-col items-center border border-yellow-100 hover:scale-105 transition" style="background:${COLORS.cardBaked}; color:#000; text-align:center;">
+          <div class="text-2xl font-extrabold mb-1" style="color:#000;">${statusCounts.Baked}</div>
+          <div class="text-xs font-medium" style="color:#000;">Baked</div>
         </div>
-        <div class="flex-1 min-w-[150px] rounded-2xl shadow-md p-6 flex flex-col items-center border border-green-100 hover:scale-105 transition" style="background:${COLORS.cardDelivered}; box-shadow: 0 2px 12px 0 #bbf7d0;">
-          <div class="text-3xl font-extrabold mb-1" style="color:${COLORS.success}; text-shadow: 0 2px 8px #bbf7d099;">${statusCounts.Delivered}</div>
-          <div class="text-sm font-medium" style="color:${COLORS.secondary};">Delivered</div>
+        <div class="flex-1 min-w-[120px] rounded-xl shadow p-4 flex flex-col items-center border border-green-100 hover:scale-105 transition" style="background:${COLORS.cardDelivered}; color:#000; text-align:center;">
+          <div class="text-2xl font-extrabold mb-1" style="color:#000;">${statusCounts.Delivered}</div>
+          <div class="text-xs font-medium" style="color:#000;">Delivered</div>
         </div>
-        <div class="flex-1 min-w-[150px] rounded-2xl shadow-md p-6 flex flex-col items-center border border-gray-200 hover:scale-105 transition" style="background:${COLORS.cardCancelled}; box-shadow: 0 2px 12px 0 #e5e7eb;">
-          <div class="text-3xl font-extrabold mb-1" style="color:${COLORS.danger}; text-shadow: 0 2px 8px #e5e7eb99;">${statusCounts.Cancelled}</div>
-          <div class="text-sm font-medium" style="color:${COLORS.secondary};">Cancelled</div>
+        <div class="flex-1 min-w-[120px] rounded-xl shadow p-4 flex flex-col items-center border border-gray-200 hover:scale-105 transition" style="background:${COLORS.cardCancelled}; color:#000; text-align:center;">
+          <div class="text-2xl font-extrabold mb-1" style="color:#000;">${statusCounts.Cancelled}</div>
+          <div class="text-xs font-medium" style="color:#000;">Cancelled</div>
         </div>
       </div>
     `;
 
     let html = `
-      <div class="max-w-5xl mx-auto py-10">
-        <div class="flex items-center justify-between mb-8">
-          <h2 class="text-4xl font-extrabold flex items-center gap-3" style="color:${COLORS.text}; letter-spacing:0.01em;">
-            <span style="font-size:2.2rem;">🧁</span> Orders Tracker
+      <div class="max-w-4xl mx-auto py-6" style="font-size:0.91rem;">
+        <div class="flex items-center justify-between mb-5">
+          <h2 class="text-3xl font-extrabold flex items-center gap-2" style="color:${COLORS.text}; letter-spacing:0.01em; font-size:1.5rem;">
+            <span style="font-size:1.7rem;">🧁</span> Orders Tracker
           </h2>
-          <button id="add-order-btn" class="px-6 py-2.5 rounded-xl shadow-md font-semibold transition hover:bg-indigo-600 hover:scale-105"
-            style="background:${COLORS.primary}; color:white; border:none; font-size:1.1rem;">
+          <button id="add-order-btn" class="px-4 py-2 rounded-lg shadow font-semibold transition hover:bg-indigo-600 hover:scale-105"
+            style="background:${COLORS.primary}; color:white; border:none; font-size:0.98rem;">
             + New Order
           </button>
         </div>
         ${monthPickerHtml}
         ${cardStackHtml}
-        <div class="overflow-x-auto rounded-2xl shadow-lg bg-white border" style="border-color:${COLORS.rowAlt};">
-          <table class="min-w-full text-base" style="color:${COLORS.text}; border-radius:1.5rem; overflow:hidden;">
+        <div class="overflow-x-auto rounded-xl shadow bg-white border" style="border-color:${COLORS.rowAlt};">
+          <table class="min-w-full text-base" style="color:${COLORS.text}; border-radius:1.2rem; overflow:hidden; font-size:0.91rem;">
             <thead>
               <tr style="background:${COLORS.background}; color:${COLORS.text}; text-transform:uppercase; letter-spacing:0.07em;">
-                <th class="p-5 text-left">Date</th>
-                <th class="p-5 text-left">Customer</th>
-                <th class="p-5 text-left">Item</th>
-                <th class="p-5 text-right">Qty</th>
-                <th class="p-5 text-center">Status</th>
-                <th class="p-5 text-center">Update</th>
-                <th class="p-5 text-center">Details</th>
-                <th class="p-5 text-center">Delete</th>
+                <th class="p-3 text-center">Date</th>
+                <th class="p-3 text-center">Customer</th>
+                <th class="p-3 text-center">Item</th>
+                <th class="p-3 text-center">Qty</th>
+                <th class="p-3 text-center">Status</th>
+                <th class="p-3 text-center">Update</th>
+                <th class="p-3 text-center">Details</th>
+                <th class="p-3 text-center">Delete</th>
               </tr>
             </thead>
             <tbody>
@@ -184,12 +192,12 @@ document.addEventListener("DOMContentLoaded", () => {
     if (orders.length === 0) {
       html += `
         <tr>
-          <td colspan="8" class="p-12 text-center" style="color:${COLORS.secondary};">
-            <div style="font-size:1.2rem;margin-bottom:10px;">No orders found for this month.</div>
+          <td colspan="8" class="p-8 text-center" style="color:${COLORS.secondary};">
+            <div style="font-size:0.98rem;margin-bottom:8px;">No orders found for this month.</div>
             <div>
-              <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f370.svg" alt="cake" style="width:56px;height:56px;opacity:0.25;">
+              <img src="https://cdn.jsdelivr.net/gh/twitter/twemoji@14.0.2/assets/svg/1f370.svg" alt="cake" style="width:36px;height:36px;opacity:0.25;">
             </div>
-            <div style="margin-top:10px;color:${COLORS.text};font-size:1rem;">Click <b>+ New Order</b> to add your first order!</div>
+            <div style="margin-top:8px;color:${COLORS.text};font-size:0.91rem;">Click <b>+ New Order</b> to add your first order!</div>
           </td>
         </tr>
       `;
@@ -197,17 +205,12 @@ document.addEventListener("DOMContentLoaded", () => {
       orders.sort((a, b) => b.date.localeCompare(a.date)).forEach((order, idx) => {
         html += `
           <tr style="background:${idx % 2 === 0 ? COLORS.background : COLORS.rowAlt}; transition:background 0.2s;">
-            <td class="p-5">${order.date}</td>
-            <td class="p-5 font-semibold" style="display:flex;align-items:center;gap:10px;">
-              <span style="display:inline-block;width:32px;height:32px;border-radius:50%;background:${COLORS.secondary};color:#fff;text-align:center;line-height:32px;font-weight:bold;font-size:1.1rem;box-shadow:0 2px 8px rgba(100,116,139,0.08);">
-                ${order.customer ? order.customer[0].toUpperCase() : "?"}
-              </span>
-              <span style="font-size:1.05rem;">${order.customer}</span>
-            </td>
-            <td class="p-5">${order.item}</td>
-            <td class="p-5 text-right">${order.quantity || 1}</td>
-            <td class="p-5 text-center">
-              <span class="inline-block px-4 py-1.5 rounded-full text-xs font-semibold shadow-sm"
+            <td class="p-3 text-center">${formatDate(order.date)}</td>
+            <td class="p-3 text-center" style="font-weight:500; font-size:0.97rem;">${order.customer}</td>
+            <td class="p-3 text-center">${order.item}</td>
+            <td class="p-3 text-center">${order.quantity || 1}</td>
+            <td class="p-3 text-center">
+              <span class="inline-block px-3 py-1 rounded-full text-xs font-semibold shadow-sm"
                 style="
                   background:${
                     order.status === "Delivered" ? COLORS.badgeDelivered :
@@ -221,29 +224,29 @@ document.addEventListener("DOMContentLoaded", () => {
                     order.status === "Cancelled" ? COLORS.secondary :
                     COLORS.primary
                   };
-                  min-width:90px;
+                  min-width:70px;
                   text-align:center;
-                  font-size:1rem;
+                  font-size:0.91rem;
                   letter-spacing:0.01em;
                 ">
                 ${order.status || "Received"}
               </span>
             </td>
-            <td class="p-5 text-center">
-              <button class="update-status-btn px-4 py-1.5 rounded-lg font-semibold shadow-sm hover:bg-indigo-500 hover:scale-105 transition"
-                style="background:${COLORS.secondary}; color:#fff; border:none;"
+            <td class="p-3 text-center">
+              <button class="update-status-btn px-3 py-1 rounded-lg font-semibold shadow-sm hover:bg-indigo-500 hover:scale-105 transition"
+                style="background:${COLORS.secondary}; color:#fff; border:none; font-size:0.91rem;"
                 data-id="${order.id}" data-status="${order.status || "Received"}">
                 Update
               </button>
             </td>
-            <td class="p-5 text-center">
-              <button class="show-order-details-btn font-medium underline hover:text-indigo-600 transition" style="color:${COLORS.primary}; background:none; border:none;" data-id="${order.id}">
+            <td class="p-3 text-center">
+              <button class="show-order-details-btn font-medium underline hover:text-indigo-600 transition" style="color:${COLORS.primary}; background:none; border:none; font-size:0.91rem;" data-id="${order.id}">
                 Details
               </button>
             </td>
-            <td class="p-5 text-center">
-              <button class="delete-order-btn px-4 py-1.5 rounded-lg font-semibold shadow-sm hover:bg-red-600 hover:scale-105 transition"
-                style="background:${COLORS.danger}; color:#fff; border:none;"
+            <td class="p-3 text-center">
+              <button class="delete-order-btn px-3 py-1 rounded-lg font-semibold shadow-sm hover:bg-red-600 hover:scale-105 transition"
+                style="background:${COLORS.danger}; color:#fff; border:none; font-size:0.91rem;"
                 data-id="${order.id}">
                 🗑️
               </button>
@@ -305,33 +308,33 @@ document.addEventListener("DOMContentLoaded", () => {
     const defaultDateStr = today.toISOString().split('T')[0];
 
     modal.innerHTML = `
-      <div class="bg-white rounded-2xl shadow-2xl p-10 w-full max-w-md relative animate-fadeIn" style="border:1px solid ${COLORS.rowAlt};">
-        <button class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-3xl font-bold" id="close-order-form" title="Close" style="background:none; border:none;">&times;</button>
-        <h3 class="text-2xl font-extrabold mb-6" style="color:${COLORS.text}; letter-spacing:0.01em;">Add New Order</h3>
-        <form id="add-order-form" class="space-y-5">
+      <div class="bg-white rounded-xl shadow-xl p-7 w-full max-w-md relative animate-fadeIn" style="border:1px solid ${COLORS.rowAlt}; font-size:0.91rem;">
+        <button class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold" id="close-order-form" title="Close" style="background:none; border:none;">&times;</button>
+        <h3 class="text-xl font-extrabold mb-4" style="color:${COLORS.text}; letter-spacing:0.01em;">Add New Order</h3>
+        <form id="add-order-form" class="space-y-4">
           <div>
-            <label class="block text-base font-medium mb-1" for="order-date" style="color:${COLORS.text};">Date</label>
-            <input type="date" name="date" id="order-date" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-300 transition" style="border-color:${COLORS.secondary}; color:${COLORS.text}; background:${COLORS.background};" required value="${defaultDateStr}" />
+            <label class="block text-sm font-medium mb-1" for="order-date" style="color:${COLORS.text};">Date</label>
+            <input type="date" name="date" id="order-date" class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-300 transition" style="border-color:${COLORS.secondary}; color:${COLORS.text}; background:${COLORS.background};" required value="${defaultDateStr}" />
           </div>
           <div>
-            <label class="block text-base font-medium mb-1" for="order-customer" style="color:${COLORS.text};">Customer</label>
-            <input type="text" name="customer" id="order-customer" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-300 transition" style="border-color:${COLORS.secondary}; color:${COLORS.text}; background:${COLORS.background};" required />
+            <label class="block text-sm font-medium mb-1" for="order-customer" style="color:${COLORS.text};">Customer</label>
+            <input type="text" name="customer" id="order-customer" class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-300 transition" style="border-color:${COLORS.secondary}; color:${COLORS.text}; background:${COLORS.background};" required />
           </div>
           <div>
-            <label class="block text-base font-medium mb-1" for="order-item" style="color:${COLORS.text};">Item</label>
-            <input type="text" name="item" id="order-item" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-300 transition" style="border-color:${COLORS.secondary}; color:${COLORS.text}; background:${COLORS.background};" required />
+            <label class="block text-sm font-medium mb-1" for="order-item" style="color:${COLORS.text};">Item</label>
+            <input type="text" name="item" id="order-item" class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-300 transition" style="border-color:${COLORS.secondary}; color:${COLORS.text}; background:${COLORS.background};" required />
           </div>
           <div>
-            <label class="block text-base font-medium mb-1" for="order-quantity" style="color:${COLORS.text};">Quantity</label>
-            <input type="number" name="quantity" id="order-quantity" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-300 transition" style="border-color:${COLORS.secondary}; color:${COLORS.text}; background:${COLORS.background};" required min="1" value="1" />
+            <label class="block text-sm font-medium mb-1" for="order-quantity" style="color:${COLORS.text};">Quantity</label>
+            <input type="number" name="quantity" id="order-quantity" class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-300 transition" style="border-color:${COLORS.secondary}; color:${COLORS.text}; background:${COLORS.background};" required min="1" value="1" />
           </div>
           <div>
-            <label class="block text-base font-medium mb-1" for="order-notes" style="color:${COLORS.text};">Notes (optional)</label>
-            <input type="text" name="notes" id="order-notes" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-300 transition" style="border-color:${COLORS.secondary}; color:${COLORS.text}; background:${COLORS.background};" />
+            <label class="block text-sm font-medium mb-1" for="order-notes" style="color:${COLORS.text};">Notes (optional)</label>
+            <input type="text" name="notes" id="order-notes" class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-300 transition" style="border-color:${COLORS.secondary}; color:${COLORS.text}; background:${COLORS.background};" />
           </div>
-          <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 px-4 py-2.5 rounded-xl font-semibold shadow-md hover:bg-indigo-600 transition" style="background:${COLORS.primary}; color:#fff; border:none;">Save</button>
-            <button type="button" id="cancel-order-form" class="flex-1 px-4 py-2.5 rounded-xl font-semibold shadow-md hover:bg-gray-200 transition" style="background:${COLORS.rowAlt}; color:${COLORS.text}; border:1px solid ${COLORS.secondary};">Cancel</button>
+          <div class="flex gap-2 mt-4">
+            <button type="submit" class="flex-1 px-3 py-2 rounded-lg font-semibold shadow-md hover:bg-indigo-600 transition" style="background:${COLORS.primary}; color:#fff; border:none;">Save</button>
+            <button type="button" id="cancel-order-form" class="flex-1 px-3 py-2 rounded-lg font-semibold shadow-md hover:bg-gray-200 transition" style="background:${COLORS.rowAlt}; color:${COLORS.text}; border:1px solid ${COLORS.secondary};">Cancel</button>
           </div>
         </form>
       </div>
@@ -366,19 +369,19 @@ document.addEventListener("DOMContentLoaded", () => {
     const modal = document.getElementById('order-form-modal');
     const statuses = ["Received", "Baked", "Delivered", "Cancelled"];
     modal.innerHTML = `
-      <div class="bg-white rounded-2xl shadow-2xl p-10 w-full max-w-md relative animate-fadeIn" style="border:1px solid ${COLORS.rowAlt};">
-        <button class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-3xl font-bold" id="close-update-status" title="Close" style="background:none; border:none;">&times;</button>
-        <h3 class="text-2xl font-extrabold mb-6" style="color:${COLORS.text}; letter-spacing:0.01em;">Update Order Status</h3>
-        <form id="update-status-form" class="space-y-5">
+      <div class="bg-white rounded-xl shadow-xl p-7 w-full max-w-md relative animate-fadeIn" style="border:1px solid ${COLORS.rowAlt}; font-size:0.91rem;">
+        <button class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold" id="close-update-status" title="Close" style="background:none; border:none;">&times;</button>
+        <h3 class="text-xl font-extrabold mb-4" style="color:${COLORS.text}; letter-spacing:0.01em;">Update Order Status</h3>
+        <form id="update-status-form" class="space-y-4">
           <div>
-            <label class="block text-base font-medium mb-1" for="order-status" style="color:${COLORS.text};">Status</label>
-            <select name="status" id="order-status" class="w-full p-3 border rounded-lg focus:ring-2 focus:ring-indigo-300 transition" style="border-color:${COLORS.secondary}; color:${COLORS.text}; background:${COLORS.background};" required>
+            <label class="block text-sm font-medium mb-1" for="order-status" style="color:${COLORS.text};">Status</label>
+            <select name="status" id="order-status" class="w-full p-2 border rounded focus:ring-2 focus:ring-indigo-300 transition" style="border-color:${COLORS.secondary}; color:${COLORS.text}; background:${COLORS.background};" required>
               ${statuses.map(s => `<option value="${s}"${s === currentStatus ? " selected" : ""}>${s}</option>`).join("")}
             </select>
           </div>
-          <div class="flex gap-3 mt-6">
-            <button type="submit" class="flex-1 px-4 py-2.5 rounded-xl font-semibold shadow-md hover:bg-indigo-600 transition" style="background:${COLORS.primary}; color:#fff; border:none;">Save</button>
-            <button type="button" id="cancel-update-status" class="flex-1 px-4 py-2.5 rounded-xl font-semibold shadow-md hover:bg-gray-200 transition" style="background:${COLORS.rowAlt}; color:${COLORS.text}; border:1px solid ${COLORS.secondary};">Cancel</button>
+          <div class="flex gap-2 mt-4">
+            <button type="submit" class="flex-1 px-3 py-2 rounded-lg font-semibold shadow-md hover:bg-indigo-600 transition" style="background:${COLORS.primary}; color:#fff; border:none;">Save</button>
+            <button type="button" id="cancel-update-status" class="flex-1 px-3 py-2 rounded-lg font-semibold shadow-md hover:bg-gray-200 transition" style="background:${COLORS.rowAlt}; color:${COLORS.text}; border:1px solid ${COLORS.secondary};">Cancel</button>
           </div>
         </form>
       </div>
@@ -408,20 +411,20 @@ document.addEventListener("DOMContentLoaded", () => {
     if (!doc.exists) return;
     const o = doc.data();
     modal.innerHTML = `
-      <div class="bg-white rounded-2xl shadow-2xl p-10 w-full max-w-lg relative animate-fadeIn" style="border:1px solid ${COLORS.rowAlt};">
-        <button class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-3xl font-bold" id="close-order-details" title="Close" style="background:none; border:none;">&times;</button>
-        <h3 class="text-2xl font-extrabold mb-6" style="color:${COLORS.text}; letter-spacing:0.01em;">Order Details</h3>
-        <div class="mb-6 space-y-2">
-          <div><span class="font-medium" style="color:${COLORS.text};">Date:</span> ${o.date}</div>
+      <div class="bg-white rounded-xl shadow-xl p-7 w-full max-w-lg relative animate-fadeIn" style="border:1px solid ${COLORS.rowAlt}; font-size:0.91rem;">
+        <button class="absolute top-3 right-3 text-gray-400 hover:text-gray-700 text-2xl font-bold" id="close-order-details" title="Close" style="background:none; border:none;">&times;</button>
+        <h3 class="text-xl font-extrabold mb-4" style="color:${COLORS.text}; letter-spacing:0.01em;">Order Details</h3>
+        <div class="mb-4 space-y-1">
+          <div><span class="font-medium" style="color:${COLORS.text};">Date:</span> ${formatDate(o.date)}</div>
           <div><span class="font-medium" style="color:${COLORS.text};">Customer:</span> ${o.customer}</div>
           <div><span class="font-medium" style="color:${COLORS.text};">Item:</span> ${o.item}</div>
           <div><span class="font-medium" style="color:${COLORS.text};">Quantity:</span> ${o.quantity || 1}</div>
           <div><span class="font-medium" style="color:${COLORS.text};">Status:</span> ${o.status || "Received"}</div>
           <div><span class="font-medium" style="color:${COLORS.text};">Notes:</span> ${o.notes || "-"}</div>
         </div>
-        <div class="flex justify-end gap-3">
-          <button id="delete-order-details-btn" class="px-5 py-2.5 rounded-xl font-semibold shadow-md hover:bg-red-600 transition" style="background:${COLORS.danger}; color:#fff; border:none;">Delete</button>
-          <button id="close-order-details-btn" class="px-5 py-2.5 rounded-xl font-semibold shadow-md hover:bg-gray-200 transition" style="background:${COLORS.rowAlt}; color:${COLORS.text}; border:1px solid ${COLORS.secondary};">Close</button>
+        <div class="flex justify-end gap-2">
+          <button id="delete-order-details-btn" class="px-4 py-2 rounded-lg font-semibold shadow-md hover:bg-red-600 transition" style="background:${COLORS.danger}; color:#fff; border:none;">Delete</button>
+          <button id="close-order-details-btn" class="px-4 py-2 rounded-lg font-semibold shadow-md hover:bg-gray-200 transition" style="background:${COLORS.rowAlt}; color:${COLORS.text}; border:1px solid ${COLORS.secondary};">Close</button>
         </div>
       </div>
     `;
@@ -449,7 +452,7 @@ document.addEventListener("DOMContentLoaded", () => {
       from { opacity: 0; transform: scale(0.98);}
       to   { opacity: 1; transform: scale(1);}
     }
-    .animate-fadeIn { animation: fadeIn 0.22s; }
+    .animate-fadeIn { animation: fadeIn 0.18s; }
     #orders-loader .animate-spin {
       animation: spin 1s linear infinite;
     }
@@ -458,7 +461,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     /* Custom scrollbar for table */
     .overflow-x-auto::-webkit-scrollbar {
-      height: 10px;
+      height: 8px;
     }
     .overflow-x-auto::-webkit-scrollbar-thumb {
       background: #e0e7ef;
@@ -469,12 +472,26 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     /* Responsive tweaks */
     @media (max-width: 700px) {
-      .max-w-5xl { max-width: 98vw !important; }
-      .p-10 { padding: 1.5rem !important; }
-      .p-12 { padding: 1.5rem !important; }
-      .p-8 { padding: 1.2rem !important; }
-      .p-6 { padding: 1rem !important; }
-      .p-5 { padding: 0.7rem !important; }
+      .max-w-4xl { max-width: 99vw !important; }
+      .p-7 { padding: 1rem !important; }
+      .p-8 { padding: 1rem !important; }
+      .p-4 { padding: 0.7rem !important; }
+      .p-3 { padding: 0.5rem !important; }
+    }
+    /* Reduce font size for all table and card content */
+    .max-w-4xl, .max-w-4xl * {
+      font-size: 0.91rem !important;
+    }
+    th, td {
+      font-size: 0.91rem !important;
+    }
+    /* Make everything more compact */
+    table th, table td {
+      padding-top: 0.5rem !important;
+      padding-bottom: 0.5rem !important;
+    }
+    .shadow, .shadow-md, .shadow-xl, .shadow-lg {
+      box-shadow: 0 1px 4px 0 rgba(0,0,0,0.07) !important;
     }
   `;
   document.head.appendChild(style);
