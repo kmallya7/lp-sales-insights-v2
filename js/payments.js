@@ -10,6 +10,71 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   }
 
+  // --- Helper: Render total outstanding for each client across all months (BOTTOM, solid, prominent color) ---
+  async function renderClientOutstandingCardsBottom() {
+    if (!paymentsSection) return;
+
+    // 1. Get all daily logs (sales)
+    const salesSnapshot = await db.collection("dailyLogs").get();
+    const clientTotals = {};
+
+    salesSnapshot.forEach(doc => {
+      const d = doc.data();
+      if (!d.client || !d.date) return;
+      if (!clientTotals[d.client]) {
+        clientTotals[d.client] = { sales: 0, paid: 0 };
+      }
+      clientTotals[d.client].sales += d.totalRevenue || 0;
+    });
+
+    // 2. Get all payments
+    const paymentsSnapshot = await db.collection("payments").get();
+    paymentsSnapshot.forEach(doc => {
+      const p = doc.data();
+      if (!p.client || !p.date) return;
+      if (!clientTotals[p.client]) {
+        clientTotals[p.client] = { sales: 0, paid: 0 };
+      }
+      clientTotals[p.client].paid += p.amount || 0;
+    });
+
+    // 3. Prepare outstanding per client
+    const clientOutstanding = Object.entries(clientTotals)
+      .map(([client, data]) => ({
+        client,
+        outstanding: data.sales - data.paid,
+        sales: data.sales,
+        paid: data.paid
+      }))
+      .filter(c => c.outstanding > 0)
+      .sort((a, b) => b.outstanding - a.outstanding);
+
+    // 4. Render cards (bottom, solid, prominent but not irritating)
+    let cardsHtml = `
+      <div class="flex flex-wrap justify-center gap-4 mt-8 mb-2" id="client-outstanding-cards">
+        ${clientOutstanding.length === 0 ? `
+          <div class="rounded-xl shadow-lg p-6 flex flex-col items-center min-w-[220px] border-2 border-[#3B2F7F] bg-[#F7D358]">
+            <div class="text-base font-semibold text-[#3B2F7F]">No client has outstanding dues!</div>
+          </div>
+        ` : clientOutstanding.map(c => `
+          <div class="rounded-xl shadow-lg p-5 flex flex-col items-center min-w-[220px] border-2 border-[#3B2F7F] bg-[#F7D358]">
+            <div class="text-lg font-bold text-[#3B2F7F] mb-1">${c.client}</div>
+            <div class="text-2xl font-extrabold text-[#3B2F7F] mb-1 tracking-wide">₹${c.outstanding.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
+            <div class="text-xs font-medium text-[#3B2F7F]">Outstanding</div>
+            <div class="text-xs text-[#3B2F7F] mt-1">Sales: ₹${c.sales.toLocaleString(undefined, {minimumFractionDigits:2})} | Paid: ₹${c.paid.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+
+    // Remove any existing cards at the bottom
+    const prev = document.getElementById('client-outstanding-cards');
+    if (prev) prev.remove();
+
+    // Append to the end of paymentsSection
+    paymentsSection.insertAdjacentHTML('beforeend', cardsHtml);
+  }
+
   // --- Helper: Render the payments summary table ---
   async function renderPaymentsTable(selectedMonthYear = getCurrentMonthYear()) {
     if (!paymentsSection || paymentsSection.classList.contains("hidden")) {
@@ -44,7 +109,8 @@ document.addEventListener("DOMContentLoaded", () => {
         clientTotals[p.client] = { sales: 0, paid: 0, payments: [], salesDates: [] };
       }
       clientTotals[p.client].paid += p.amount || 0;
-      clientTotals[p.client].payments.push(p);
+      // Attach Firestore doc ID for delete
+      clientTotals[p.client].payments.push({ ...p, id: doc.id });
     });
 
     // --- 3. Prepare sorted client list ---
@@ -167,6 +233,7 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById('month-filter-form').onsubmit = e => e.preventDefault();
     document.getElementById('month-filter').onchange = (e) => {
       renderPaymentsTable(e.target.value);
+      renderClientOutstandingCardsBottom();
     };
 
     // Add event listeners for log payment buttons
@@ -185,6 +252,9 @@ document.addEventListener("DOMContentLoaded", () => {
         );
       });
     });
+
+    // Render the client outstanding cards at the bottom
+    renderClientOutstandingCardsBottom();
   }
 
   // Show payment form modal
@@ -238,14 +308,19 @@ document.addEventListener("DOMContentLoaded", () => {
       const date = form.date.value;
       const amount = parseFloat(form.amount.value);
       const notes = form.notes.value;
-      await db.collection("payments").add({ client, date, amount, notes, createdAt: new Date() });
-      modal.classList.add('hidden');
-      modal.innerHTML = '';
-      renderPaymentsTable(selectedMonthYear);
+      try {
+        await db.collection("payments").add({ client, date, amount, notes, createdAt: new Date() });
+        modal.classList.add('hidden');
+        modal.innerHTML = '';
+        renderPaymentsTable(selectedMonthYear);
+        renderClientOutstandingCardsBottom();
+      } catch (err) {
+        alert("Failed to save payment: " + err.message);
+      }
     };
   }
 
-  // Show payment history modal
+  // Show payment history modal (with delete option)
   function showPaymentHistory(client, payments) {
     const modal = document.getElementById('payment-history-modal');
     let html = `
@@ -259,12 +334,13 @@ document.addEventListener("DOMContentLoaded", () => {
                 <th class="p-2 text-left">Date</th>
                 <th class="p-2 text-right">Amount (₹)</th>
                 <th class="p-2 text-left">Notes</th>
+                <th class="p-2 text-center">Delete</th>
               </tr>
             </thead>
             <tbody>
     `;
     if (!payments || payments.length === 0) {
-      html += `<tr><td colspan="3" class="p-4 text-center text-gray-400">No payments logged.</td></tr>`;
+      html += `<tr><td colspan="4" class="p-4 text-center text-gray-400">No payments logged.</td></tr>`;
     } else {
       payments.sort((a, b) => (a.date > b.date ? -1 : 1)).forEach(p => {
         html += `
@@ -272,6 +348,9 @@ document.addEventListener("DOMContentLoaded", () => {
             <td class="p-2 text-black">${p.date}</td>
             <td class="p-2 text-right text-green-700 font-semibold">₹${p.amount.toLocaleString(undefined, {minimumFractionDigits:2})}</td>
             <td class="p-2 text-black">${p.notes || ''}</td>
+            <td class="p-2 text-center">
+              <button class="delete-payment-btn text-red-600 hover:underline text-xs" data-id="${p.id || ''}">Delete</button>
+            </td>
           </tr>
         `;
       });
@@ -292,6 +371,25 @@ document.addEventListener("DOMContentLoaded", () => {
       modal.classList.add('hidden');
       modal.innerHTML = '';
     };
+
+    // Add delete event listeners
+    document.querySelectorAll('.delete-payment-btn').forEach(btn => {
+      btn.onclick = async () => {
+        const id = btn.dataset.id;
+        if (!id) return alert("Cannot delete: missing payment ID.");
+        if (!confirm("Are you sure you want to delete this payment?")) return;
+        try {
+          await db.collection("payments").doc(id).delete();
+          alert("Payment deleted.");
+          modal.classList.add('hidden');
+          modal.innerHTML = '';
+          renderPaymentsTable();
+          renderClientOutstandingCardsBottom();
+        } catch (err) {
+          alert("Failed to delete payment: " + err.message);
+        }
+      };
+    });
   }
 
   // Animation for modals
@@ -320,6 +418,12 @@ document.addEventListener("DOMContentLoaded", () => {
       #payments h2, #payments h3 {
         font-size: 1rem !important;
       }
+    }
+    #client-outstanding-cards {
+      animation: fadeIn 0.3s;
+    }
+    #client-outstanding-cards .rounded-xl {
+      box-shadow: 0 4px 24px 0 rgba(59,47,127,0.10);
     }
   `;
   document.head.appendChild(style);
