@@ -1,6 +1,7 @@
-// monthlyDashboard.js
+// Dashboard.js
 
 // --- Utility Functions ---
+console.log("dashboard.js loaded");
 
 function $(id) {
   return document.getElementById(id);
@@ -56,7 +57,7 @@ window.loadDashboard = async function () {
     <div id="dashboard-loading" class="hidden text-center py-4 text-gray-500">Loading...</div>
     <div id="dashboard-error" class="hidden text-center py-4 text-red-600"></div>
     <section class="bg-white p-6 rounded shadow max-w-7xl mx-auto">
-      <h2 class="text-2xl font-bold mb-4 text-text flex items-center">
+      <h2 class="text-2xl font-bold mb-4 text-gray-900 flex items-center">
         <span class="mr-2">📊</span> Monthly Dashboard
       </h2>
       <p class="text-sm text-gray-500 mb-6">View your monthly financial summary</p>
@@ -246,6 +247,8 @@ async function loadDashboardData(month, year) {
 
     let totalRevenue = 0, totalIngredients = 0, totalPackaging = 0;
     let allItems = [], clientMap = {};
+    // --- Order Days & Streak Calculation ---
+    const orderDatesSet = new Set();
     logsSnap.forEach(doc => {
       const d = doc.data();
       if (d.items && Array.isArray(d.items)) {
@@ -265,7 +268,32 @@ async function loadDashboardData(month, year) {
           });
         }
       }
+      if (d.date) orderDatesSet.add(d.date);
     });
+
+    // Calculate order days, streak, and no order days
+    const orderDatesArr = Array.from(orderDatesSet).sort();
+    const orderDays = orderDatesArr.length;
+    let maxStreak = 0, currentStreak = 0;
+    let prevDate = null;
+    orderDatesArr.forEach(dateStr => {
+      const date = new Date(dateStr);
+      if (prevDate) {
+        const diff = (date - prevDate) / (1000 * 60 * 60 * 24);
+        if (diff === 1) {
+          currentStreak += 1;
+        } else {
+          currentStreak = 1;
+        }
+      } else {
+        currentStreak = 1;
+      }
+      if (currentStreak > maxStreak) maxStreak = currentStreak;
+      prevDate = date;
+    });
+    const orderStreak = maxStreak;
+    const daysInMonth = new Date(year, month, 0).getDate();
+    const noOrderDays = daysInMonth - orderDays;
 
     const orderCount = logsSnap.size;
     const avgOrderValue = orderCount ? totalRevenue / orderCount : 0;
@@ -294,17 +322,31 @@ async function loadDashboardData(month, year) {
       .where("date", ">=", `${prevPrefix}-01`)
       .where("date", "<=", `${prevPrefix}-31`)
       .get();
-    let prevRevenue = 0, prevCost = 0, prevProfit = 0;
-    prevSnap.forEach(doc => {
-      const d = doc.data();
-      if (d.items && Array.isArray(d.items)) {
-        d.items.forEach(item => {
-          prevRevenue += item.revenue || 0;
-          prevCost += (item.ingredients || 0) + (item.packaging || 0);
-          prevProfit += (item.revenue || 0) - ((item.ingredients || 0) + (item.packaging || 0));
-        });
-      }
+let prevRevenue = 0, prevCost = 0, prevProfit = 0;
+prevSnap.forEach(doc => {
+  const d = doc.data();
+  if (d.items && Array.isArray(d.items)) {
+    d.items.forEach(item => {
+      prevRevenue += item.revenue || 0;
+      prevCost += (item.ingredients || 0) + (item.packaging || 0);
+      prevProfit += (item.revenue || 0) - ((item.ingredients || 0) + (item.packaging || 0));
     });
+  }
+});
+let prevOrderCount = prevSnap.size;
+
+    const prevProfitPercent = prevRevenue ? (prevProfit / prevRevenue) * 100 : 0;
+
+    // Count unique clients in prevSnap
+const prevClientSet = new Set();
+prevSnap.forEach(doc => {
+  const d = doc.data();
+  if (d.client) prevClientSet.add(d.client);
+});
+const prevClientCount = prevClientSet.size;
+const prevProfitPerClient = prevClientCount ? prevProfit / prevClientCount : 0;
+
+    const prevActualProfit = prevProfit;
 
     const grossProfit = totalRevenue - (totalIngredients + totalPackaging);
 
@@ -326,17 +368,28 @@ async function loadDashboardData(month, year) {
     });
 
     function pctChange(current, prev) {
-      if (prev === 0) return current === 0 ? "0%" : "▲ 100%";
-      const pct = ((current - prev) / Math.abs(prev)) * 100;
-      return (pct >= 0 ? "▲ " : "▼ ") + Math.abs(pct).toFixed(1) + "%";
-    }
+  current = Number(current);
+  prev = Number(prev);
 
-    renderSummaryCards({
-      totalRevenue, totalIngredients, totalPackaging, grossProfit,
-      prevRevenue, prevCost, prevProfit, orderCount, avgOrderValue, repeatCustomers,
-      bestSelling, worstSelling, mostProfitable, pctChange,
-      profitPerClient, actualProfit, profitPercent
-    });
+  if (!prev && !current) return "0%";
+  if (!prev && current) return "▲ 100%";
+  if (prev && !current) return "▼ 100%";
+
+  const pct = ((current - prev) / Math.abs(prev)) * 100;
+  return (pct >= 0 ? "▲ " : "▼ ") + Math.abs(pct).toFixed(1) + "%";
+}
+
+  renderSummaryCards({
+  totalRevenue, totalIngredients, totalPackaging, grossProfit,
+  prevRevenue, prevCost, prevProfit, orderCount, avgOrderValue, repeatCustomers,
+  bestSelling, worstSelling, mostProfitable, pctChange,
+  profitPerClient, actualProfit, profitPercent,
+  orderDays, orderStreak, noOrderDays,
+  prevActualProfit,
+  prevProfitPerClient,
+  prevProfitPercent
+});
+
 
     renderTopItems(itemsArr);
     renderTopClients(clientMap);
@@ -380,7 +433,12 @@ function renderSummaryCards({
   totalRevenue, totalIngredients, totalPackaging, grossProfit,
   prevRevenue, prevCost, prevProfit, orderCount, avgOrderValue, repeatCustomers,
   bestSelling, worstSelling, mostProfitable, pctChange,
-  profitPerClient, actualProfit, profitPercent
+  profitPerClient, actualProfit, profitPercent,
+  orderDays, orderStreak, noOrderDays,
+  prevActualProfit,
+  prevProfitPerClient,
+  prevProfitPercent,
+  prevOrderCount
 }) {
   $("summary-cards").innerHTML = `
     <div class="summary-card bg-blue-100 p-4 rounded flex flex-col items-start justify-between cursor-pointer">
@@ -416,22 +474,50 @@ function renderSummaryCards({
         </div>
       </div>
     </div>
-    <div class="summary-card bg-lime-100 p-4 rounded flex flex-col items-start justify-between">
+   <div class="summary-card bg-lime-100 p-4 rounded flex flex-col items-start justify-between">
+  <div class="flex items-center justify-between w-full">
+    <div>
       <p class="text-sm font-medium text-lime-700">Actual Profit</p>
-      <p class="text-xl font-bold text-lime-900">₹${actualProfit.toFixed(2)}</p>
+      <p class="text-xl font-bold text-lime-900 flex items-center">
+        <span id="dash-actual-profit">₹${actualProfit.toFixed(2)}</span>
+        <span class="ml-2 text-xs ${actualProfit - prevActualProfit >= 0 ? 'text-green-600' : 'text-red-600'}">${pctChange(actualProfit, prevActualProfit)}</span>
+      </p>
     </div>
+  </div>
+</div>
     <div class="summary-card bg-cyan-100 p-4 rounded flex flex-col items-start justify-between">
+  <div class="flex items-center justify-between w-full">
+    <div>
       <p class="text-sm font-medium text-cyan-700">Profit per Client</p>
-      <p class="text-xl font-bold text-cyan-900">₹${profitPerClient.toFixed(2)}</p>
+      <p class="text-xl font-bold text-cyan-900 flex items-center">
+        <span id="dash-profit-per-client">₹${profitPerClient.toFixed(2)}</span>
+        <span class="ml-2 text-xs ${profitPerClient - prevProfitPerClient >= 0 ? 'text-green-600' : 'text-red-600'}">${pctChange(profitPerClient, prevProfitPerClient)}</span>
+      </p>
     </div>
+  </div>
+</div>
     <div class="summary-card bg-amber-100 p-4 rounded flex flex-col items-start justify-between">
+  <div class="flex items-center justify-between w-full">
+    <div>
       <p class="text-sm font-medium text-amber-700">Profit %</p>
-      <p class="text-xl font-bold text-amber-900">${profitPercent.toFixed(1)}%</p>
+      <p class="text-xl font-bold text-amber-900 flex items-center">
+        <span id="dash-profit-percent">${profitPercent.toFixed(1)}%</span>
+        <span class="ml-2 text-xs ${profitPercent - prevProfitPercent >= 0 ? 'text-green-600' : 'text-red-600'}">${pctChange(profitPercent, prevProfitPercent)}</span>
+      </p>
     </div>
-    <div class="summary-card bg-yellow-100 p-4 rounded flex flex-col items-start justify-between">
+  </div>
+</div>
+   <div class="summary-card bg-yellow-100 p-4 rounded flex flex-col items-start justify-between">
+  <div class="flex items-center justify-between w-full">
+    <div>
       <p class="text-sm font-medium text-yellow-700">Orders</p>
-      <p class="text-xl font-bold text-yellow-900">${orderCount}</p>
+      <p class="text-xl font-bold text-yellow-900">
+        <span id="dash-orders">${orderCount}</span>
+      </p>
     </div>
+  </div>
+</div>
+
     <div class="summary-card bg-pink-100 p-4 rounded flex flex-col items-start justify-between">
       <p class="text-sm font-medium text-pink-700">Avg Order Value</p>
       <p class="text-xl font-bold text-pink-900">₹${avgOrderValue.toFixed(2)}</p>
@@ -455,6 +541,21 @@ function renderSummaryCards({
       <p class="text-base font-bold text-orange-900">${mostProfitable ? mostProfitable.name : "N/A"}</p>
       <p class="text-xs text-orange-700">Profit: ₹${mostProfitable ? mostProfitable.profit.toFixed(2) : 0}</p>
     </div>
+    <div class="summary-card bg-indigo-100 p-4 rounded flex flex-col items-start justify-between">
+      <p class="text-sm font-medium text-indigo-700">Order Days</p>
+      <p class="text-xl font-bold text-indigo-900">${orderDays}</p>
+      <p class="text-xs text-indigo-700">Days with at least 1 order</p>
+    </div>
+    <div class="summary-card bg-fuchsia-100 p-4 rounded flex flex-col items-start justify-between">
+      <p class="text-sm font-medium text-fuchsia-700">Order Streak</p>
+      <p class="text-xl font-bold text-fuchsia-900">${orderStreak}</p>
+      <p class="text-xs text-fuchsia-700">Longest consecutive days</p>
+    </div>
+    <div class="summary-card bg-slate-100 p-4 rounded flex flex-col items-start justify-between">
+      <p class="text-sm font-medium text-slate-700">No Order Days</p>
+      <p class="text-xl font-bold text-slate-900">${noOrderDays}</p>
+      <p class="text-xs text-slate-700">Days with zero orders</p>
+    </div>    
   `;
 }
 
@@ -598,16 +699,28 @@ function renderTrendChart(logsSnap) {
   });
   const data = rawDates.map(date => dailyTotals[date]);
   const peakIndex = data.indexOf(Math.max(...data));
+
+  // Set point colors: orange for peak, blue for others
+  const pointColors = labels.map((_, i) => i === peakIndex ? "#f97316" : "#60a5fa");
+  const pointRadius = labels.map((_, i) => i === peakIndex ? 7 : 4);
+
   const ctx = $("trendChart").getContext("2d");
   if (window.trendChartInstance) window.trendChartInstance.destroy();
   window.trendChartInstance = new Chart(ctx, {
-    type: 'bar',
+    type: 'line',
     data: {
       labels,
       datasets: [{
         label: "Revenue",
         data,
-        backgroundColor: labels.map((_, i) => i === peakIndex ? "#f97316" : "#60a5fa")
+        borderColor: "#60a5fa",
+        backgroundColor: "rgba(96,165,250,0.1)",
+        fill: true,
+        pointBackgroundColor: pointColors,
+        pointRadius: pointRadius,
+        pointBorderColor: pointColors,
+        pointHoverRadius: 9,
+        tension: 0.3
       }]
     },
     options: {
@@ -650,6 +763,7 @@ function renderTrendChart(logsSnap) {
   }
   legendDiv.innerHTML = legendHtml;
 }
+
 
 function renderLineChart(allItems) {
   const dailyMap = {};

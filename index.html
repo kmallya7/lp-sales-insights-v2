@@ -2,39 +2,46 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <link rel="icon" type="image/png" href="assets/favicon_io/favicon.ico">
+  <!-- ====== Meta & Favicon ====== -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LP Sales & Insights</title>
+  <link rel="icon" type="image/png" href="assets/favicon_io/favicon.ico">
+
+  <!-- ====== Fonts ====== -->
   <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
+
+  <!-- ====== Tailwind (for dev, remove if using your own build) ====== -->
   <script src="https://cdn.tailwindcss.com"></script>
+
+  <!-- ====== External Libraries ====== -->
   <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="https://unpkg.com/feather-icons"></script>
   <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/src/dom-to-image.min.js"></script>
-  
+
+  <!-- ====== Custom Styles ====== -->
   <style>
     body { font-family: 'Poppins', sans-serif; }
     .nav-link.active {
       background-color: #C8AFF0;
+      color: #000;
       border-radius: 0.5rem;
       font-weight: 600;
-      color: #000;
       border-left: 4px solid #fdba74;
       box-shadow: 0 2px 8px rgba(253,186,116,0.08);
     }
     .nav-link {
-      transition: background 0.2s, color 0.2s, box-shadow 0.2s; 
+      transition: background 0.2s, color 0.2s, box-shadow 0.2s, border-radius 0.2s;
     }
     .nav-link:hover {
-  border-radius: 0.9rem;
-  background: #C8AFF0;
-  color: #000;   /* black text on hover */
-}
-
+      border-radius: 0.5rem;
+      background: #C8AFF0;
+      color: #000;
+    }
     button, .btn {
       transition: background-color 0.2s, transform 0.2s ease-in-out;
     }
@@ -118,7 +125,6 @@
     .font-signature {
       font-family: 'Great Vibes', cursive;
     }
-    /* Sign-in page styles */
     #signInPage {
       display: none;
       animation: fadeIn 0.5s;
@@ -139,14 +145,14 @@
       <h1 class="text-3xl font-bold text-center text-black-700 mb-2">Welcome to Lush Patisserie</h1>
       <p class="text-lg text-gray-600 mb-8 text-center">Sign in to access your sales, insights, and more.</p>
       <button id="signInGoogleBtn" class="flex items-center gap-3 bg-gray-900 hover:bg-gray-800 text-white px-6 py-3 rounded-lg text-lg font-semibold shadow transition">
-  <svg class="w-6 h-6" viewBox="0 0 48 48"><g><path fill="#4285F4" d="M44.5 20H24v8.5h11.7C34.7 33.1 30.1 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.5 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-21 0-1.3-.1-2.7-.3-4z"/><path fill="#34A853" d="M6.3 14.7l7 5.1C15.5 16.1 19.4 13 24 13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.5 5.1 29.6 3 24 3c-7.2 0-13.4 3.1-17.7 8.1z"/><path fill="#FBBC05" d="M24 45c5.6 0 10.5-1.9 14.3-5.1l-6.6-5.4C29.7 36.9 27 38 24 38c-6.1 0-10.7-2.9-13.7-7.1l-7 5.4C6.6 41.9 14.1 45 24 45z"/><path fill="#EA4335" d="M44.5 20H24v8.5h11.7c-1.1 3.1-4.1 5.5-7.7 5.5-4.6 0-8.4-3.8-8.4-8.5s3.8-8.5 8.4-8.5c2.5 0 4.7.9 6.3 2.4l6.4-6.4C38.1 7.1 31.5 4 24 4c-10.5 0-19 8.5-19 19s8.5 19 19 19c10.5 0 19-8.5 19-19 0-1.3-.1-2.7-.3-4z"/></g></svg>
-  Sign in with Google
-</button>
+        <svg class="w-6 h-6" viewBox="0 0 48 48"><g><path fill="#4285F4" d="M44.5 20H24v8.5h11.7C34.7 33.1 30.1 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.5 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-21 0-1.3-.1-2.7-.3-4z"/><path fill="#34A853" d="M6.3 14.7l7 5.1C15.5 16.1 19.4 13 24 13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.5 5.1 29.6 3 24 3c-7.2 0-13.4 3.1-17.7 8.1z"/><path fill="#FBBC05" d="M24 45c5.6 0 10.5-1.9 14.3-5.1l-6.6-5.4C29.7 36.9 27 38 24 38c-6.1 0-10.7-2.9-13.7-7.1l-7 5.4C6.6 41.9 14.1 45 24 45z"/><path fill="#EA4335" d="M44.5 20H24v8.5h11.7c-1.1 3.1-4.1 5.5-7.7 5.5-4.6 0-8.4-3.8-8.4-8.5s3.8-8.5 8.4-8.5c2.5 0 4.7.9 6.3 2.4l6.4-6.4C38.1 7.1 31.5 4 24 4c-10.5 0-19 8.5-19 19s8.5 19 19 19c10.5 0 19-8.5 19-19 0-1.3-.1-2.7-.3-4z"/></g></svg>
+        Sign in with Google
       </button>
     </div>
     <div class="mt-8 text-gray-400 text-xs">© 2025 Lush Patisserie</div>
   </div>
 
+  <!-- Loader -->
   <div id="loader">
     <svg class="animate-spin h-8 w-8 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
       <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
@@ -154,93 +160,84 @@
     </svg>
   </div>
 
+  <!-- Greeting Bar -->
   <div class="w-full flex justify-end items-center px-6 py-3 bg-white shadow-sm border-b">
     <p id="greetingText" class="text-sm text-gray-600 font-medium"></p>
   </div>
 
   <!-- Sidebar -->
   <aside id="sidebar" style="background-color: #F7F5F2;" class="w-64 border-r border-orange-100 shadow-md p-4 flex flex-col h-screen fixed left-0 top-0 bottom-0 transition-all duration-300 overflow-y-auto z-40">
-    <div class="flex items-center space-x-2 mb-6">
+    <div class="flex items-center space-x-2 mb-6 p-4">
       <button id="sidebarToggle" class="md:hidden text-2xl focus:outline-none" aria-label="Toggle sidebar">☰</button>
-      <img id="brandLogo" src="assets/LP Logo.png" alt="Lush Patisserie" class="h-10 w-10 rounded-full bg-gray-100" />
+      <img id="brandLogo" src="assets/LP Logo.png" alt="Lush Patisserie" class="h-14 w-14 rounded-full bg-gray-100" />
       <div class="sidebar-label">
         <h2 class="text-xl font-bold text-gray-900">Lush Patisserie</h2>
         <p class="text-sm text-gray-900">Sales & Insights</p>
       </div>
     </div>
-    <nav id="sidebarNav" class="space-y-1 flex-1">
-  <div class="text-xs colour: #9C7A56 mt-2 mb-1 sidebar-label">Operations</div>
-  <a href="#workLog" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Work Log">
-    <!-- Work Log Icon -->
-    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor" class="h-5 w-5">
-      <path d="M21.731 2.269a2.625 2.625 0 0 0-3.712 0l-1.157 1.157 3.712 3.712 1.157-1.157a2.625 2.625 0 0 0 0-3.712ZM19.513 8.199l-3.712-3.712-8.4 8.4a5.25 5.25 0 0 0-1.32 2.214l-.8 2.685a.75.75 0 0 0 .933.933l2.685-.8a5.25 5.25 0 0 0 2.214-1.32l8.4-8.4Z" />
-      <path d="M5.25 5.25a3 3 0 0 0-3 3v10.5a3 3 0 0 0 3 3h10.5a3 3 0 0 0 3-3V13.5a.75.75 0 0 0-1.5 0v5.25a1.5 1.5 0 0 1-1.5 1.5H5.25a1.5 1.5 0 0 1-1.5-1.5V8.25a1.5 1.5 0 0 1 1.5-1.5h5.25a.75.75 0 0 0 0-1.5H5.25Z" />
-    </svg>
-    <span class="sidebar-label">Work Log</span>
-  </a>
-  <a href="#dashboard" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Dashboard">
-    <!-- Chart Bar Icon -->
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 3v18h18M9 17V9m4 8V5m4 12v-6" />
-    </svg>
-    <span class="sidebar-label">Dashboard</span>
-  </a>
-  <a href="#invoice" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Invoices">
-    <!-- Document Text Icon -->
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 8h10M7 12h4m1 8H6a2 2 0 01-2-2V6a2 2 0 012-2h7l5 5v11a2 2 0 01-2 2z" />
-    </svg>
-    <span class="sidebar-label">Invoices</span>
-  </a>
-  <a href="#payments" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Payments">
-    <!-- Credit Card Icon -->
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <rect width="20" height="14" x="2" y="5" rx="2" stroke-width="2" stroke="currentColor" fill="none"/>
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2 10h20" />
-    </svg>
-    <span class="sidebar-label">Payments</span>
-  </a>
-  <a href="#orders" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Orders">
-  <!-- Orders Icon -->
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
-  </svg>
-  <span class="sidebar-label">Orders</span>
-</a>
-  <div class="border-t my-2"></div>
-  <div class="text-xs colour: #9C7A56 mt-2 mb-1 sidebar-label">Management</div>
-  <a href="#inventory" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Inventory">
-    <!-- Cube Icon -->
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 7l-8-4-8 4m16 0v6a8 8 0 01-16 0V7m16 0L12 11m0 0L4 7m8 4v8" />
-    </svg>
-    <span class="sidebar-label">Inventory</span>
-  </a>
-  <a href="#clients" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Clients">
-    <!-- Users Icon (your latest SVG) -->
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
-    </svg>
-    <span class="sidebar-label">Clients</span>
-  </a>
-  <a href="#fixedExpenses" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Fixed Expenses">
-    <!-- Custom Fixed Expenses Icon -->
-    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-5 w-5">
-      <path stroke-linecap="round" stroke-linejoin="round" d="M15 8.25H9m6 3H9m3 6-3-3h1.5a3 3 0 1 0 0-6M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
-    </svg>
-    <span class="sidebar-label">Fixed Expenses</span>
-  </a>
-  <a href="#export" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Export Data">
-    <!-- Arrow Up Tray Icon -->
-    <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2M7 10l5-5m0 0l5 5m-5-5v12" />
-    </svg>
-    <span class="sidebar-label">Export Data</span>
-  </a>
-</nav>
-
+    <nav id="sidebarNav" class="flex-1 px-4 space-y-1 overflow-y-auto">
+      <div class="text-xs text-black mt-6 mb-1 sidebar-label">Operations</div>
+      <a href="#workLog" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Work Log">
+        <!-- SVG from your first code -->
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L10.582 16.07a4.5 4.5 0 0 1-1.897 1.13L6 18l.8-2.685a4.5 4.5 0 0 1 1.13-1.897l8.932-8.931Zm0 0L19.5 7.125M18 14v4.75A2.25 2.25 0 0 1 15.75 21H5.25A2.25 2.25 0 0 1 3 18.75V8.25A2.25 2.25 0 0 1 5.25 6H10" />
+        </svg>
+        <span class="sidebar-label">Work Log</span>
+      </a>
+      <a href="#dashboard" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Dashboard">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
+          <path stroke-linecap="round" stroke-linejoin="round" d="M13.5 10.5H21A7.5 7.5 0 0 0 13.5 3v7.5Z" />
+        </svg>
+        <span class="sidebar-label">Dashboard</span>
+      </a>
+      <a href="#invoice" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Invoice">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
+        </svg>
+        <span class="sidebar-label">Invoice</span>
+      </a>
+      <a href="#payments" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Payments">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M2.25 8.25h19.5M2.25 9h19.5m-16.5 5.25h6m-6 2.25h3m-3.75 3h15a2.25 2.25 0 0 0 2.25-2.25V6.75A2.25 2.25 0 0 0 19.5 4.5h-15a2.25 2.25 0 0 0-2.25 2.25v10.5A2.25 2.25 0 0 0 4.5 19.5Z" />
+        </svg>
+        <span class="sidebar-label">Payments</span>
+      </a>
+      <a href="#orders" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Orders">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 10.5V6a3.75 3.75 0 1 0-7.5 0v4.5m11.356-1.993 1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 0 1-1.12-1.243l1.264-12A1.125 1.125 0 0 1 5.513 7.5h12.974c.576 0 1.059.435 1.119 1.007ZM8.625 10.5a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Zm7.5 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z" />
+        </svg>
+        <span class="sidebar-label">Orders</span>
+      </a>
+      <hr class="my-4 border-t border-gray-300" />
+      <div class="text-xs text-black mt-6 mb-1 sidebar-label">Management</div>
+      <a href="#inventory" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Inventory">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="m20.25 7.5-.625 10.632a2.25 2.25 0 0 1-2.247 2.118H6.622a2.25 2.25 0 0 1-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125Z" />
+        </svg>
+        <span class="sidebar-label">Inventory</span>
+      </a>
+      <a href="#clients" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Clients">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
+        </svg>
+        <span class="sidebar-label">Clients</span>
+      </a>
+      <a href="#fixedExpenses" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Fixed Expenses">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M15 8.25H9m6 3H9m3 6-3-3h1.5a3 3 0 1 0 0-6M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z" />
+        </svg>
+        <span class="sidebar-label">Fixed Expenses</span>
+      </a>
+      <a href="#export" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Export">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M12 16.5V9.75m0 0 3 3m-3-3-3 3M6.75 19.5a4.5 4.5 0 0 1-1.41-8.775 5.25 5.25 0 0 1 10.233-2.33 3 3 0 0 1 3.758 3.848A3.752 3.752 0 0 1 18 19.5H6.75Z" />
+        </svg>
+        <span class="sidebar-label">Export</span>
+      </a>
+    </nav>
     <button id="quickAddBtn" class="fixed bottom-8 left-72 z-50 bg-orange-600 text-white rounded-full shadow-lg w-12 h-12 flex items-center justify-center text-3xl hover:bg-orange-700 transition-all duration-200" title="Quick Add" style="display:none;">+</button>
-  <div id="userInfo" class="hidden items-center gap-2">
+    <div id="userInfo" class="hidden items-center gap-2 p-4">
       <img id="userPhoto" class="h-8 w-8 rounded-full" src="" alt="User" />
       <span id="userName" class="text-sm font-medium"></span>
       <button id="logoutBtn" class="bg-gray-200 text-gray-700 px-2 py-1 rounded hover:bg-gray-300">Logout</button>
@@ -390,21 +387,20 @@
         </section>
       </div>
     </div>
-    
     <!-- Other sections remain hidden for navigation -->
-   <div id="dashboard" class="page-section hidden"></div>
-<div id="fixedExpenses" class="page-section hidden"></div>
-<div id="inventory" class="page-section hidden"></div>
-<div id="export" class="page-section hidden"></div>
-<div id="clients" class="page-section hidden"></div>
-<div id="invoice" class="page-section hidden">
-  <div id="invoicePrintArea"></div>
-</div>
-<div id="payments" class="page-section hidden"></div>
-<div id="orders" class="page-section hidden"></div>
-
+    <div id="dashboard" class="page-section hidden"></div>
+    <div id="fixedExpenses" class="page-section hidden"></div>
+    <div id="inventory" class="page-section hidden"></div>
+    <div id="export" class="page-section hidden"></div>
+    <div id="clients" class="page-section hidden"></div>
+    <div id="invoice" class="page-section hidden">
+      <div id="invoicePrintArea"></div>
+    </div>
+    <div id="payments" class="page-section hidden"></div>
+    <div id="orders" class="page-section hidden"></div>
   </main>
 
+  <!-- Scripts -->
   <script>
     function getGreeting() {
       const hour = new Date().getHours();
@@ -426,73 +422,63 @@
   <script src="js/invoices.js"></script>
   <script src="js/payments.js"></script>
   <script src="js/orders.js"></script>
-
-
   <script>
-   // All sections that are toggled (except workLog, which is always visible)
-const sections = ["workLog", "dashboard", "fixedExpenses", "inventory", "export", "clients", "invoice", "payments", "orders"];
-
-function toggleLoader(show) {
-  const loader = document.getElementById("loader");
-  loader.style.display = show ? "block" : "none";
-}
-
-function setActiveNav(target) {
-  document.querySelectorAll(".nav-link").forEach(link => link.classList.remove("active"));
-  document.querySelector(`.nav-link[href='#${target}']`)?.classList.add("active");
-}
-
-function showSection(target) {
-  toggleLoader(true);
-  sections.forEach(id => {
-    const el = document.getElementById(id);
-    if (el && !el.classList.contains("hidden")) {
-      el.classList.remove("show");
-      el.classList.add("fade-out");
-      setTimeout(() => {
-        el.classList.add("hidden");
-        el.classList.remove("fade-out");
-      }, 400);
+    // Section navigation logic
+    const sections = ["workLog", "dashboard", "fixedExpenses", "inventory", "export", "clients", "invoice", "payments", "orders"];
+    function toggleLoader(show) {
+      const loader = document.getElementById("loader");
+      loader.style.display = show ? "block" : "none";
     }
-  });
-  const targetEl = document.getElementById(target);
-  if (targetEl) {
-    targetEl.classList.remove("hidden");
-    // Force reflow to ensure animation triggers
-    void targetEl.offsetWidth;
-    setTimeout(() => {
-      targetEl.classList.add("show");
-      if (target === "payments" && typeof renderPaymentsTable === "function") {
-        renderPaymentsTable();
+    function setActiveNav(target) {
+      document.querySelectorAll(".nav-link").forEach(link => link.classList.remove("active"));
+      document.querySelector(`.nav-link[href='#${target}']`)?.classList.add("active");
+    }
+    function showSection(target) {
+      toggleLoader(true);
+      sections.forEach(id => {
+        const el = document.getElementById(id);
+        if (el && !el.classList.contains("hidden")) {
+          el.classList.remove("show");
+          el.classList.add("fade-out");
+          setTimeout(() => {
+            el.classList.add("hidden");
+            el.classList.remove("fade-out");
+          }, 400);
+        }
+      });
+      const targetEl = document.getElementById(target);
+      if (targetEl) {
+        targetEl.classList.remove("hidden");
+        void targetEl.offsetWidth;
+        setTimeout(() => {
+          targetEl.classList.add("show");
+          if (target === "payments" && typeof renderPaymentsTable === "function") {
+            renderPaymentsTable();
+          }
+          toggleLoader(false);
+          const main = document.querySelector('main');
+          if (main) {
+            main.scrollTop = 0;
+          }
+          window.scrollTo({ top: 0, behavior: "auto" });
+        }, 30);
+      } else {
+        toggleLoader(false);
       }
-      toggleLoader(false);
-      // Scroll the main content area to top
-      const main = document.querySelector('main');
-      if (main) {
-        main.scrollTop = 0;
-      }
-      window.scrollTo({ top: 0, behavior: "auto" });
-    }, 30);
-  } else {
-    toggleLoader(false);
-  }
-}
-
-document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
-  link.addEventListener("click", e => {
-    const target = link.getAttribute("href").substring(1);
-    e.preventDefault();
-    showSection(target);
-    setActiveNav(target);
-    if (target === "dashboard" && typeof loadDashboard === "function") loadDashboard();
-  });
-});
-
-window.addEventListener("DOMContentLoaded", () => {
-  setActiveNav("workLog");
-  showSection("workLog");
-});
-
+    }
+    document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {
+      link.addEventListener("click", e => {
+        const target = link.getAttribute("href").substring(1);
+        e.preventDefault();
+        showSection(target);
+        setActiveNav(target);
+        if (target === "dashboard" && typeof loadDashboard === "function") loadDashboard();
+      });
+    });
+    window.addEventListener("DOMContentLoaded", () => {
+      setActiveNav("workLog");
+      showSection("workLog");
+    });
     // Sidebar toggle/collapse
     const sidebar = document.getElementById("sidebar");
     const sidebarToggle = document.getElementById("sidebarToggle");
@@ -532,7 +518,7 @@ window.addEventListener("DOMContentLoaded", () => {
     });
     // Dark mode toggle
     const darkBtn = document.getElementById("toggleDark");
-    darkBtn.addEventListener("click", () => {
+    darkBtn?.addEventListener("click", () => {
       document.body.classList.toggle("dark");
       if (document.body.classList.contains("dark")) {
         document.body.classList.add("bg-gray-900", "text-white");
