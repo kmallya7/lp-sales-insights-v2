@@ -1,12 +1,9 @@
 // js/dailyLogs.js
 
 /**
- * Daily Logs Manager Script (Month & Date Picker + Client Search)
- * 
- * - By default, shows both the current month and current date entries.
- * - Entries can be filtered by month (using a month picker), by date (using a date picker), and by client name.
- * - The "Entries for" header updates based on the filter.
- * - The client search box filters by client name within the selected month or date.
+ * Modern Daily Logs Manager Script (2025 UI/UX)
+ * - All original features preserved.
+ * - UI/UX upgraded for a sleek, modern experience.
  */
 
 document.addEventListener("DOMContentLoaded", () => {
@@ -22,47 +19,71 @@ document.addEventListener("DOMContentLoaded", () => {
   // --- 1. Render the Daily Logs UI Section ---
   const dailyLogSection = document.getElementById("dailyLog");
   dailyLogSection.innerHTML = `
+    <!-- Loading Spinner -->
+    <div id="loading-spinner" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm hidden">
+      <div class="animate-spin rounded-full h-16 w-16 border-t-4 border-blue-500 border-b-4"></div>
+    </div>
+    <!-- Floating Add Entry Button (Mobile) -->
+    <button id="fab-add-entry" class="fixed bottom-6 right-6 z-40 bg-blue-600 text-white rounded-full shadow-lg p-4 text-2xl hover:bg-blue-700 transition hidden md:hidden" title="Add Entry">
+      +
+    </button>
     <!-- Summary Cards Layer -->
-    <section class="max-w-5xl mx-auto mt-6 mb-6">
-      <div class="flex flex-col sm:flex-row gap-4">
-        <div class="flex-1 bg-blue-100 p-4 rounded shadow flex flex-col items-center">
-          <span class="text-sm text-blue-700 font-medium">Revenue</span>
-          <span id="summary-revenue" class="text-xl font-bold text-blue-900 mt-1">₹0.00</span>
-        </div>
-        <div class="flex-1 bg-red-100 p-4 rounded shadow flex flex-col items-center">
-          <span class="text-sm text-red-700 font-medium">Cost</span>
-          <span id="summary-cost" class="text-xl font-bold text-red-900 mt-1">₹0.00</span>
-        </div>
-        <div class="flex-1 bg-green-100 p-4 rounded shadow flex flex-col items-center">
-          <span class="text-sm text-green-700 font-medium">Profit</span>
-          <span id="summary-profit" class="text-xl font-bold text-green-900 mt-1">₹0.00</span>
-        </div>
-      </div>
-    </section>
+<section class="max-w-5xl mx-auto mt-8 mb-8">
+  <div class="flex flex-col sm:flex-row gap-6">
+    <!-- Revenue Card -->
+    <div class="flex-1 p-6 rounded-2xl shadow-2xl flex flex-col items-center animate-fade-in bg-green-100 transition hover:scale-105">
+      <span class="text-sm font-semibold text-green-700 tracking-wide">Revenue</span>
+      <span id="summary-revenue" class="text-2xl font-extrabold text-green-900 mt-2">₹0.00</span>
+    </div>
+    <!-- Cost Card -->
+    <div class="flex-1 p-6 rounded-2xl shadow-2xl flex flex-col items-center animate-fade-in bg-red-100 transition hover:scale-105">
+      <span class="text-sm font-semibold text-red-700 tracking-wide">Cost</span>
+      <span id="summary-cost" class="text-2xl font-extrabold text-red-900 mt-2">₹0.00</span>
+    </div>
+    <!-- Profit Card -->
+    <div class="flex-1 p-6 rounded-2xl shadow-2xl flex flex-col items-center animate-fade-in bg-green-200 transition hover:scale-105">
+      <span class="text-sm font-semibold text-green-800 tracking-wide">Profit</span>
+      <span id="summary-profit" class="text-2xl font-extrabold text-green-900 mt-2">₹0.00</span>
+    </div>
+  </div>
+</section>
+<style>
+  .animate-fade-in {
+    animation: fadeIn 0.6s cubic-bezier(.4,0,.2,1);
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; transform: translateY(20px) scale(0.95);}
+    to { opacity: 1; transform: translateY(0) scale(1);}
+  }
+</style>
+
+
     <!-- Main Section: Header + Entry Form -->
     <section class="max-w-5xl mx-auto p-4">
-      <!-- Header -->
-      <div class="flex items-center gap-2 mb-2">
-        <span class="text-2xl">📒</span>
-        <h2 class="text-lg font-bold text-gray-800">Daily Logs</h2>
+      <div class="flex items-center gap-3 mb-4">
+        <span class="text-3xl">📒</span>
+        <h2 class="text-2xl font-extrabold text-gray-900 tracking-tight" style="font-family: 'Inter', sans-serif;">Daily Logs</h2>
       </div>
-      <p class="text-sm text-gray-500 mb-4">Track your daily sales and expenses</p>
-      <!-- Entry Form fills the space below -->
-      <div class="flex flex-col md:flex-row gap-8">
-        <div class="flex-1 bg-white rounded-lg shadow p-4 space-y-5">
-          <form id="daily-log-form" class="space-y-4">
-            <!-- Date & Client (centered, one line) -->
-            <div class="flex flex-row gap-3 justify-center items-center w-full mb-2">
-              <input type="date" id="log-date" class="flex-1 p-2 border rounded text-sm text-center" required />
-              <input type="text" id="client" placeholder="Client/Order Name" class="flex-1 p-2 border rounded text-sm text-center" required />
+      <p class="text-base text-gray-500 mb-6">Track your daily sales and expenses with ease.</p>
+      <div class="flex flex-col md:flex-row gap-10">
+        <div class="flex-1 glass-card rounded-2xl shadow-2xl p-6 space-y-7 border border-gray-100">
+          <form id="daily-log-form" class="space-y-6">
+            <div class="flex flex-row gap-4 justify-center items-center w-full mb-2">
+              <div class="flex flex-col flex-1">
+                <label for="log-date" class="text-xs text-gray-600 mb-1 font-medium">Date</label>
+                <input type="date" id="log-date" class="p-2 border rounded-xl text-sm text-center focus:ring-2 focus:ring-blue-400 transition" required />
+              </div>
+              <div class="flex flex-col flex-1">
+                <label for="client" class="text-xs text-gray-600 mb-1 font-medium">Client/Order Name</label>
+                <input type="text" id="client" placeholder="Client/Order Name" class="p-2 border rounded-xl text-sm text-center focus:ring-2 focus:ring-blue-400 transition" required />
+              </div>
             </div>
-            <!-- Items Table -->
             <div>
               <div class="font-semibold text-gray-700 mb-2 text-base">Items</div>
-              <div class="overflow-x-auto">
-                <table id="items-table" class="w-full text-sm border rounded mb-0">
+              <div class="overflow-x-auto rounded-xl border border-gray-200">
+                <table id="items-table" class="w-full text-sm">
                   <thead>
-                    <tr class="bg-gray-50">
+                    <tr class="bg-gradient-to-r from-blue-50 to-blue-100">
                       <th class="p-2">Item</th>
                       <th class="p-2">Qty</th>
                       <th class="p-2">Revenue</th>
@@ -74,48 +95,80 @@ document.addEventListener("DOMContentLoaded", () => {
                   <tbody id="items-tbody"></tbody>
                 </table>
               </div>
-              <div class="flex mt-2">
-                <button type="button" id="add-item-row" class="ml-auto px-3 py-1 bg-blue-600 text-white rounded font-medium text-sm shadow hover:bg-blue-700 transition w-full sm:w-auto">
+              <div class="flex mt-3">
+                <button type="button" id="add-item-row" class="ml-auto px-4 py-2 bg-blue-600 text-white rounded-xl font-semibold text-sm shadow hover:bg-blue-700 active:scale-95 transition w-full sm:w-auto">
                   + Add Item
                 </button>
               </div>
             </div>
-            <!-- Calculated Profit -->
             <div>
               <label for="calculatedProfit" class="block text-sm text-gray-600 mb-1 font-medium">Calculated Profit</label>
-              <input type="number" id="calculatedProfit" class="w-full p-2 border rounded bg-green-50 text-green-800 font-semibold text-base" readonly />
+              <input type="number" id="calculatedProfit" class="w-full p-2 border rounded-xl bg-green-50 text-green-800 font-semibold text-base" readonly />
             </div>
-            <!-- Notes -->
             <div>
-              <a href="#" id="toggle-notes" class="text-blue-600 text-sm hover:underline font-medium">Show Notes</a>
-              <textarea id="notes" placeholder="Notes (Optional)" class="w-full p-2 border rounded mt-2 hidden text-sm"></textarea>
-            </div>
-            <!-- Submit -->
-            <button type="submit" class="w-full bg-black text-white py-2 rounded text-base font-bold flex items-center justify-center gap-2 shadow hover:bg-gray-900 transition">
+  <button type="button" id="toggle-notes" class="text-blue-600 text-sm hover:underline font-medium transition flex items-center gap-1">
+    <span id="notes-icon">📝</span> <span id="notes-label">Show Notes</span>
+  </button>
+  <textarea
+    id="notes"
+    placeholder="Notes (Optional)"
+    class="w-full p-3 border-2 border-yellow-300 bg-yellow-50 rounded-xl mt-2 text-sm shadow transition-all duration-300 ease-in-out hidden focus:outline-none focus:ring-2 focus:ring-yellow-400"
+    style="min-height: 80px;"
+  ></textarea>
+</div>
+
+            <button type="submit" class="w-full bg-gradient-to-r from-blue-700 to-blue-500 text-white py-3 rounded-xl text-base font-bold flex items-center justify-center gap-2 shadow hover:bg-blue-900 active:scale-95 transition">
               <span>+</span> Add Entry
             </button>
           </form>
         </div>
       </div>
     </section>
-    <!-- Entries Table Layer -->
-    <section id="entries-layer" class="max-w-5xl mx-auto mt-8">
-      <div class="bg-white rounded shadow p-4">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-3">
-          <div class="flex items-center gap-3 flex-wrap">
-            <h3 class="text-base font-bold">Entries for <span id="log-date-display">[Filter]</span></h3>
-            <label for="summary-month" class="text-sm text-gray-600 ml-2 font-medium">View Month:</label>
-            <input type="month" id="summary-month" class="p-2 border rounded text-sm" />
-            <label for="summary-date" class="text-sm text-gray-600 ml-2 font-medium">or Date:</label>
-            <input type="date" id="summary-date" class="p-2 border rounded text-sm" />
+    <section id="entries-layer" class="max-w-5xl mx-auto mt-10">
+      <div class="glass-card rounded-2xl shadow-2xl p-6 border border-gray-100">
+        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-4">
+          <div class="flex items-center gap-4 flex-wrap">
+            <h3 class="text-lg font-bold">Entries for <span id="log-date-display" class="text-blue-700">[Filter]</span></h3>
+            <label for="summary-month" class="text-sm text-gray-600 font-medium">View Month:</label>
+            <input type="month" id="summary-month" class="p-2 border rounded-xl text-sm focus:ring-2 focus:ring-blue-400 transition" />
+            <label for="summary-date" class="text-sm text-gray-600 font-medium">or Date:</label>
+            <input type="date" id="summary-date" class="p-2 border rounded-xl text-sm focus:ring-2 focus:ring-blue-400 transition" />
           </div>
           <div class="flex gap-2">
-            <input type="text" id="client-search" placeholder="Search by client name..." class="p-2 border rounded text-sm" style="min-width:180px;" />
+            <input type="text" id="client-search" placeholder="Search by client name..." class="p-2 border rounded-xl text-sm focus:ring-2 focus:ring-blue-400 transition min-w-[180px]" />
           </div>
         </div>
-        <div id="log-entries" class="text-sm text-gray-700 bg-gray-50 p-2 rounded border overflow-x-auto">No entries found. Add your first entry above!</div>
+        <div id="log-entries" class="text-sm text-gray-700 bg-gray-50 p-3 rounded-xl border overflow-x-auto">No entries found. Add your first entry above!</div>
       </div>
     </section>
+    <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm hidden">
+      <div class="glass-card bg-white rounded-xl shadow-lg p-8 max-w-sm w-full text-center animate-fade-in">
+        <div class="text-2xl mb-4">⚠️</div>
+        <div class="text-lg font-semibold mb-4">Are you sure you want to delete this entry?</div>
+        <div class="flex justify-center gap-4">
+          <button id="confirm-delete" class="px-4 py-2 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 active:scale-95 transition">Delete</button>
+          <button id="cancel-delete" class="px-4 py-2 bg-gray-200 text-gray-800 rounded-xl font-bold hover:bg-gray-300 active:scale-95 transition">Cancel</button>
+        </div>
+      </div>
+    </div>
+    <style>
+      .glass-card {
+        background: rgba(255,255,255,0.7);
+        box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255,255,255,0.18);
+      }
+      body, input, button, textarea, table {
+        font-family: 'Inter', sans-serif;
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.3s ease;
+      }
+      @keyframes fadeIn {
+        from { opacity: 0; transform: scale(0.95);}
+        to { opacity: 1; transform: scale(1);}
+      }
+    </style>
   `;
 
   // --- 2. State Variables ---
@@ -125,43 +178,55 @@ document.addEventListener("DOMContentLoaded", () => {
   let allMonthEntries = [];
   let allDateEntries = [];
   let currentFilter = "month"; // or "date"
+  let deleteEntryId = null;
+  let deleteEntryDate = null;
   const db = window.db;
 
-  // --- 3. Helper: Add a new item row to the items table ---
+  // --- 3. Helper: Show/Hide Loading Spinner ---
+  function showLoading(show = true) {
+    document.getElementById("loading-spinner").classList.toggle("hidden", !show);
+  }
+
+  // --- 4. Helper: Add a new item row to the items table ---
   function addItemRow(item = {}) {
     const tbody = document.getElementById('items-tbody');
     const tr = document.createElement('tr');
+    tr.className = "hover:bg-blue-50 transition";
     tr.innerHTML = `
-      <td><input type="text" class="item-name p-1 border rounded w-full text-sm" value="${item.name || ''}" required></td>
-      <td><input type="number" class="item-qty p-1 border rounded w-full text-sm" value="${item.qty || ''}" min="1" required /></td>
-      <td><input type="number" class="item-revenue p-1 border rounded w-full text-sm" value="${item.revenue || ''}" min="0" step="0.01" required /></td>
-      <td><input type="number" class="item-ingredients p-1 border rounded w-full text-sm" value="${item.ingredients || ''}" min="0" step="0.01" required /></td>
-      <td><input type="number" class="item-packaging p-1 border rounded w-full text-sm" value="${item.packaging || ''}" min="0" step="0.01" required /></td>
-      <td><button type="button" class="remove-item text-red-500 text-lg" title="Remove Item">🗑️</button></td>
+      <td><input type="text" class="item-name p-1 border rounded-lg w-full text-sm focus:ring-2 focus:ring-blue-400 transition" value="${item.name || ''}" required></td>
+      <td><input type="number" class="item-qty p-1 border rounded-lg w-full text-sm focus:ring-2 focus:ring-blue-400 transition" value="${item.qty || ''}" min="1" required /></td>
+      <td><input type="number" class="item-revenue p-1 border rounded-lg w-full text-sm focus:ring-2 focus:ring-blue-400 transition" value="${item.revenue || ''}" min="0" step="0.01" required /></td>
+      <td><input type="number" class="item-ingredients p-1 border rounded-lg w-full text-sm focus:ring-2 focus:ring-blue-400 transition" value="${item.ingredients || ''}" min="0" step="0.01" required /></td>
+      <td><input type="number" class="item-packaging p-1 border rounded-lg w-full text-sm focus:ring-2 focus:ring-blue-400 transition" value="${item.packaging || ''}" min="0" step="0.01" required /></td>
+      <td>
+        <button type="button" class="remove-item text-red-500 text-lg" title="Remove Item">
+          <span class="hover:scale-125 transition" aria-label="Remove">🗑️</span>
+        </button>
+      </td>
     `;
     tbody.appendChild(tr);
     updateProfit();
   }
 
-  // --- 4. Helper: Ensure at least one item row exists ---
+  // --- 5. Helper: Ensure at least one item row exists ---
   function ensureAtLeastOneItemRow() {
     const tbody = document.getElementById('items-tbody');
     if (tbody.children.length === 0) addItemRow();
   }
 
-  // --- 5. Event: Add item row button ---
+  // --- 6. Event: Add item row button ---
   document.getElementById('add-item-row').addEventListener('click', () => addItemRow());
 
-  // --- 6. Event: Remove item row button (delegated) ---
+  // --- 7. Event: Remove item row button (delegated) ---
   document.getElementById('items-tbody').addEventListener('click', function(e) {
-    if (e.target.classList.contains('remove-item')) {
+    if (e.target.closest('.remove-item')) {
       e.target.closest('tr').remove();
       ensureAtLeastOneItemRow();
       updateProfit();
     }
   });
 
-  // --- 7. Event: Update profit on any item input change (delegated) ---
+  // --- 8. Event: Update profit on any item input change (delegated) ---
   document.getElementById('items-tbody').addEventListener('input', function(e) {
     if (
       e.target.classList.contains('item-name') ||
@@ -174,7 +239,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // --- 8. Helper: Calculate and update profit field in the form ---
+  // --- 9. Helper: Calculate and update profit field in the form ---
   function updateProfit() {
     const items = Array.from(document.querySelectorAll("#items-tbody tr")).map(row => ({
       name: row.querySelector(".item-name").value,
@@ -194,54 +259,59 @@ document.addEventListener("DOMContentLoaded", () => {
     profitInput.placeholder = "Calculated Profit";
   }
 
-  // --- 9. Event: Toggle notes textarea visibility ---
+  // --- 10. Event: Toggle notes textarea visibility with animation ---
   document.getElementById("toggle-notes").addEventListener("click", function(e) {
-    e.preventDefault();
-    const notes = document.getElementById("notes");
-    notes.classList.toggle("hidden");
-    this.innerText = notes.classList.contains("hidden") ? "Show Notes" : "Hide Notes";
-  });
+  e.preventDefault();
+  const notes = document.getElementById("notes");
+  notes.classList.toggle("hidden");
+  this.innerText = notes.classList.contains("hidden") ? "Show Notes" : "Hide Notes";
+});
 
-  // --- 10. Helper: Render entries as a table (for entries list) ---
+
+  // --- 11. Helper: Render entries as a table (for entries list) ---
   function renderEntriesTable(entries, emptyMsg) {
     if (!entries.length) {
       return emptyMsg || "No entries found. Add your first entry above!";
     }
     let html = `
       <div class="overflow-x-auto">
-      <table class="w-full text-sm border rounded">
-        <thead>
+      <table class="w-full text-sm border rounded-lg">
+        <thead class="sticky top-0 z-10">
           <tr class="bg-gray-100">
-            <th class="border p-1">Client</th>
-            <th class="border p-1">Date</th>
-            <th class="border p-1">Item</th>
-            <th class="border p-1">Qty</th>
-            <th class="border p-1">Revenue (₹)</th>
-            <th class="border p-1">Ingredients (₹)</th>
-            <th class="border p-1">Packaging (₹)</th>
-            <th class="border p-1">Profit (₹)</th>
-            <th class="border p-1">Notes</th>
-            <th class="border p-1"></th>
+            <th class="border p-2">Client</th>
+            <th class="border p-2">Date</th>
+            <th class="border p-2">Item</th>
+            <th class="border p-2">Qty</th>
+            <th class="border p-2">Revenue (₹)</th>
+            <th class="border p-2">Ingredients (₹)</th>
+            <th class="border p-2">Packaging (₹)</th>
+            <th class="border p-2">Profit (₹)</th>
+            <th class="border p-2">Notes</th>
+            <th class="border p-2"></th>
           </tr>
         </thead>
         <tbody>
     `;
-    entries.forEach(({ docId, d }) => {
-      (d.items || []).forEach(item => {
+    entries.forEach(({ docId, d }, entryIdx) => {
+      (d.items || []).forEach((item, itemIdx) => {
         html += `
-          <tr>
-            <td class="border p-1">${d.client || ""}</td>
-            <td class="border p-1">${formatDisplayDate(d.date) || ""}</td>
-            <td class="border p-1">${item.name || ""}</td>
-            <td class="border p-1">${item.qty || ""}</td>
-            <td class="border p-1">₹${item.revenue?.toFixed(2) ?? ""}</td>
-            <td class="border p-1">₹${item.ingredients?.toFixed(2) ?? ""}</td>
-            <td class="border p-1">₹${item.packaging?.toFixed(2) ?? ""}</td>
-            <td class="border p-1 text-green-700 font-semibold">₹${((item.revenue || 0) - ((item.ingredients || 0) + (item.packaging || 0))).toFixed(2)}</td>
-            <td class="border p-1">${d.notes || ""}</td>
-            <td class="border p-1 flex gap-1">
-              <button onclick="editEntry('${docId}', ${JSON.stringify(d).replace(/"/g, '&quot;')})" class="text-blue-500 hover:text-blue-700 text-base" title="Edit">✏️</button>
-              <button onclick="deleteEntry('${docId}', '${d.date}')" class="text-red-500 hover:text-red-700 text-base" title="Delete">🗑️</button>
+          <tr class="${entryIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition">
+            <td class="border p-2">${d.client || ""}</td>
+            <td class="border p-2">${formatDisplayDate(d.date) || ""}</td>
+            <td class="border p-2">${item.name || ""}</td>
+            <td class="border p-2">${item.qty || ""}</td>
+            <td class="border p-2">₹${item.revenue?.toFixed(2) ?? ""}</td>
+            <td class="border p-2">₹${item.ingredients?.toFixed(2) ?? ""}</td>
+            <td class="border p-2">₹${item.packaging?.toFixed(2) ?? ""}</td>
+            <td class="border p-2 text-green-700 font-semibold">₹${((item.revenue || 0) - ((item.ingredients || 0) + (item.packaging || 0))).toFixed(2)}</td>
+            <td class="border p-2">${d.notes || ""}</td>
+            <td class="border p-2 flex gap-2">
+              <button onclick="editEntry('${docId}', ${JSON.stringify(d).replace(/"/g, '&quot;')})" class="text-blue-500 hover:text-blue-700 text-base" title="Edit">
+                <span class="hover:scale-125 transition" aria-label="Edit">✏️</span>
+              </button>
+              <button onclick="showDeleteModal('${docId}', '${d.date}')" class="text-red-500 hover:text-red-700 text-base" title="Delete">
+                <span class="hover:scale-125 transition" aria-label="Delete">🗑️</span>
+              </button>
             </td>
           </tr>
         `;
@@ -251,8 +321,9 @@ document.addEventListener("DOMContentLoaded", () => {
     return html;
   }
 
-  // --- 11. Load and display summary and entries for a given month ---
+  // --- 12. Load and display summary and entries for a given month ---
   async function loadMonthlySummary(monthStr) {
+    showLoading(true);
     lastSelectedMonth = monthStr;
     lastSelectedDate = null;
     currentFilter = "month";
@@ -290,10 +361,12 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("summary-profit").innerText = `₹${totalProfit.toFixed(2)}`;
     document.getElementById("log-entries").innerHTML = renderEntriesTable(entries, "No entries found for this month. Add your first entry above!");
     filterEntriesByClient();
+    showLoading(false);
   }
 
-  // --- 12. Load and display summary and entries for a given date ---
+  // --- 13. Load and display summary and entries for a given date ---
   async function loadDailySummary(date) {
+    showLoading(true);
     lastSelectedDate = date;
     lastSelectedMonth = null;
     currentFilter = "date";
@@ -323,9 +396,10 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("summary-profit").innerText = `₹${totalProfit.toFixed(2)}`;
     document.getElementById("log-entries").innerHTML = renderEntriesTable(entries, "No entries found for this date. Add your first entry above!");
     filterEntriesByClient();
+    showLoading(false);
   }
 
-  // --- 13. Filter entries by client name in the current view ---
+  // --- 14. Filter entries by client name in the current view ---
   function filterEntriesByClient() {
     const search = (document.getElementById("client-search")?.value || "").trim().toLowerCase();
     const table = document.querySelector("#log-entries table");
@@ -340,23 +414,24 @@ document.addEventListener("DOMContentLoaded", () => {
   }
   document.getElementById("client-search").addEventListener("input", filterEntriesByClient);
 
-  // --- 14. Event: Change summary month picker (loads summary for selected month) ---
+  // --- 15. Event: Change summary month picker (loads summary for selected month) ---
   document.getElementById("summary-month").addEventListener("change", (e) => {
     if (e.target.value) {
       loadMonthlySummary(e.target.value);
     }
   });
 
-  // --- 15. Event: Change summary date picker (loads summary for selected date) ---
+  // --- 16. Event: Change summary date picker (loads summary for selected date) ---
   document.getElementById("summary-date").addEventListener("change", (e) => {
     if (e.target.value) {
       loadDailySummary(e.target.value);
     }
   });
 
-  // --- 16. Event: Form submit (add or update entry) ---
+  // --- 17. Event: Form submit (add or update entry) ---
   document.getElementById("daily-log-form").addEventListener("submit", async (e) => {
     e.preventDefault();
+    showLoading(true);
     const date = document.getElementById("log-date").value;
     const client = document.getElementById("client").value;
     const notes = document.getElementById("notes").value;
@@ -400,9 +475,10 @@ document.addEventListener("DOMContentLoaded", () => {
       const monthStr = today.slice(0, 7);
       loadMonthlySummary(monthStr);
     }
+    showLoading(false);
   });
 
-  // --- 17. On page load: set today's date and load this month's and today's entries ---
+  // --- 18. On page load: set today's date and load this month's and today's entries ---
   const today = new Date().toISOString().split("T")[0];
   const thisMonth = today.slice(0, 7);
   document.getElementById("log-date").value = today;
@@ -413,7 +489,7 @@ document.addEventListener("DOMContentLoaded", () => {
   loadMonthlySummary(thisMonth);
   loadDailySummary(today);
 
-  // --- 18. Expose edit and delete functions globally for table buttons ---
+  // --- 19. Expose edit and delete functions globally for table buttons ---
   window.editEntry = function (id, data) {
     editingId = id;
     document.getElementById("log-date").value = data.date;
@@ -427,17 +503,33 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("daily-log-form").scrollIntoView({ behavior: "smooth" });
   };
 
-  window.deleteEntry = async function (id, date) {
-    if (!confirm("Are you sure you want to delete this entry?")) return;
-    await db.collection("dailyLogs").doc(id).delete();
+  // --- 20. Confirmation Modal for Delete ---
+  window.showDeleteModal = function (id, date) {
+    deleteEntryId = id;
+    deleteEntryDate = date;
+    document.getElementById("confirm-modal").classList.remove("hidden");
+  };
+  document.getElementById("cancel-delete").addEventListener("click", function () {
+    document.getElementById("confirm-modal").classList.add("hidden");
+    deleteEntryId = null;
+    deleteEntryDate = null;
+  });
+  document.getElementById("confirm-delete").addEventListener("click", async function () {
+    if (!deleteEntryId) return;
+    showLoading(true);
+    await db.collection("dailyLogs").doc(deleteEntryId).delete();
+    document.getElementById("confirm-modal").classList.add("hidden");
     // After delete, reload the current filter
-    if (currentFilter === "date" && date) {
-      loadDailySummary(date);
-    } else if (currentFilter === "month" && date) {
-      loadMonthlySummary(date.slice(0, 7));
+    if (currentFilter === "date" && deleteEntryDate) {
+      loadDailySummary(deleteEntryDate);
+    } else if (currentFilter === "month" && deleteEntryDate) {
+      loadMonthlySummary(deleteEntryDate.slice(0, 7));
     } else {
       loadMonthlySummary(thisMonth);
       loadDailySummary(today);
     }
-  };
+    showLoading(false);
+    deleteEntryId = null;
+    deleteEntryDate = null;
+  });
 });

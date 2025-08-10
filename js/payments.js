@@ -1,4 +1,4 @@
-// payments.js
+// payments-dashboard.js
 
 document.addEventListener("DOMContentLoaded", () => {
   const paymentsSection = document.getElementById("payments");
@@ -10,168 +10,229 @@ document.addEventListener("DOMContentLoaded", () => {
     return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}`;
   }
 
-  // --- Helper: Render total outstanding for each client across all months (BOTTOM, solid, prominent color) ---
-  async function renderClientOutstandingCardsBottom() {
-    if (!paymentsSection) return;
-
-    // 1. Get all daily logs (sales)
+  // --- Helper: Get all clients ---
+  async function getAllClients() {
     const salesSnapshot = await db.collection("dailyLogs").get();
-    const clientTotals = {};
-
+    const paymentsSnapshot = await db.collection("payments").get();
+    const clients = new Set();
     salesSnapshot.forEach(doc => {
       const d = doc.data();
-      if (!d.client || !d.date) return;
-      if (!clientTotals[d.client]) {
-        clientTotals[d.client] = { sales: 0, paid: 0 };
-      }
-      clientTotals[d.client].sales += d.totalRevenue || 0;
+      if (d.client) clients.add(d.client);
     });
-
-    // 2. Get all payments
-    const paymentsSnapshot = await db.collection("payments").get();
     paymentsSnapshot.forEach(doc => {
       const p = doc.data();
-      if (!p.client || !p.date) return;
-      if (!clientTotals[p.client]) {
-        clientTotals[p.client] = { sales: 0, paid: 0 };
-      }
-      clientTotals[p.client].paid += p.amount || 0;
+      if (p.client) clients.add(p.client);
     });
-
-    // 3. Prepare outstanding per client
-    const clientOutstanding = Object.entries(clientTotals)
-      .map(([client, data]) => ({
-        client,
-        outstanding: data.sales - data.paid,
-        sales: data.sales,
-        paid: data.paid
-      }))
-      .filter(c => c.outstanding > 0)
-      .sort((a, b) => b.outstanding - a.outstanding);
-
-    // 4. Render cards (bottom, solid, prominent but not irritating)
-    let cardsHtml = `
-      <div class="flex flex-wrap justify-center gap-4 mt-8 mb-2" id="client-outstanding-cards">
-        ${clientOutstanding.length === 0 ? `
-          <div class="rounded-xl shadow-lg p-6 flex flex-col items-center min-w-[220px] border-2 border-[#3B2F7F] bg-[#F7D358]">
-            <div class="text-base font-semibold text-[#3B2F7F]">No client has outstanding dues!</div>
-          </div>
-        ` : clientOutstanding.map(c => `
-          <div class="rounded-xl shadow-lg p-5 flex flex-col items-center min-w-[220px] border-2 border-[#3B2F7F] bg-[#F7D358]">
-            <div class="text-lg font-bold text-[#3B2F7F] mb-1">${c.client}</div>
-            <div class="text-2xl font-extrabold text-[#3B2F7F] mb-1 tracking-wide">₹${c.outstanding.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
-            <div class="text-xs font-medium text-[#3B2F7F]">Outstanding</div>
-            <div class="text-xs text-[#3B2F7F] mt-1">Sales: ₹${c.sales.toLocaleString(undefined, {minimumFractionDigits:2})} | Paid: ₹${c.paid.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
-          </div>
-        `).join('')}
-      </div>
-    `;
-
-    // Remove any existing cards at the bottom
-    const prev = document.getElementById('client-outstanding-cards');
-    if (prev) prev.remove();
-
-    // Append to the end of paymentsSection
-    paymentsSection.insertAdjacentHTML('beforeend', cardsHtml);
+    return Array.from(clients).sort();
   }
 
-  // --- Helper: Render the payments summary table ---
-  async function renderPaymentsTable(selectedMonthYear = getCurrentMonthYear()) {
-    if (!paymentsSection || paymentsSection.classList.contains("hidden")) {
-      paymentsSection.innerHTML = "";
-      return;
-    }
+  // --- Helper: Render summary cards (top) ---
+  function renderSummaryCards(insights) {
+    return `
+      <div class="flex flex-wrap gap-4 mb-6">
+        <div class="flex-1 min-w-[160px] rounded-xl shadow-lg p-5 flex flex-col items-center bg-gradient-to-br from-[#C8AFF0] to-[#F6F2FF]">
+          <div class="text-lg font-bold text-black mb-1">₹${insights.totalOutstanding.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
+          <div class="text-xs font-medium text-black">Outstanding</div>
+        </div>
+        <div class="flex-1 min-w-[160px] rounded-xl shadow-lg p-5 flex flex-col items-center bg-gradient-to-br from-[#B9FBC0] to-[#F6F2FF]">
+          <div class="text-lg font-bold text-green-700 mb-1">₹${insights.totalReceived.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
+          <div class="text-xs font-medium text-black">Received</div>
+        </div>
+        <div class="flex-1 min-w-[160px] rounded-xl shadow-lg p-5 flex flex-col items-center bg-gradient-to-br from-[#F3F0FF] to-[#C8AFF0]">
+          <div class="text-lg font-bold text-black mb-1">${insights.closedCount}</div>
+          <div class="text-xs font-medium text-black">Closed Accounts</div>
+        </div>
+        <div class="flex-1 min-w-[160px] rounded-xl shadow-lg p-5 flex flex-col items-center bg-gradient-to-br from-[#F7D358] to-[#F3F0FF]">
+          <div class="text-lg font-bold text-[#3B2F7F] mb-1">${insights.topDebtor || '-'}</div>
+          <div class="text-xs font-medium text-[#3B2F7F]">Top Debtor</div>
+        </div>
+        <div class="flex-1 min-w-[160px] rounded-xl shadow-lg p-5 flex flex-col items-center bg-gradient-to-br from-[#B9FBC0] to-[#F3F0FF]">
+          <div class="text-lg font-bold text-[#3B2F7F] mb-1">${insights.fastestPayer || '-'}</div>
+          <div class="text-xs font-medium text-[#3B2F7F]">Fastest Payer</div>
+        </div>
+      </div>
+    `;
+  }
 
-    // --- 1. Get all daily logs (sales) for selected month ---
+  // --- Helper: Render attention section ---
+  function renderAttentionSection(attentionClients) {
+    if (!attentionClients.length) return '';
+    return `
+      <div class="mb-6">
+        <div class="rounded-xl shadow-lg p-5 bg-[#FFF3F0] border-2 border-[#F7D358]">
+          <div class="text-base font-bold text-[#D7263D] mb-2">⚠️ Needs Attention</div>
+          <div class="flex flex-wrap gap-3">
+            ${attentionClients.map(c => `
+              <div class="rounded-lg bg-[#F7D358] p-3 min-w-[180px] flex flex-col items-center border border-[#3B2F7F]">
+                <div class="text-sm font-bold text-[#3B2F7F]">${c.client}</div>
+                <div class="text-lg font-extrabold text-[#D7263D]">₹${c.outstanding.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
+                <div class="text-xs text-[#3B2F7F]">Overdue by ${c.daysOverdue} days</div>
+              </div>
+            `).join('')}
+          </div>
+        </div>
+      </div>
+    `;
+  }
+
+  // --- Helper: Render payment trend chart ---
+  function renderPaymentTrendChart(payments) {
+    // Prepare data for Chart.js
+    const dates = {};
+    payments.forEach(p => {
+      if (!p.date || !p.amount) return;
+      dates[p.date] = (dates[p.date] || 0) + p.amount;
+    });
+    const sortedDates = Object.keys(dates).sort();
+    const chartLabels = sortedDates;
+    const chartData = sortedDates.map(d => dates[d]);
+
+    // Chart container
+    return `
+      <div class="mb-6">
+        <div class="rounded-xl shadow-lg p-5 bg-white">
+          <div class="text-base font-bold text-black mb-2">Payment Timeline</div>
+          <canvas id="payment-trend-chart" height="80"></canvas>
+        </div>
+      </div>
+    `;
+  }
+
+  // --- Helper: Render filter controls ---
+  function renderFilterControls(selectedMonthYear, clients, selectedClient, selectedStatus, dateRange) {
+    return `
+      <form id="dashboard-filter-form" class="mb-4 flex flex-wrap gap-3 items-center">
+        <label class="font-medium text-gray-700 text-[13px]">Month:</label>
+        <input type="month" id="filter-month" name="month" value="${selectedMonthYear}" class="border rounded px-2 py-1 focus:ring-2 focus:ring-[#C8AFF0] text-[13px]" />
+        <label class="font-medium text-gray-700 text-[13px]">Client:</label>
+        <select id="filter-client" name="client" class="border rounded px-2 py-1 focus:ring-2 focus:ring-[#C8AFF0] text-[13px]">
+          <option value="">All</option>
+          ${clients.map(c => `<option value="${c}" ${selectedClient === c ? 'selected' : ''}>${c}</option>`).join('')}
+        </select>
+        <label class="font-medium text-gray-700 text-[13px]">Status:</label>
+        <select id="filter-status" name="status" class="border rounded px-2 py-1 focus:ring-2 focus:ring-[#C8AFF0] text-[13px]">
+          <option value="">All</option>
+          <option value="open" ${selectedStatus === 'open' ? 'selected' : ''}>Open</option>
+          <option value="closed" ${selectedStatus === 'closed' ? 'selected' : ''}>Closed</option>
+        </select>
+        <label class="font-medium text-gray-700 text-[13px]">Date Range:</label>
+        <input type="date" id="filter-date-from" name="dateFrom" value="${dateRange.from || ''}" class="border rounded px-2 py-1 focus:ring-2 focus:ring-[#C8AFF0] text-[13px]" />
+        <span>-</span>
+        <input type="date" id="filter-date-to" name="dateTo" value="${dateRange.to || ''}" class="border rounded px-2 py-1 focus:ring-2 focus:ring-[#C8AFF0] text-[13px]" />
+        <button type="submit" class="bg-[#C8AFF0] text-black px-3 py-1 rounded-md shadow hover:bg-[#b39ddb] focus:outline-none focus:ring-2 focus:ring-[#C8AFF0] transition text-xs">Apply</button>
+      </form>
+    `;
+  }
+
+  // --- Main render function ---
+  async function renderPaymentsDashboard({
+    selectedMonthYear = getCurrentMonthYear(),
+    selectedClient = "",
+    selectedStatus = "",
+    dateRange = { from: "", to: "" }
+  } = {}) {
+    if (!paymentsSection) return;
+
+    // --- Get all clients for filter dropdown ---
+    const clients = await getAllClients();
+
+    // --- Get all sales and payments ---
     const salesSnapshot = await db.collection("dailyLogs").get();
-    const clientTotals = {};
+    const paymentsSnapshot = await db.collection("payments").get();
 
+    // --- Prepare client totals ---
+    const clientTotals = {};
+    const paymentsList = [];
     salesSnapshot.forEach(doc => {
       const d = doc.data();
       if (!d.client || !d.date) return;
       // Filter by month/year
-      if (!d.date.startsWith(selectedMonthYear)) return;
+      if (selectedMonthYear && !d.date.startsWith(selectedMonthYear)) return;
+      if (selectedClient && d.client !== selectedClient) return;
       if (!clientTotals[d.client]) {
         clientTotals[d.client] = { sales: 0, paid: 0, payments: [], salesDates: [] };
       }
       clientTotals[d.client].sales += d.totalRevenue || 0;
       clientTotals[d.client].salesDates.push(d.date);
     });
-
-    // --- 2. Get all payments for selected month ---
-    const paymentsSnapshot = await db.collection("payments").get();
     paymentsSnapshot.forEach(doc => {
       const p = doc.data();
       if (!p.client || !p.date) return;
       // Filter by month/year
-      if (!p.date.startsWith(selectedMonthYear)) return;
+      if (selectedMonthYear && !p.date.startsWith(selectedMonthYear)) return;
+      if (selectedClient && p.client !== selectedClient) return;
+      // Filter by date range
+      if (dateRange.from && p.date < dateRange.from) return;
+      if (dateRange.to && p.date > dateRange.to) return;
       if (!clientTotals[p.client]) {
         clientTotals[p.client] = { sales: 0, paid: 0, payments: [], salesDates: [] };
       }
       clientTotals[p.client].paid += p.amount || 0;
-      // Attach Firestore doc ID for delete
       clientTotals[p.client].payments.push({ ...p, id: doc.id });
+      paymentsList.push({ ...p, client: p.client });
     });
 
-    // --- 3. Prepare sorted client list ---
+    // --- Prepare sorted client list ---
     const openAccounts = [];
     const closedAccounts = [];
     Object.entries(clientTotals).forEach(([client, data]) => {
       const outstanding = data.sales - data.paid;
+      if (selectedStatus === "open" && outstanding <= 0) return;
+      if (selectedStatus === "closed" && outstanding > 0) return;
       if (outstanding > 0) {
         openAccounts.push({ client, ...data, outstanding });
       } else {
         closedAccounts.push({ client, ...data, outstanding });
       }
     });
-    // Sort open accounts by outstanding desc
     openAccounts.sort((a, b) => b.outstanding - a.outstanding);
-    // Sort closed accounts alphabetically
     closedAccounts.sort((a, b) => a.client.localeCompare(b.client));
     const sortedClients = [...openAccounts, ...closedAccounts];
 
-    // --- 4. Card Stack Calculations ---
+    // --- Insights calculations ---
     let totalOutstanding = 0;
     let totalReceived = 0;
     let closedCount = closedAccounts.length;
+    let topDebtor = openAccounts[0]?.client || "";
+    let fastestPayer = "";
     openAccounts.forEach(data => { totalOutstanding += data.outstanding; });
     Object.values(clientTotals).forEach(data => { totalReceived += data.paid; });
 
-    // --- 5. Month/Year Picker UI ---
-    const [year, month] = selectedMonthYear.split("-");
-    let monthPickerHtml = `
-      <form id="month-filter-form" class="mb-4 flex flex-wrap gap-3 items-center">
-        <label class="font-medium text-gray-700 text-[13px]">Show for:</label>
-        <input type="month" id="month-filter" name="month" value="${selectedMonthYear}" class="border rounded px-2 py-1 focus:ring-2 focus:ring-[#C8AFF0] text-[13px]" />
-      </form>
-    `;
+    // Fastest payer: client who paid full earliest in the month
+    let fastestPayerObj = closedAccounts
+      .map(c => ({
+        client: c.client,
+        lastPaidDate: c.payments.length ? c.payments.sort((a, b) => a.date.localeCompare(b.date)).slice(-1)[0].date : ""
+      }))
+      .filter(c => c.lastPaidDate)
+      .sort((a, b) => a.lastPaidDate.localeCompare(b.lastPaidDate))[0];
+    if (fastestPayerObj) fastestPayer = fastestPayerObj.client;
 
-    // --- 6. Card Stack HTML (smaller, sleeker) ---
-    let cardStackHtml = `
-      <div class="flex flex-wrap gap-3 mb-6">
-        <div class="flex-1 min-w-[140px] rounded-lg shadow p-4 flex flex-col items-center" style="background: rgba(200, 175, 240, 0.8);">
-          <div class="text-lg font-bold text-black mb-1">₹${totalOutstanding.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
-          <div class="text-xs font-medium text-black">Amount Yet to Receive</div>
-        </div>
-        <div class="flex-1 min-w-[140px] rounded-lg shadow p-4 flex flex-col items-center" style="background: rgba(185, 251, 192, 0.8);">
-          <div class="text-lg font-bold text-green-700 mb-1">₹${totalReceived.toLocaleString(undefined, {minimumFractionDigits:2})}</div>
-          <div class="text-xs font-medium text-black">Amount Received</div>
-        </div>
-        <div class="flex-1 min-w-[140px] rounded-lg shadow p-4 flex flex-col items-center" style="background: rgba(243, 240, 255, 0.8);">
-          <div class="text-lg font-bold text-black mb-1">${closedCount}</div>
-          <div class="text-xs font-medium text-black">Closed Accounts</div>
-        </div>
-      </div>
-    `;
+    // --- Attention section: overdue/large outstanding ---
+    const today = new Date();
+    const attentionClients = openAccounts
+      .map(c => {
+        // Overdue: last payment > 15 days ago, or outstanding > 10,000
+        let lastPaidDate = c.payments.length ? c.payments.sort((a, b) => b.date.localeCompare(a.date))[0].date : "";
+        let daysOverdue = lastPaidDate ? Math.floor((today - new Date(lastPaidDate)) / (1000 * 60 * 60 * 24)) : "";
+        return {
+          client: c.client,
+          outstanding: c.outstanding,
+          daysOverdue: daysOverdue || "N/A"
+        };
+      })
+      .filter(c => c.outstanding > 10000 || (c.daysOverdue !== "N/A" && c.daysOverdue > 15));
 
-    // --- 7. Table HTML (smaller, sleeker) ---
+    // --- Render HTML ---
     let html = `
-      <div class="max-w-3xl mx-auto py-6 text-[13px]">
-        <h2 class="text-xl font-bold mb-4 text-black flex items-center gap-2">
-          <span>💸</span> Payments Tracker
+      <div class="max-w-5xl mx-auto py-6 text-[13px]">
+        <h2 class="text-2xl font-bold mb-4 text-black flex items-center gap-2">
+          <span>💸</span> Payments Dashboard
         </h2>
-        ${monthPickerHtml}
-        ${cardStackHtml}
+        ${renderFilterControls(selectedMonthYear, clients, selectedClient, selectedStatus, dateRange)}
+        ${renderSummaryCards({ totalOutstanding, totalReceived, closedCount, topDebtor, fastestPayer })}
+        ${renderAttentionSection(attentionClients)}
+        ${renderPaymentTrendChart(paymentsList)}
         <div class="overflow-x-auto rounded-lg shadow-lg bg-white">
           <table class="min-w-full text-xs text-gray-800">
             <thead>
@@ -190,7 +251,7 @@ document.addEventListener("DOMContentLoaded", () => {
     if (sortedClients.length === 0) {
       html += `
         <tr>
-          <td colspan="6" class="p-6 text-center text-gray-400">No client sales or payments found for this month.</td>
+          <td colspan="6" class="p-6 text-center text-gray-400">No client sales or payments found for this filter.</td>
         </tr>
       `;
     } else {
@@ -229,11 +290,45 @@ document.addEventListener("DOMContentLoaded", () => {
 
     paymentsSection.innerHTML = html;
 
-    // --- Month/Year Picker Event ---
-    document.getElementById('month-filter-form').onsubmit = e => e.preventDefault();
-    document.getElementById('month-filter').onchange = (e) => {
-      renderPaymentsTable(e.target.value);
-      renderClientOutstandingCardsBottom();
+    // --- Chart.js: Payment Trend ---
+    setTimeout(() => {
+      if (window.Chart && document.getElementById('payment-trend-chart')) {
+        const ctx = document.getElementById('payment-trend-chart').getContext('2d');
+        new Chart(ctx, {
+          type: 'line',
+          data: {
+            labels: paymentsList.map(p => p.date),
+            datasets: [{
+              label: 'Payments (₹)',
+              data: paymentsList.map(p => p.amount),
+              borderColor: '#3B2F7F',
+              backgroundColor: 'rgba(200,175,240,0.2)',
+              fill: true,
+              tension: 0.3
+            }]
+          },
+          options: {
+            plugins: { legend: { display: false } },
+            scales: { x: { display: true }, y: { display: true } }
+          }
+        });
+      }
+    }, 300);
+
+    // --- Filter controls events ---
+    document.getElementById('dashboard-filter-form').onsubmit = e => {
+      e.preventDefault();
+      const month = document.getElementById('filter-month').value;
+      const client = document.getElementById('filter-client').value;
+      const status = document.getElementById('filter-status').value;
+      const dateFrom = document.getElementById('filter-date-from').value;
+      const dateTo = document.getElementById('filter-date-to').value;
+      renderPaymentsDashboard({
+        selectedMonthYear: month,
+        selectedClient: client,
+        selectedStatus: status,
+        dateRange: { from: dateFrom, to: dateTo }
+      });
     };
 
     // Add event listeners for log payment buttons
@@ -252,15 +347,11 @@ document.addEventListener("DOMContentLoaded", () => {
         );
       });
     });
-
-    // Render the client outstanding cards at the bottom
-    renderClientOutstandingCardsBottom();
   }
 
-  // Show payment form modal
+  // --- Payment form modal (same as before) ---
   function showPaymentForm(client, selectedMonthYear) {
     const modal = document.getElementById('payment-form-modal');
-    // Default date to selected month
     let defaultDate = new Date();
     if (selectedMonthYear) {
       const [y, m] = selectedMonthYear.split("-");
@@ -312,15 +403,14 @@ document.addEventListener("DOMContentLoaded", () => {
         await db.collection("payments").add({ client, date, amount, notes, createdAt: new Date() });
         modal.classList.add('hidden');
         modal.innerHTML = '';
-        renderPaymentsTable(selectedMonthYear);
-        renderClientOutstandingCardsBottom();
+        renderPaymentsDashboard();
       } catch (err) {
         alert("Failed to save payment: " + err.message);
       }
     };
   }
 
-  // Show payment history modal (with delete option)
+  // --- Payment history modal (same as before) ---
   function showPaymentHistory(client, payments) {
     const modal = document.getElementById('payment-history-modal');
     let html = `
@@ -383,8 +473,7 @@ document.addEventListener("DOMContentLoaded", () => {
           alert("Payment deleted.");
           modal.classList.add('hidden');
           modal.innerHTML = '';
-          renderPaymentsTable();
-          renderClientOutstandingCardsBottom();
+          renderPaymentsDashboard();
         } catch (err) {
           alert("Failed to delete payment: " + err.message);
         }
@@ -392,7 +481,7 @@ document.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  // Animation for modals
+  // --- Animation and styles ---
   const style = document.createElement('style');
   style.innerHTML = `
     @keyframes fadeIn {
@@ -400,7 +489,6 @@ document.addEventListener("DOMContentLoaded", () => {
       to   { opacity: 1; transform: scale(1);}
     }
     .animate-fadeIn { animation: fadeIn 0.2s; }
-    /* Sleeker font size for all payments section */
     #payments, #payments * {
       font-size: 13px !important;
       line-height: 1.3 !important;
@@ -419,18 +507,15 @@ document.addEventListener("DOMContentLoaded", () => {
         font-size: 1rem !important;
       }
     }
-    #client-outstanding-cards {
-      animation: fadeIn 0.3s;
-    }
-    #client-outstanding-cards .rounded-xl {
+    .rounded-xl, .rounded-lg {
       box-shadow: 0 4px 24px 0 rgba(59,47,127,0.10);
     }
   `;
   document.head.appendChild(style);
 
   // Expose the render function globally for navigation
-  window.renderPaymentsTable = renderPaymentsTable;
+  window.renderPaymentsDashboard = renderPaymentsDashboard;
 
   // Initial render
-  renderPaymentsTable();
+  renderPaymentsDashboard();
 });

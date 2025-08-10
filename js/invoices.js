@@ -14,7 +14,7 @@
 // 4. Save Invoice to Firestore
 // 5. Download as PNG (dom-to-image)
 // 6. Print Invoice
-// 7. All Invoices Table (view, print, delete, filter, sort)
+// 7. All Invoices Table (view, print, delete, filter, sort, search, pagination)
 // 8. Utility: Populate Month/Year Dropdowns
 // 9. Initial Load
 //
@@ -94,6 +94,7 @@ document.addEventListener("DOMContentLoaded", () => {
       <!-- Invoice Actions Section (Save/Print/PNG) -->
       <section id="invoiceActionsSection" class="bg-white p-6 rounded shadow max-w-5xl mx-auto my-6 flex flex-col items-center print:hidden png-hide">
         <div class="flex flex-col sm:flex-row gap-4 justify-center w-full">
+          <button id="newInvoiceBtn" class="bg-gray-500 text-white px-6 py-2 rounded hover:bg-gray-600 print:hidden png-hide">New Invoice</button>
           <button id="downloadPngBtn" class="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 png-hide">Download as PNG</button>
           <button id="printInvoiceBtn" class="bg-black text-white px-6 py-2 rounded hover:bg-gray-800 png-hide">Print / Save PDF</button>
           <button id="saveInvoiceBtn" class="bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700 print:hidden png-hide">Save Invoice</button>
@@ -102,6 +103,10 @@ document.addEventListener("DOMContentLoaded", () => {
       <!-- All Invoices Section -->
       <section id="allInvoicesSection" class="bg-white p-6 rounded shadow max-w-5xl mx-auto mt-10">
         <h2 class="text-xl font-bold mb-4 text-orange-900">All Invoices</h2>
+        <div class="flex flex-wrap gap-4 mb-2 items-center">
+          <input type="text" id="invoiceSearchBox" class="p-2 border rounded" placeholder="Search by invoice #, client, date...">
+          
+        </div>
         <form id="invoiceFilterForm" class="flex flex-wrap gap-4 mb-4 items-end">
           <div>
             <label class="block text-sm text-gray-700 mb-1" for="filterMonth">Month</label>
@@ -120,7 +125,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 1A. ADD PRINT-SAFE AND RESPONSIVE CSS
   // -------------------------------------
-  // These styles help with print layout and responsive design.
   const style = document.createElement("style");
   style.innerHTML = `
     @media print {
@@ -147,6 +151,12 @@ document.addEventListener("DOMContentLoaded", () => {
     #filterMonth:focus, #filterYear:focus {
       border-color: #fb923c;
       box-shadow: 0 0 0 1px #fb923c;
+    }
+    thead {
+      position: sticky;
+      top: 0;
+      background: #f3f4f6;
+      z-index: 1;
     }
   `;
   document.head.appendChild(style);
@@ -200,7 +210,6 @@ document.addEventListener("DOMContentLoaded", () => {
   const db = firebase.firestore();
   const itemsBody = document.getElementById("invoiceItems");
 
-  // Add a new row to the invoice items table
   function addRow(item = {}) {
     const row = document.createElement("tr");
     row.innerHTML = `
@@ -249,7 +258,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 4. SAVE INVOICE TO FIRESTORE
   // ----------------------------
-  // Save Invoice button (in the actions section)
   document.addEventListener("click", function(e) {
     if (e.target && e.target.id === "saveInvoiceBtn") {
       const invoiceData = {
@@ -284,6 +292,7 @@ document.addEventListener("DOMContentLoaded", () => {
           alert("Invoice saved successfully!");
           document.getElementById("successSound")?.play();
           loadAllInvoices();
+          resetInvoiceForm();
         })
         .catch(err => {
           console.error("Error saving invoice:", err);
@@ -294,7 +303,6 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 5. DOWNLOAD AS PNG (dom-to-image)
   // ---------------------------------
-  // Loads dom-to-image if not present, then sets up the download button
   const setupPngDownload = () => {
     const downloadBtn = document.getElementById("downloadPngBtn");
     if (downloadBtn && window.domtoimage) {
@@ -345,7 +353,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   };
 
-  // Load dom-to-image if not already loaded
   if (window.domtoimage) {
     setupPngDownload();
   } else {
@@ -357,99 +364,146 @@ document.addEventListener("DOMContentLoaded", () => {
 
   // 6. PRINT INVOICE
   // ----------------
-  // Print button (in the actions section)
   document.addEventListener("click", function(e) {
     if (e.target && e.target.id === "printInvoiceBtn") {
       window.print();
     }
   });
 
-  // 7. ALL INVOICES TABLE (VIEW, PRINT, DELETE, FILTER, SORT)
-  // ---------------------------------------------------------
-  let allInvoicesDocs = []; // Store all loaded invoices for sorting
+  // 7. ALL INVOICES TABLE (VIEW, PRINT, DELETE, FILTER, SORT, SEARCH, PAGINATION)
+  // -----------------------------------------------------------------------------
+  let currentPage = 1;
+  const invoicesPerPage = 10;
+  let filteredInvoices = [];
+  let allInvoicesDocs = [];
 
-  // Render the invoices table
   function renderInvoicesTable(docs) {
-    const invoicesList = document.getElementById("invoicesList");
-    if (!invoicesList) return;
+  const invoicesList = document.getElementById("invoicesList");
+  if (!invoicesList) return;
 
-    let html = `
-      <div class="flex flex-wrap gap-4 mb-2 items-center">
-        <label class="text-sm text-gray-700">Sort by:
-          <select id="sortInvoicesBy" class="p-1 border rounded ml-1">
-            <option value="invoiceNumber-desc">Invoice # (desc)</option>
-            <option value="invoiceNumber-asc">Invoice # (asc)</option>
-            <option value="invoiceDate-desc">Date (newest)</option>
-            <option value="invoiceDate-asc">Date (oldest)</option>
-            <option value="client-asc">Client (A-Z)</option>
-            <option value="client-desc">Client (Z-A)</option>
-            <option value="total-desc">Total (high-low)</option>
-            <option value="total-asc">Total (low-high)</option>
-          </select>
-        </label>
-      </div>
-      <table class="w-full text-sm border rounded bg-white">
-        <thead>
-          <tr class="bg-gray-100">
-            <th class="border p-2 text-center font-semibold">Invoice #</th>
-            <th class="border p-2 text-center font-semibold">Date</th>
-            <th class="border p-2 text-center font-semibold">Client</th>
-            <th class="border p-2 text-center font-semibold">Total</th>
-            <th class="border p-2 text-center font-semibold">Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-    `;
+  // Filter by search box
+  const searchVal = document.getElementById("invoiceSearchBox")?.value?.toLowerCase() || "";
+  filteredInvoices = docs.filter(d => {
+    return (
+      (d.invoiceNumber || "").toLowerCase().includes(searchVal) ||
+      (d.client?.name || "").toLowerCase().includes(searchVal) ||
+      (d.invoiceDate || "").toLowerCase().includes(searchVal)
+    );
+  });
 
-    docs.forEach(d => {
-      html += `
-        <tr>
-          <td class="border p-2 text-center">${d.invoiceNumber || ""}</td>
-          <td class="border p-2 text-center">${d.invoiceDate || ""}</td>
-          <td class="border p-2 text-center">${d.client?.name || ""}</td>
-          <td class="border p-2 text-center">${d.total || ""}</td>
-          <td class="border p-2 text-center">
-            <button class="text-blue-600 viewInvoiceBtn" data-id="${d.id}">View</button>
-            <button class="text-blue-600 printInvoiceBtn" data-id="${d.id}">Print</button>
-            <button class="text-red-600 deleteInvoiceBtn" data-id="${d.id}">Delete</button>
-          </td>
+  // Pagination
+  const totalPages = Math.ceil(filteredInvoices.length / invoicesPerPage);
+  if (currentPage > totalPages) currentPage = totalPages || 1;
+  const startIdx = (currentPage - 1) * invoicesPerPage;
+  const pageDocs = filteredInvoices.slice(startIdx, startIdx + invoicesPerPage);
+
+  // Table HTML
+  let html = `
+    <div class="flex flex-wrap gap-4 mb-2 items-center">
+      <label class="text-sm text-gray-700">Sort by:
+        <select id="sortInvoicesBy" class="p-1 border rounded ml-1">
+          <option value="invoiceNumber-desc">Invoice # (desc)</option>
+          <option value="invoiceNumber-asc">Invoice # (asc)</option>
+          <option value="invoiceDate-desc">Date (newest)</option>
+          <option value="invoiceDate-asc">Date (oldest)</option>
+          <option value="client-asc">Client (A-Z)</option>
+          <option value="client-desc">Client (Z-A)</option>
+          <option value="total-desc">Total (high-low)</option>
+          <option value="total-asc">Total (low-high)</option>
+        </select>
+      </label>
+    </div>
+    <table class="w-full text-sm border rounded bg-white">
+      <thead>
+        <tr class="bg-gray-100">
+          <th class="border p-2 text-center font-semibold">Invoice #</th>
+          <th class="border p-2 text-center font-semibold">Date</th>
+          <th class="border p-2 text-center font-semibold">Client</th>
+          <th class="border p-2 text-center font-semibold">Total</th>
+          <th class="border p-2 text-center font-semibold">Actions</th>
         </tr>
-      `;
-    });
+      </thead>
+      <tbody>
+  `;
 
-    html += "</tbody></table>";
-    invoicesList.innerHTML = html;
+  pageDocs.forEach(d => {
+    html += `
+      <tr>
+        <td class="border p-2 text-center">${d.invoiceNumber || ""}</td>
+        <td class="border p-2 text-center">${d.invoiceDate || ""}</td>
+        <td class="border p-2 text-center">${d.client?.name || ""}</td>
+        <td class="border p-2 text-center">${d.total || ""}</td>
+        <td class="border p-2 text-center">
+          <button class="text-blue-600 viewInvoiceBtn" data-id="${d.id}">View</button>
+          <button class="text-blue-600 printInvoiceBtn" data-id="${d.id}">Print</button>
+          <button class="text-red-600 deleteInvoiceBtn" data-id="${d.id}">Delete</button>
+        </td>
+      </tr>
+    `;
+  });
 
-    // Attach event listeners for view, print, delete
-    document.querySelectorAll(".viewInvoiceBtn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const id = btn.getAttribute("data-id");
-        await showInvoiceDetails(id);
-      });
-    });
-    document.querySelectorAll(".printInvoiceBtn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const id = btn.getAttribute("data-id");
-        await showInvoiceDetails(id, true);
-        setTimeout(() => window.print(), 500);
-      });
-    });
-    document.querySelectorAll(".deleteInvoiceBtn").forEach(btn => {
-      btn.addEventListener("click", async () => {
-        const id = btn.getAttribute("data-id");
-        if (confirm("Are you sure you want to delete this invoice?")) {
-          await deleteInvoice(id);
-        }
-      });
-    });
+  html += `
+      </tbody>
+    </table>
+    <div id="paginationControls" class="flex justify-center items-center gap-2 mt-4">
+      ${
+        totalPages > 1
+          ? `
+            <button ${currentPage === 1 ? "disabled" : ""} id="prevPageBtn" class="px-2 py-1 border rounded">Prev</button>
+            <span>Page ${currentPage} of ${totalPages}</span>
+            <button ${currentPage === totalPages ? "disabled" : ""} id="nextPageBtn" class="px-2 py-1 border rounded">Next</button>
+          `
+          : ""
+      }
+    </div>
+  `;
 
-    // Sorting
-    document.getElementById("sortInvoicesBy").addEventListener("change", function() {
-      sortAndRenderInvoices();
-    });
-  }
+  invoicesList.innerHTML = html;
 
-  // Sort and re-render invoices
+  // Pagination event listeners
+  document.getElementById("prevPageBtn")?.addEventListener("click", () => {
+    if (currentPage > 1) {
+      currentPage--;
+      renderInvoicesTable(allInvoicesDocs);
+    }
+  });
+  document.getElementById("nextPageBtn")?.addEventListener("click", () => {
+    if (currentPage < totalPages) {
+      currentPage++;
+      renderInvoicesTable(allInvoicesDocs);
+    }
+  });
+
+  // Attach event listeners for view, print, delete
+  document.querySelectorAll(".viewInvoiceBtn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-id");
+      await showInvoiceDetails(id);
+    });
+  });
+  document.querySelectorAll(".printInvoiceBtn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-id");
+      await showInvoiceDetails(id, true);
+      setTimeout(() => window.print(), 500);
+    });
+  });
+  document.querySelectorAll(".deleteInvoiceBtn").forEach(btn => {
+    btn.addEventListener("click", async () => {
+      const id = btn.getAttribute("data-id");
+      if (confirm("Are you sure you want to delete this invoice?")) {
+        await deleteInvoice(id);
+      }
+    });
+  });
+
+  // Sorting
+  document.getElementById("sortInvoicesBy")?.addEventListener("change", function() {
+    sortAndRenderInvoices();
+  });
+}
+
+
   function sortAndRenderInvoices() {
     let docs = [...allInvoicesDocs];
     const sortVal = document.getElementById("sortInvoicesBy")?.value || "invoiceNumber-desc";
@@ -481,19 +535,17 @@ document.addEventListener("DOMContentLoaded", () => {
     if (document.getElementById("sortInvoicesBy")) document.getElementById("sortInvoicesBy").value = sortVal;
   }
 
-  // Delete invoice from Firestore
   async function deleteInvoice(id) {
     try {
       await db.collection("invoices").doc(id).delete();
       alert("Invoice deleted.");
-      loadAllInvoices(); // reload
+      loadAllInvoices();
     } catch (err) {
       alert("Failed to delete invoice.");
       console.error(err);
     }
   }
 
-  // Load all invoices for a given month/year
   function loadAllInvoices(filter = {}) {
     const invoicesList = document.getElementById("invoicesList");
     if (!invoicesList) return;
@@ -503,7 +555,6 @@ document.addEventListener("DOMContentLoaded", () => {
     let filterMonth = filter.month;
     let filterYear = filter.year;
 
-    // If no filter, show current month by default
     if (!filterMonth || !filterYear) {
       const now = new Date();
       filterMonth = String(now.getMonth() + 1).padStart(2, "0");
@@ -512,9 +563,8 @@ document.addEventListener("DOMContentLoaded", () => {
       if (document.getElementById("filterYear")) document.getElementById("filterYear").value = filterYear;
     }
 
-    // Always filter by month and year (default to current)
     const start = `${filterYear}-${filterMonth}-01`;
-    const endDate = new Date(parseInt(filterYear), parseInt(filterMonth), 0); // last day of month
+    const endDate = new Date(parseInt(filterYear), parseInt(filterMonth), 0);
     const end = `${filterYear}-${filterMonth}-${String(endDate.getDate()).padStart(2, "0")}`;
     query = query.where("invoiceDate", ">=", start).where("invoiceDate", "<=", end);
 
@@ -538,7 +588,6 @@ document.addEventListener("DOMContentLoaded", () => {
       });
   }
 
-  // Show invoice details in the form (for view/print)
   async function showInvoiceDetails(invoiceId, silentPrint = false) {
     const doc = await db.collection("invoices").doc(invoiceId).get();
     if (!doc.exists) return alert("Invoice not found.");
@@ -553,7 +602,6 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("clientEmail").value = d.client?.email || "";
     document.getElementById("invoiceNotes").value = d.notes || "";
 
-    // Clear and fill items
     itemsBody.innerHTML = "";
     (d.items || []).forEach(item => addRow(item));
     updateTotals();
@@ -563,8 +611,38 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+  // --- NEW INVOICE FORM RESET ---
+  function resetInvoiceForm() {
+    document.getElementById("invoiceNumber").value = "";
+    const today = new Date();
+    const formattedDate = today.toISOString().split("T")[0];
+    document.getElementById("invoiceDate").value = formattedDate;
+    document.getElementById("dueDate").value = formattedDate;
+    document.getElementById("clientName").value = "";
+    document.getElementById("clientAddress").value = "";
+    document.getElementById("clientPhone").value = "";
+    document.getElementById("clientEmail").value = "";
+    document.getElementById("invoiceNotes").value = "";
+    itemsBody.innerHTML = "";
+    addRow();
+    updateTotals();
+  }
+
+  document.addEventListener("click", function(e) {
+    if (e.target && e.target.id === "newInvoiceBtn") {
+      resetInvoiceForm();
+    }
+  });
+
+  // --- SEARCH BOX EVENT ---
+  document.addEventListener("input", function(e) {
+    if (e.target && e.target.id === "invoiceSearchBox") {
+      currentPage = 1;
+      renderInvoicesTable(allInvoicesDocs);
+    }
+  });
+
   // 8. UTILITY: POPULATE MONTH/YEAR DROPDOWNS
-  // ------------------------------------------
   function populateMonthDropdown() {
     const monthSelect = document.getElementById("filterMonth");
     if (!monthSelect) return;
@@ -581,7 +659,6 @@ document.addEventListener("DOMContentLoaded", () => {
       html += `<option value="${months[i]}">${monthNames[i]}</option>`;
     }
     monthSelect.innerHTML = html;
-    // Set current month as default
     const now = new Date();
     monthSelect.value = String(now.getMonth() + 1).padStart(2, "0");
   }
@@ -600,18 +677,14 @@ document.addEventListener("DOMContentLoaded", () => {
   populateYearDropdown();
 
   // 9. INITIAL LOAD
-  // ---------------
-  // Set today's date for invoice and due date
   const today = new Date();
   const formattedDate = today.toISOString().split("T")[0];
   document.getElementById("invoiceDate").value = formattedDate;
   document.getElementById("dueDate").value = formattedDate;
 
-  // Load all invoices on page load (current month)
   loadAllInvoices();
 
   // --- FILTER FORM EVENTS ---
-  // When month/year dropdowns change, reload invoices
   document.addEventListener("change", function(e) {
     if (e.target && (e.target.id === "filterMonth" || e.target.id === "filterYear")) {
       const month = document.getElementById("filterMonth").value;
@@ -623,7 +696,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // Clear filter button resets to current month/year
   document.addEventListener("click", function(e) {
     if (e.target && e.target.id === "clearFilterBtn") {
       const now = new Date();

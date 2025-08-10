@@ -1,5 +1,168 @@
 // Dashboard.js
 
+// --- Inject Google Fonts & Visual Upgrade CSS ---
+(function addVisualUpgradeCSS() {
+  // Load Inter font
+  const interFont = document.createElement('link');
+  interFont.rel = 'stylesheet';
+  interFont.href = 'https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap';
+  document.head.appendChild(interFont);
+
+  // Glassmorphism, soft shadows, rounded corners, animated buttons, table enhancements
+  const style = document.createElement('style');
+  style.innerHTML = `
+    body, .dashboard-root, .dashboard * {
+      font-family: 'Inter', system-ui, sans-serif !important;
+    }
+    .glass {
+      background: rgba(255,255,255,0.25);
+      box-shadow: 0 8px 32px 0 rgba(31, 38, 135, 0.18);
+      backdrop-filter: blur(12px);
+      border-radius: 1.25rem;
+      border: 1px solid rgba(255,255,255,0.18);
+    }
+    .summary-card {
+  border-radius: 1.25rem !important;
+  box-shadow: 0 6px 24px 0 rgba(0,0,0,0.10), 0 1.5px 4px 0 rgba(0,0,0,0.08);
+  background: rgba(255,255,255,0.35);
+  backdrop-filter: blur(10px);
+  transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s, background 0.18s;
+  will-change: transform;
+  border: 1px solid rgba(255,255,255,0.18);
+}
+.summary-card.bg-blue-100 {
+  background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 100%);
+  box-shadow: 0 8px 32px 0 rgba(96, 165, 250, 0.10), 0 1.5px 4px 0 rgba(0,0,0,0.08);
+}
+.summary-card.bg-red-100 {
+  background: linear-gradient(135deg, #ffe0e0 0%, #fff0f0 100%);
+  box-shadow: 0 8px 32px 0 rgba(239, 68, 68, 0.10), 0 1.5px 4px 0 rgba(0,0,0,0.08);
+}
+.summary-card.bg-green-100 {
+  background: linear-gradient(135deg, #d1fae5 0%, #f0fff4 100%);
+  box-shadow: 0 8px 32px 0 rgba(16, 185, 129, 0.10), 0 1.5px 4px 0 rgba(0,0,0,0.08);
+}
+.summary-card.bg-lime-100 {
+  background: linear-gradient(135deg, #eaffd0 0%, #f7ffe0 100%);
+  box-shadow: 0 8px 32px 0 rgba(163, 230, 53, 0.10), 0 1.5px 4px 0 rgba(0,0,0,0.08);
+}
+.summary-card.bg-cyan-100 {
+  background: linear-gradient(135deg, #cffafe 0%, #e0f7fa 100%);
+  box-shadow: 0 8px 32px 0 rgba(6, 182, 212, 0.10), 0 1.5px 4px 0 rgba(0,0,0,0.08);
+}
+.summary-card.bg-amber-100 {
+  background: linear-gradient(135deg, #fef3c7 0%, #fffbe0 100%);
+  box-shadow: 0 8px 32px 0 rgba(251, 191, 36, 0.10), 0 1.5px 4px 0 rgba(0,0,0,0.08);
+}
+.summary-card.bg-yellow-100 {
+  background: linear-gradient(135deg, #fef9c3 0%, #fffde0 100%);
+  box-shadow: 0 8px 32px 0 rgba(253, 224, 71, 0.10), 0 1.5px 4px 0 rgba(0,0,0,0.08);
+}
+.summary-card.bg-pink-100 {
+  background: linear-gradient(135deg, #fce7f3 0%, #fff0fa 100%);
+  box-shadow: 0 8px 32px 0 rgba(236, 72, 153, 0.10), 0 1.5px 4px 0 rgba(0,0,0,0.08);
+}
+.summary-card.bg-orange-100 {
+  background: linear-gradient(135deg, #ffedd5 0%, #fff7e0 100%);
+  box-shadow: 0 8px 32px 0 rgba(251, 146, 60, 0.10), 0 1.5px 4px 0 rgba(0,0,0,0.08);
+}
+.summary-card.bg-indigo-100 {
+  background: linear-gradient(135deg, #e0e7ff 0%, #f0f4ff 100%);
+  box-shadow: 0 8px 32px 0 rgba(99, 102, 241, 0.10), 0 1.5px 4px 0 rgba(0,0,0,0.08);
+}
+.summary-card.bg-fuchsia-100 {
+  background: linear-gradient(135deg, #fae8ff 0%, #fff0ff 100%);
+  box-shadow: 0 8px 32px 0 rgba(232, 121, 249, 0.10), 0 1.5px 4px 0 rgba(0,0,0,0.08);
+}
+.summary-card.bg-slate-100 {
+  background: linear-gradient(135deg, #f1f5f9 0%, #f8fafc 100%);
+  box-shadow: 0 8px 32px 0 rgba(100, 116, 139, 0.10), 0 1.5px 4px 0 rgba(0,0,0,0.08);
+}
+
+    .summary-card:hover, .summary-card:focus-within {
+      transform: scale(1.045);
+      box-shadow: 0 12px 32px 0 rgba(0,0,0,0.14), 0 2px 8px 0 rgba(0,0,0,0.10);
+      background: rgba(255,255,255,0.45);
+      z-index: 2;
+    }
+    button, .btn {
+      transition: transform 0.15s, box-shadow 0.15s, background 0.15s, color 0.15s;
+      border-radius: 0.75rem !important;
+      font-family: 'Inter', system-ui, sans-serif !important;
+      font-weight: 600;
+      box-shadow: 0 2px 8px 0 rgba(0,0,0,0.08);
+      outline: none;
+    }
+    button:active, .btn:active {
+      transform: scale(0.97);
+      box-shadow: 0 1px 4px 0 rgba(0,0,0,0.10);
+    }
+    button:hover, .btn:hover {
+      background: #f3f4f6;
+      color: #111827;
+      box-shadow: 0 4px 16px 0 rgba(0,0,0,0.10);
+      transform: scale(1.04);
+    }
+    select, input[type="number"] {
+      border-radius: 0.75rem !important;
+      font-family: 'Inter', system-ui, sans-serif !important;
+      padding: 0.5rem 0.75rem;
+      border: 1px solid #e5e7eb;
+      background: rgba(255,255,255,0.65);
+      transition: border 0.15s;
+    }
+    select:focus, input[type="number"]:focus {
+      border-color: #6366f1;
+      outline: none;
+    }
+    table {
+      font-family: 'Inter', system-ui, sans-serif !important;
+      border-radius: 1rem;
+      overflow: hidden;
+      box-shadow: 0 2px 8px 0 rgba(0,0,0,0.06);
+      background: rgba(255,255,255,0.55);
+      backdrop-filter: blur(6px);
+      border-collapse: separate;
+      border-spacing: 0;
+    }
+    th, td {
+      padding: 0.75rem 0.5rem;
+      border-bottom: 1px solid #e5e7eb;
+      font-size: 0.98rem;
+    }
+    th {
+      background: rgba(243,244,246,0.85);
+      font-weight: 600;
+      color: #374151;
+    }
+    tr:last-child td {
+      border-bottom: none;
+    }
+    tbody tr {
+      transition: background 0.15s;
+    }
+    tbody tr:hover {
+      background: rgba(236, 72, 153, 0.08);
+    }
+    @media (max-width: 768px) {
+      .max-w-7xl { max-width: 100vw !important; }
+      .grid, .grid-cols-1, .md\\:grid-cols-2, .md\\:grid-cols-4 {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+      }
+      section, .glass, .summary-card {
+        padding: 1rem !important;
+        border-radius: 1rem !important;
+      }
+      table, th, td {
+        font-size: 0.92rem !important;
+        padding: 0.5rem !important;
+      }
+    }
+  `;
+  document.head.appendChild(style);
+})();
+
 // --- Utility Functions ---
 console.log("dashboard.js loaded");
 
@@ -13,23 +176,6 @@ function show(el) {
 function hide(el) {
   el.classList.add("hidden");
 }
-
-// --- Inject CSS for KPI Zoom Animation ---
-(function addSummaryCardZoomCSS() {
-  const style = document.createElement('style');
-  style.innerHTML = `
-    .summary-card {
-      transition: transform 0.18s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.18s;
-      will-change: transform;
-    }
-    .summary-card:hover, .summary-card:focus-within {
-      transform: scale(1.045);
-      box-shadow: 0 6px 24px 0 rgba(0,0,0,0.10), 0 1.5px 4px 0 rgba(0,0,0,0.08);
-      z-index: 2;
-    }
-  `;
-  document.head.appendChild(style);
-})();
 
 // --- Loading & Error State ---
 
@@ -56,40 +202,42 @@ window.loadDashboard = async function () {
   container.innerHTML = `
     <div id="dashboard-loading" class="hidden text-center py-4 text-gray-500">Loading...</div>
     <div id="dashboard-error" class="hidden text-center py-4 text-red-600"></div>
-    <section class="bg-white p-6 rounded shadow max-w-7xl mx-auto">
-      <h2 class="text-2xl font-bold mb-4 text-gray-900 flex items-center">
+    <section class="glass p-6 rounded-2xl shadow max-w-7xl mx-auto dashboard-root">
+      <h2 class="text-2xl font-bold mb-4 text-gray-900 flex items-center" style="font-family: 'Inter', system-ui, sans-serif;">
         <span class="mr-2">📊</span> Monthly Dashboard
       </h2>
       <p class="text-sm text-gray-500 mb-6">View your monthly financial summary</p>
       <div class="flex flex-wrap items-center gap-4 mb-6">
         <label class="text-sm text-gray-600">Month:
-          <select id="filter-month" class="border p-2 rounded">
-            ${[...Array(12).keys()].map(m => `<option value="${m+1}">${new Date(0, m).toLocaleString('default', { month: 'long' })}</option>`).join('')}
-          </select>
+          <select id="filter-month" class="border p-2 rounded"></select>
         </label>
         <label class="text-sm text-gray-600">Year:
           <input id="filter-year" type="number" class="border p-2 rounded w-24" value="${new Date().getFullYear()}" />
         </label>
-        <button id="prev-month" class="bg-gray-200 text-gray-700 px-3 py-2 rounded hover:bg-gray-300" title="Previous Month">◀</button>
-        <button id="next-month" class="bg-gray-200 text-gray-700 px-3 py-2 rounded hover:bg-gray-300" title="Next Month">▶</button>
-        <button id="apply-filters" class="bg-black text-white px-4 py-2 rounded hover:bg-gray-800">Apply</button>
-        <button id="export-csv" class="bg-blue-100 text-blue-700 px-4 py-2 rounded hover:bg-blue-200">Export CSV</button>
+        <label class="text-sm text-gray-600 flex items-center gap-1">
+          <input type="checkbox" id="partial-toggle" />
+          Same period last month
+        </label>
+        <button id="prev-month" class="btn bg-gray-200 text-gray-700 px-3 py-2 rounded hover:bg-gray-300" title="Previous Month">◀</button>
+        <button id="next-month" class="btn bg-gray-200 text-gray-700 px-3 py-2 rounded hover:bg-gray-300" title="Next Month">▶</button>
+        <button id="apply-filters" class="btn bg-black text-white px-4 py-2 rounded hover:bg-gray-800">Apply</button>
+        <button id="export-csv" class="btn bg-blue-100 text-blue-700 px-4 py-2 rounded hover:bg-blue-200">Export CSV</button>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6" id="summary-cards"></div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div class="bg-white p-4 rounded shadow">
+        <div class="glass p-4 rounded-2xl shadow">
           <div class="flex justify-between items-center mb-2">
             <h3 class="text-sm font-semibold text-gray-600">Revenue Trend</h3>
-            <button id="toggle-trend" class="text-xs text-blue-600 hover:underline">Hide</button>
+            <button id="toggle-trend" class="btn text-xs text-blue-600 hover:underline">Hide</button>
           </div>
           <div class="w-full h-64" id="trendChart-container">
             <canvas id="trendChart" class="w-full h-full" aria-label="Revenue Trend Bar Chart" role="img"></canvas>
           </div>
         </div>
-        <div class="bg-white p-4 rounded shadow">
+        <div class="glass p-4 rounded-2xl shadow">
           <div class="flex justify-between items-center mb-2">
             <h3 class="text-sm font-semibold text-gray-600">Cost Breakdown</h3>
-            <button id="toggle-cost" class="text-xs text-blue-600 hover:underline">Hide</button>
+            <button id="toggle-cost" class="btn text-xs text-blue-600 hover:underline">Hide</button>
           </div>
           <div class="w-full h-64 flex items-center justify-center" id="costChart-container">
             <canvas id="costChart" class="w-full h-full max-w-[300px]" aria-label="Cost Breakdown Pie Chart" role="img"></canvas>
@@ -97,7 +245,7 @@ window.loadDashboard = async function () {
         </div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div class="bg-white p-4 rounded shadow">
+        <div class="glass p-4 rounded-2xl shadow">
           <h4 class="font-semibold mb-2">Top 3 Best-Selling Items</h4>
           <table class="w-full text-sm border rounded" aria-label="Top 3 Best-Selling Items">
             <thead>
@@ -110,7 +258,7 @@ window.loadDashboard = async function () {
             <tbody id="top-sellers-tbody"></tbody>
           </table>
         </div>
-        <div class="bg-white p-4 rounded shadow">
+        <div class="glass p-4 rounded-2xl shadow">
           <h4 class="font-semibold mb-2">Top Clients</h4>
           <table class="w-full text-sm border rounded" aria-label="Top Clients">
             <thead>
@@ -125,7 +273,7 @@ window.loadDashboard = async function () {
         </div>
       </div>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <div class="bg-white p-4 rounded shadow">
+        <div class="glass p-4 rounded-2xl shadow">
           <h4 class="font-semibold mb-2">Top Clients by Revenue</h4>
           <table class="w-full text-sm border rounded" aria-label="Top Clients by Revenue">
             <thead>
@@ -137,7 +285,7 @@ window.loadDashboard = async function () {
             <tbody id="revenue-per-client-tbody"></tbody>
           </table>
         </div>
-        <div class="bg-white p-4 rounded shadow">
+        <div class="glass p-4 rounded-2xl shadow">
           <h4 class="font-semibold mb-2">Profit per Client</h4>
           <table class="w-full text-sm border rounded" aria-label="Profit per Client">
             <thead>
@@ -150,7 +298,7 @@ window.loadDashboard = async function () {
           </table>
         </div>
       </div>
-      <div class="bg-white p-4 rounded shadow mb-6">
+      <div class="glass p-4 rounded-2xl shadow mb-6">
         <h4 class="font-semibold mb-2">Expense Breakdown</h4>
         <table class="w-full text-sm border rounded" aria-label="Expense Breakdown">
           <thead>
@@ -162,11 +310,11 @@ window.loadDashboard = async function () {
           <tbody id="expense-breakdown-tbody"></tbody>
         </table>
       </div>
-      <div class="bg-white p-4 rounded shadow mb-6">
+      <div class="glass p-4 rounded-2xl shadow mb-6">
         <h4 class="font-semibold mb-2">Revenue & Profit Over Time</h4>
         <canvas id="lineChart" class="w-full h-64" aria-label="Revenue and Profit Over Time" role="img"></canvas>
       </div>
-      <div class="bg-white p-4 rounded shadow">
+      <div class="glass p-4 rounded-2xl shadow">
         <h4 class="font-semibold mb-2">Summary Table</h4>
         <table class="w-full text-sm border rounded" aria-label="Summary Table">
           <thead>
@@ -181,11 +329,13 @@ window.loadDashboard = async function () {
     </section>
   `;
 
+  $("filter-month").innerHTML = [...Array(12).keys()].map(m => `<option value="${m+1}">${new Date(0, m).toLocaleString('default', { month: 'long' })}</option>`).join('');
   $("filter-month").value = new Date().getMonth() + 1;
 
   $("prev-month").addEventListener("click", () => changeMonth(-1));
   $("next-month").addEventListener("click", () => changeMonth(1));
   $("apply-filters").addEventListener("click", () => applyFilters());
+  $("partial-toggle").addEventListener("change", () => applyFilters());
   $("export-csv").addEventListener("click", () => exportDashboardCSV());
   $("toggle-trend").addEventListener("click", function() {
     const el = $("trendChart-container");
@@ -225,19 +375,23 @@ function changeMonth(delta) {
 function applyFilters() {
   const m = parseInt($("filter-month").value);
   const y = parseInt($("filter-year").value);
-  loadDashboardData(m, y);
+  const usePartial = $("partial-toggle").checked;
+  const dayLimit = usePartial ? new Date().getDate() : null;
+  loadDashboardData(m, y, dayLimit);
 }
 
 // --- Data Fetching and Rendering ---
 
-async function loadDashboardData(month, year) {
+async function loadDashboardData(month, year, dayLimit = null) {
   setLoading(true);
   try {
     const datePrefix = `${year}-${String(month).padStart(2, '0')}`;
-    const logsSnap = await window.db.collection("dailyLogs")
-      .where("date", ">=", `${datePrefix}-01`)
-      .where("date", "<=", `${datePrefix}-31`)
-      .get();
+const endDay = dayLimit || new Date(year, month, 0).getDate();
+const endDate = `${datePrefix}-${String(endDay).padStart(2, '0')}`;
+const logsSnap = await window.db.collection("dailyLogs")
+  .where("date", ">=", `${datePrefix}-01`)
+  .where("date", "<=", endDate)
+  .get();
 
     if (logsSnap.empty) {
       renderEmptyState();
@@ -316,12 +470,14 @@ async function loadDashboardData(month, year) {
     const mostProfitable = itemsArr.length ? itemsArr.slice().sort((a, b) => b.profit - a.profit)[0] : null;
 
     let prevMonth = month - 1, prevYear = year;
-    if (prevMonth < 1) { prevMonth = 12; prevYear--; }
-    const prevPrefix = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
-    const prevSnap = await window.db.collection("dailyLogs")
-      .where("date", ">=", `${prevPrefix}-01`)
-      .where("date", "<=", `${prevPrefix}-31`)
-      .get();
+if (prevMonth < 1) { prevMonth = 12; prevYear--; }
+const prevPrefix = `${prevYear}-${String(prevMonth).padStart(2, '0')}`;
+const prevEndDay = dayLimit || new Date(prevYear, prevMonth, 0).getDate();
+const prevEndDate = `${prevPrefix}-${String(prevEndDay).padStart(2, '0')}`;
+const prevSnap = await window.db.collection("dailyLogs")
+  .where("date", ">=", `${prevPrefix}-01`)
+  .where("date", "<=", prevEndDate)
+  .get();
 let prevRevenue = 0, prevCost = 0, prevProfit = 0;
 prevSnap.forEach(doc => {
   const d = doc.data();
@@ -387,8 +543,10 @@ const prevProfitPerClient = prevClientCount ? prevProfit / prevClientCount : 0;
   orderDays, orderStreak, noOrderDays,
   prevActualProfit,
   prevProfitPerClient,
-  prevProfitPercent
+  prevProfitPercent,
+  dayLimit // <-- add this
 });
+
 
 
     renderTopItems(itemsArr);
@@ -438,13 +596,18 @@ function renderSummaryCards({
   prevActualProfit,
   prevProfitPerClient,
   prevProfitPercent,
-  prevOrderCount
+  prevOrderCount,
+  dayLimit // <-- add this
 }) {
+
   $("summary-cards").innerHTML = `
     <div class="summary-card bg-blue-100 p-4 rounded flex flex-col items-start justify-between cursor-pointer">
       <div class="flex items-center justify-between w-full">
         <div>
-          <p class="text-sm font-medium text-blue-700">Total Revenue</p>
+          <p class="text-sm font-medium text-blue-700">
+  Total Revenue
+  ${dayLimit ? `<span class="text-xs text-gray-500">(till day ${dayLimit})</span>` : ""}
+</p>
           <p class="text-xl font-bold text-blue-900 flex items-center">
             <span id="dash-revenue">${"₹" + totalRevenue.toFixed(2)}</span>
             <span class="ml-2 text-xs ${totalRevenue - prevRevenue >= 0 ? 'text-green-600' : 'text-red-600'}">${pctChange(totalRevenue, prevRevenue)}</span>
