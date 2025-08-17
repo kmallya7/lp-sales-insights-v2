@@ -90,18 +90,26 @@ document.addEventListener("DOMContentLoaded", () => {
           </div>
         </div>
       </div>
-      <!-- Preset List Section -->
-      <div class="mt-12">
-        <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">📌 Common Batches</h3>
-        <div id="preset-loading" class="hidden flex items-center gap-2 text-gray-500 text-sm mb-2 animate-pulse">
-          <svg class="w-4 h-4 mr-1" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-            <circle cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" fill="none" />
-            <path d="M12 2v4M12 18v4M4.22 4.22l2.83 2.83M16.95 16.95l2.83 2.83M2 12h4M18 12h4M4.22 19.78l2.83-2.83M16.95 7.05l2.83-2.83" stroke="currentColor" stroke-width="2" />
-          </svg>
-          <span>Loading presets...</span>
-        </div>
-        <div id="preset-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
-      </div>
+      <!-- Toggle for Preset List Section -->
+<div class="mt-12">
+  <!-- Modern Toggle Button -->
+  <button id="toggle-presets-btn" class="flex items-center gap-2 px-5 py-3 rounded-full bg-gradient-to-r from-blue-500 to-purple-500 text-white font-semibold shadow-lg hover:scale-105 transition focus:outline-none focus:ring-2 focus:ring-blue-400 mb-4" aria-expanded="false" aria-controls="preset-section">
+    <span id="toggle-icon" class="transition-transform duration-300">
+      <svg class="w-5 h-5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+        <path id="toggle-arrow" stroke-linecap="round" stroke-linejoin="round" d="M19 9l-7 7-7-7"/>
+      </svg>
+    </span>
+    <span id="toggle-text">Show Common Batches</span>
+  </button>
+  <!-- Preset Section (hidden by default) -->
+  <div id="preset-section" class="transition-all duration-300 overflow-hidden" style="max-height:0; opacity:0;">
+    <h3 class="text-xl font-semibold mb-4 flex items-center gap-2">📌 Common Batches</h3>
+    <div id="preset-loading" class="hidden flex items-center gap-2 text-gray-500 text-sm mb-2 animate-pulse">
+      <!-- ... -->
+    </div>
+    <div id="preset-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
+  </div>
+</div>
     </section>
   `;
 
@@ -319,6 +327,52 @@ document.addEventListener("DOMContentLoaded", () => {
     if (dropdown) dropdown.classList.add('hidden');
   };
 
-  // Initial load
-  loadPresets();
+  // --- Modern Toggle Logic for Preset Section ---
+const toggleBtn = document.getElementById("toggle-presets-btn");
+const presetSection = document.getElementById("preset-section");
+const toggleText = document.getElementById("toggle-text");
+const toggleIcon = document.getElementById("toggle-icon");
+const toggleArrow = document.getElementById("toggle-arrow");
+
+let presetsVisible = false; // Hidden by default
+
+function showPresets() {
+  toggleText.textContent = "Hide Common Batches";
+  toggleBtn.setAttribute("aria-expanded", "true");
+  toggleArrow.setAttribute("d", "M19 15l-7-7-7 7"); // Up arrow
+  presetsVisible = true;
+  // 1. Load presets, then expand after content is rendered
+  loadPresets().then(() => {
+    // Use setTimeout to ensure DOM updates before measuring height
+    setTimeout(() => {
+      presetSection.style.maxHeight = presetSection.scrollHeight + "px";
+      presetSection.style.opacity = "1";
+    }, 10);
+  });
+}
+
+
+function hidePresets() {
+  presetSection.style.maxHeight = "0";
+  presetSection.style.opacity = "0";
+  toggleText.textContent = "Show Common Batches";
+  toggleBtn.setAttribute("aria-expanded", "false");
+  toggleArrow.setAttribute("d", "M19 9l-7 7-7-7"); // Down arrow
+  presetsVisible = false;
+}
+
+toggleBtn.addEventListener("click", () => {
+  if (presetsVisible) {
+    hidePresets();
+  } else {
+    showPresets();
+  }
+});
+
+// Hide on load
+hidePresets();
+
+// Initial load (presets only when shown)
+// loadPresets(); <-- now called only when shown
+
 });

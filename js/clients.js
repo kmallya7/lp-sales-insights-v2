@@ -1,39 +1,71 @@
 // clients.js
 
-document.addEventListener("DOMContentLoaded", () => {
-  // 1. Render the Clients Section UI (modernized, minimal, clean)
+window.renderClientsSection = function() {
+  // --- 1. Render UI ---
   const clientsSection = document.getElementById("clients");
   clientsSection.innerHTML = `
-    <section class="bg-white p-7 rounded-2xl shadow-lg max-w-3xl mx-auto mt-8 border border-gray-200">
-      <div class="mb-6 flex items-center gap-3">
-        <span class="inline-flex items-center justify-center h-10 w-10 rounded-full bg-gradient-to-br from-gray-900 to-gray-700 shadow text-white">
-          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="h-6 w-6">
-            <path stroke-linecap="round" stroke-linejoin="round" d="M18 18.72a9.094 9.094 0 0 0 3.741-.479 3 3 0 0 0-4.682-2.72m.94 3.198.001.031c0 .225-.012.447-.037.666A11.944 11.944 0 0 1 12 21c-2.17 0-4.207-.576-5.963-1.584A6.062 6.062 0 0 1 6 18.719m12 0a5.971 5.971 0 0 0-.941-3.197m0 0A5.995 5.995 0 0 0 12 12.75a5.995 5.995 0 0 0-5.058 2.772m0 0a3 3 0 0 0-4.681 2.72 8.986 8.986 0 0 0 3.74.477m.94-3.197a5.971 5.971 0 0 0-.94 3.197M15 6.75a3 3 0 1 1-6 0 3 3 0 0 1 6 0Zm6 3a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Zm-13.5 0a2.25 2.25 0 1 1-4.5 0 2.25 2.25 0 0 1 4.5 0Z" />
-          </svg>
-        </span>
-        <h2 class="text-2xl font-bold text-gray-900 tracking-tight">Clients</h2>
-        <div class="ml-4 flex items-center">
-          <div class="relative w-12 h-12">
-            <svg id="clients-ring" width="48" height="48" viewBox="0 0 48 48">
-              <circle cx="24" cy="24" r="20" fill="none" stroke="#e5e7eb" stroke-width="6"/>
-              <circle id="clients-ring-bar" cx="24" cy="24" r="20" fill="none" stroke="#6366f1" stroke-width="6" stroke-linecap="round"
-                stroke-dasharray="125.66" stroke-dashoffset="125.66" />
-            </svg>
-            <span id="clients-count" class="absolute inset-0 flex items-center justify-center text-lg font-bold text-gray-900">0</span>
-          </div>
+    <section class="glass-section p-7 rounded-3xl shadow-2xl max-w-6xl mx-auto mt-10 border border-gray-200 relative">
+      <!-- KPI Summary Boxes -->
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-6 mb-8">
+        <div class="kpi-box bg-gradient-to-br from-indigo-100 to-blue-100 rounded-2xl p-6 shadow flex flex-col gap-2 transition-transform duration-200 hover:scale-105 hover:shadow-2xl cursor-pointer">
+          <div class="text-xs text-gray-500 font-semibold">Total Clients</div>
+          <div class="text-2xl font-bold text-indigo-700" id="kpi-total-clients">0</div>
         </div>
-        <button id="show-add-client-form" class="ml-auto bg-gradient-to-br from-indigo-600 to-blue-500 hover:from-indigo-700 hover:to-blue-600 text-white px-5 py-2.5 rounded-lg font-semibold flex items-center gap-2 text-base shadow transition">
-          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
-            <line x1="12" y1="5" x2="12" y2="19"/>
-            <line x1="5" y1="12" x2="19" y2="12"/>
-          </svg>
-          <span>Add Client</span>
-        </button>
+        <div class="kpi-box bg-gradient-to-br from-green-100 to-teal-100 rounded-2xl p-6 shadow flex flex-col gap-2 transition-transform duration-200 hover:scale-105 hover:shadow-2xl cursor-pointer">
+          <div class="text-xs text-gray-500 font-semibold">New Clients This Month</div>
+          <div class="text-2xl font-bold text-green-700" id="kpi-new-clients">0</div>
+        </div>
+        <div class="kpi-box bg-gradient-to-br from-yellow-100 to-orange-100 rounded-2xl p-6 shadow flex flex-col gap-2 transition-transform duration-200 hover:scale-105 hover:shadow-2xl cursor-pointer">
+          <div class="text-xs text-gray-500 font-semibold">In Pipeline</div>
+          <div class="text-2xl font-bold text-yellow-700" id="kpi-pipeline">0</div>
+        </div>
+        <div class="kpi-box bg-gradient-to-br from-purple-100 to-pink-100 rounded-2xl p-6 shadow flex flex-col gap-2 transition-transform duration-200 hover:scale-105 hover:shadow-2xl cursor-pointer">
+          <div class="text-xs text-gray-500 font-semibold">Converted This Month</div>
+          <div class="text-2xl font-bold text-purple-700" id="kpi-converted">0</div>
+        </div>
       </div>
-      <div id="client-list" class="grid grid-cols-1 md:grid-cols-2 gap-6"></div>
+      <!-- Pipeline Section -->
+      <div class="mb-8">
+  <div class="flex items-center justify-between mb-2">
+    <h3 class="text-lg font-bold text-gray-800">Pipeline (Prospects)</h3>
+    <button id="show-add-prospect-form"
+      class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold shadow-sm transition text-base focus:outline-none focus:ring-2 focus:ring-indigo-400">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      <span>Add Prospect</span>
+    </button>
+  </div>
+  <div id="pipeline-list" class="overflow-x-auto rounded-2xl shadow"></div>
+</div>
+<!-- Table Controls -->
+<div class="flex flex-col md:flex-row items-center justify-between mb-4 gap-4">
+  <h2 class="text-2xl font-bold text-gray-900 flex-1">Clients List</h2>
+  <div class="flex gap-2 items-center">
+    <input id="client-search" type="text" placeholder="Search clients..." class="px-4 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 transition w-full md:w-64" />
+    <select id="client-status-filter" class="px-3 py-2 rounded-xl border border-gray-300 focus:ring-2 focus:ring-indigo-500 transition text-gray-700">
+      <option value="Active">Active</option>
+      <option value="Lost">Lost</option>
+    </select>
+    <button id="show-add-client-form"
+      class="flex items-center justify-center gap-2 px-4 py-2 rounded-lg bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold shadow-sm transition text-base focus:outline-none focus:ring-2 focus:ring-indigo-400">
+      <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
+        <line x1="12" y1="5" x2="12" y2="19"/>
+        <line x1="5" y1="12" x2="19" y2="12"/>
+      </svg>
+      <span>Add Client</span>
+    </button>
+  </div>
+</div>
+
+      <!-- Table -->
+      <div id="client-list" class="overflow-x-auto rounded-2xl shadow"></div>
+      <div id="pagination" class="flex justify-center items-center gap-2 mt-6"></div>
     </section>
+    <!-- Overlay Form (shared for both client and prospect) -->
     <div id="client-form-overlay" class="fixed inset-0 bg-black bg-opacity-40 z-50 flex items-center justify-center hidden">
-      <form id="client-form" class="bg-white rounded-2xl shadow-2xl border border-gray-200 p-8 w-full max-w-lg relative animate-fade-in">
+      <form id="client-form" class="rounded-2xl shadow-2xl border border-gray-200 p-8 w-full max-w-lg relative animate-fade-in glass-form">
         <button type="button" id="client-cancel-btn" class="absolute top-4 right-4 text-gray-400 hover:text-gray-700 text-2xl font-bold">&times;</button>
         <h3 class="text-xl font-bold mb-6 text-gray-900 flex items-center gap-2">
           <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2">
@@ -45,7 +77,7 @@ document.addEventListener("DOMContentLoaded", () => {
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
             <label for="client-name" class="block text-xs font-semibold text-gray-700 mb-1">Client Name <span class="text-red-500">*</span></label>
-            <input type="text" id="client-name" placeholder="e.g. Le Pastry" class="w-full p-2.5 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" required />
+            <input type="text" id="client-name" placeholder="e.g. Zonkk" class="w-full p-2.5 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" required />
           </div>
           <div>
             <label for="client-contact-person" class="block text-xs font-semibold text-gray-700 mb-1">Contact Person</label>
@@ -58,6 +90,18 @@ document.addEventListener("DOMContentLoaded", () => {
           <div>
             <label for="client-address" class="block text-xs font-semibold text-gray-700 mb-1">Address</label>
             <input type="text" id="client-address" placeholder="e.g. 123, MG Road, Bangalore" class="w-full p-2.5 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition" />
+          </div>
+          <div>
+            <label for="client-status" class="block text-xs font-semibold text-gray-700 mb-1">Status</label>
+            <select id="client-status" class="w-full p-2.5 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition">
+              <option value="Prospect">Prospect</option>
+              <option value="Active">Active</option>
+              <option value="Lost">Lost</option>
+            </select>
+          </div>
+          <div>
+            <label for="client-notes" class="block text-xs font-semibold text-gray-700 mb-1">Notes</label>
+            <textarea id="client-notes" placeholder="Add notes..." class="w-full p-2.5 border border-gray-300 rounded-lg text-base focus:ring-2 focus:ring-indigo-500 focus:border-indigo-500 transition"></textarea>
           </div>
         </div>
         <div class="flex gap-2 mt-7">
@@ -74,29 +118,110 @@ document.addEventListener("DOMContentLoaded", () => {
     <style>
       @keyframes fade-in { from { opacity: 0; transform: translateY(30px);} to { opacity: 1; transform: none; } }
       .animate-fade-in { animation: fade-in 0.2s ease; }
-      #client-list .client-card { background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%); }
-      #client-list .client-card:hover { box-shadow: 0 6px 24px 0 rgba(60,72,88,0.10); border-color: #6366f1; }
+      .glass-section {
+        background: rgba(255,255,255,0.25);
+        backdrop-filter: blur(16px) saturate(180%);
+        border: 1px solid rgba(255,255,255,0.18);
+        box-shadow: 0 8px 32px 0 rgba(60,72,88,0.18), 0 1.5px 6px 0 rgba(99,102,241,0.08);
+      }
+      .glass-form {
+        background: rgba(255,255,255,0.35) !important;
+        backdrop-filter: blur(10px) saturate(180%);
+        border: 1px solid rgba(99,102,241,0.10);
+        box-shadow: 0 8px 32px 0 rgba(99,102,241,0.18), 0 1.5px 12px 0 rgba(99,102,241,0.12);
+      }
+      .kpi-box {
+        min-width: 0;
+      }
+      .table-view {
+        width: 100%;
+        border-collapse: collapse;
+        background: rgba(255,255,255,0.35);
+        backdrop-filter: blur(10px) saturate(180%);
+        border-radius: 1rem;
+        overflow: hidden;
+      }
+      .table-view th, .table-view td {
+        padding: 1rem 0.75rem;
+        border-bottom: 1px solid #e5e7eb;
+        text-align: left;
+        font-size: 1rem;
+      }
+      .table-view th {
+        background: rgba(99,102,241,0.08);
+        font-weight: 600;
+        color: #6366f1;
+      }
+      .table-view tr:hover td {
+        background: rgba(99,102,241,0.06);
+      }
+      .avatar {
+        background: linear-gradient(135deg, #6366f1 0%, #60a5fa 100%);
+        color: white;
+        font-weight: bold;
+        font-size: 1.1rem;
+        border-radius: 9999px;
+        width: 36px;
+        height: 36px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        box-shadow: 0 4px 16px 0 rgba(99,102,241,0.12);
+      }
+      .badge {
+        display: inline-block;
+        padding: 0.25em 0.75em;
+        border-radius: 9999px;
+        font-size: 0.85em;
+        font-weight: 600;
+        color: #fff;
+      }
+      .badge-prospect { background: linear-gradient(90deg,#fbbf24,#f59e42); }
+      .badge-active { background: linear-gradient(90deg,#34d399,#3b82f6); }
+      .badge-lost { background: linear-gradient(90deg,#f87171,#a78bfa); }
     </style>
   `;
 
-  // 2. Initialize variables
+  // --- 2. Variables ---
   const db = window.db;
   let editingClientId = null;
+  let editingMode = "client"; // or "prospect"
+  let searchTerm = '';
+  let statusFilter = 'Active'; // Default to Active
+  let currentPage = 1;
+  const pageSize = 10;
 
-  // 3. Show/Hide Overlay Add Client Form
+  // --- 3. UI Elements ---
   const addBtn = document.getElementById("show-add-client-form");
+  const addProspectBtn = document.getElementById("show-add-prospect-form");
   const overlay = document.getElementById("client-form-overlay");
   const form = document.getElementById("client-form");
   const cancelBtn = document.getElementById("client-cancel-btn");
   const formTitle = document.getElementById("client-form-title");
   const submitLabel = document.getElementById("client-submit-label");
+  const searchInput = document.getElementById("client-search");
+  const statusFilterInput = document.getElementById("client-status-filter");
+  const pagination = document.getElementById("pagination");
 
+  // --- 4. Overlay Add/Edit Client/Prospect Form ---
   addBtn.addEventListener("click", () => {
     overlay.classList.remove("hidden");
     form.reset();
     editingClientId = null;
+    editingMode = "client";
     formTitle.textContent = "Add Client";
     submitLabel.textContent = "Add Client";
+    document.getElementById("client-status").value = "Active";
+  });
+
+  addProspectBtn.addEventListener("click", () => {
+    overlay.classList.remove("hidden");
+    form.reset();
+    editingClientId = null;
+    editingMode = "prospect";
+    formTitle.textContent = "Add Prospect";
+    submitLabel.textContent = "Add Prospect";
+    document.getElementById("client-status").value = "Prospect";
   });
 
   cancelBtn.addEventListener("click", () => {
@@ -117,7 +242,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   });
 
-  // 4. Handle form submission for adding/updating clients
+  // --- 5. Add/Update Client/Prospect ---
   form.addEventListener("submit", async (e) => {
     e.preventDefault();
 
@@ -125,6 +250,8 @@ document.addEventListener("DOMContentLoaded", () => {
     const contactPerson = document.getElementById("client-contact-person").value.trim();
     const phone = document.getElementById("client-phone").value.trim();
     const address = document.getElementById("client-address").value.trim();
+    const status = document.getElementById("client-status").value;
+    const notes = document.getElementById("client-notes").value.trim();
 
     if (!name) {
       showToast("Client name is required.", "error");
@@ -132,11 +259,11 @@ document.addEventListener("DOMContentLoaded", () => {
     }
 
     if (editingClientId) {
-      await db.collection("clients").doc(editingClientId).update({ name, contactPerson, phone, address });
+      await db.collection("clients").doc(editingClientId).update({ name, contactPerson, phone, address, status, notes });
       editingClientId = null;
       showToast("Client updated!", "success");
     } else {
-      await db.collection("clients").add({ name, contactPerson, phone, address, createdAt: new Date() });
+      await db.collection("clients").add({ name, contactPerson, phone, address, status, notes, createdAt: new Date() });
       showToast("Client added!", "success");
     }
 
@@ -145,101 +272,204 @@ document.addEventListener("DOMContentLoaded", () => {
     loadClients();
   });
 
-  // 5. Load and display all clients as cards, and update number ring
+  // --- 6. Search Input ---
+  searchInput.addEventListener("input", (e) => {
+    searchTerm = e.target.value.toLowerCase();
+    currentPage = 1;
+    loadClients();
+  });
+
+  // --- 7. Status Filter Input ---
+  statusFilterInput.addEventListener("change", (e) => {
+    statusFilter = e.target.value;
+    currentPage = 1;
+    loadClients();
+  });
+
+  // --- 8. Load & Display Clients ---
   async function loadClients() {
     const list = document.getElementById("client-list");
+    const pipelineList = document.getElementById("pipeline-list");
     const snapshot = await db.collection("clients").orderBy("createdAt", "desc").get();
-    list.innerHTML = "";
 
-    // Number ring update
-    const count = snapshot.size;
-    updateClientsRing(count);
+    // Filter by search
+    let clients = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    if (searchTerm) {
+      clients = clients.filter(c =>
+        (c.name && c.name.toLowerCase().includes(searchTerm)) ||
+        (c.contactPerson && c.contactPerson.toLowerCase().includes(searchTerm)) ||
+        (c.phone && c.phone.toLowerCase().includes(searchTerm)) ||
+        (c.address && c.address.toLowerCase().includes(searchTerm))
+      );
+    }
 
-    if (snapshot.empty) {
-      list.innerHTML = `<div class="text-center text-gray-400 py-12 text-base col-span-2">No clients yet.<br><span class="text-gray-300">Click <b>Add Client</b> to get started.</span></div>`;
+    // --- KPI Calculations ---
+    // Total Clients (Active only)
+    const activeClients = clients.filter(c => c.status === "Active");
+    document.getElementById("kpi-total-clients").textContent = activeClients.length;
+
+    // New Clients This Month (Active, created this month)
+    const now = new Date();
+    const thisMonth = now.getMonth();
+    const thisYear = now.getFullYear();
+    const newClients = activeClients.filter(c => {
+      let d = c.createdAt;
+      if (d && typeof d.toDate === 'function') d = d.toDate();
+      else d = new Date(d);
+      return d.getMonth() === thisMonth && d.getFullYear() === thisYear;
+    });
+    document.getElementById("kpi-new-clients").textContent = newClients.length;
+
+    // Pipeline (Prospect)
+    const pipelineClients = clients.filter(c => c.status === "Prospect");
+    document.getElementById("kpi-pipeline").textContent = pipelineClients.length;
+
+    // Converted This Month (Active, created this month)
+    document.getElementById("kpi-converted").textContent = newClients.length;
+
+    // --- Pipeline Table ---
+    if (pipelineClients.length === 0) {
+      pipelineList.innerHTML = `<div class="text-center text-gray-400 py-6 text-base">No prospects in pipeline.<br><span class="text-gray-300">Click <b>Add Prospect</b> to get started.</span></div>`;
+    } else {
+      pipelineList.innerHTML = `
+        <table class="table-view w-full rounded-2xl overflow-hidden fade-in">
+          <thead>
+            <tr>
+              <th>Client Name</th>
+              <th>Contact Person</th>
+              <th>Phone</th>
+              <th>Address</th>
+              <th>Status</th>
+              <th>Notes</th>
+              <th>Date Added</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${pipelineClients.map(c => `
+              <tr>
+                <td>
+                  <div class="flex items-center gap-2">
+                    <div class="avatar">${c.name ? c.name[0].toUpperCase() : '?'}</div>
+                    <span class="font-semibold text-gray-900">${c.name}</span>
+                  </div>
+                </td>
+                <td>${c.contactPerson || '-'}</td>
+                <td><a href="tel:${c.phone}" class="text-indigo-500 hover:underline">${c.phone || '-'}</a></td>
+                <td>${c.address || '-'}</td>
+                <td><span class="badge badge-prospect">Prospect</span></td>
+                <td>${c.notes || '-'}</td>
+                <td>${c.createdAt ? formatDate(c.createdAt) : '-'}</td>
+                <td>
+                  <button
+                    class="edit-btn p-1.5 rounded hover:bg-indigo-100 transition"
+                    title="Edit"
+                    data-id="${c.id}"
+                    data-name="${escapeStr(c.name)}"
+                    data-contact-person="${escapeStr(c.contactPerson)}"
+                    data-phone="${escapeStr(c.phone)}"
+                    data-address="${escapeStr(c.address)}"
+                    data-status="${c.status}"
+                    data-notes="${escapeStr(c.notes)}"
+                  >✏️</button>
+                  <button
+                    class="convert-btn p-1.5 rounded hover:bg-green-100 transition"
+                    title="Mark as Client"
+                    data-id="${c.id}"
+                  >✅</button>
+                  <button
+                    class="lost-btn p-1.5 rounded hover:bg-red-100 transition"
+                    title="Mark as Lost"
+                    data-id="${c.id}"
+                  >❌</button>
+                  <button
+                    class="delete-btn p-1.5 rounded hover:bg-red-100 transition"
+                    title="Delete"
+                    data-id="${c.id}"
+                  >🗑️</button>
+                </td>
+              </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      `;
+    }
+
+    // --- Main Clients Table (Active/Lost) ---
+    let mainClients = clients.filter(c => 
+  c.status === statusFilter || typeof c.status === "undefined" || c.status === null || c.status === ""
+);
+
+    const totalPages = Math.ceil(mainClients.length / pageSize);
+    if (currentPage > totalPages) currentPage = totalPages || 1;
+    const pagedClients = mainClients.slice((currentPage - 1) * pageSize, currentPage * pageSize);
+
+    if (mainClients.length === 0) {
+      list.innerHTML = `<div class="text-center text-gray-400 py-12 text-base col-span-2">No clients found.<br><span class="text-gray-300">Try a different search or filter.</span></div>`;
+      pagination.innerHTML = "";
       return;
     }
 
-    for (const doc of snapshot.docs) {
-      const c = doc.data();
-      const id = doc.id;
+    list.innerHTML = `
+      <table class="table-view w-full rounded-2xl overflow-hidden fade-in">
+        <thead>
+          <tr>
+            <th>Client Name</th>
+            <th>Contact Person</th>
+            <th>Phone</th>
+            <th>Address</th>
+            <th>Status</th>
+            <th>Notes</th>
+            <th>Date Added</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${pagedClients.map(c => `
+            <tr>
+              <td>
+                <div class="flex items-center gap-2">
+                  <div class="avatar">${c.name ? c.name[0].toUpperCase() : '?'}</div>
+                  <span class="font-semibold text-gray-900">${c.name}</span>
+                </div>
+              </td>
+              <td>${c.contactPerson || '-'}</td>
+              <td><a href="tel:${c.phone}" class="text-indigo-500 hover:underline">${c.phone || '-'}</a></td>
+              <td>${c.address || '-'}</td>
+              <td>
+                <span class="badge ${c.status === "Active" ? "badge-active" : "badge-lost"}">${c.status === "Active" ? "Active" : "Lost"}</span>
+              </td>
+              <td>${c.notes || '-'}</td>
+              <td>${c.createdAt ? formatDate(c.createdAt) : '-'}</td>
+              <td>
+                <button
+                  class="edit-btn p-1.5 rounded hover:bg-indigo-100 transition"
+                  title="Edit"
+                  data-id="${c.id}"
+                  data-name="${escapeStr(c.name)}"
+                  data-contact-person="${escapeStr(c.contactPerson)}"
+                  data-phone="${escapeStr(c.phone)}"
+                  data-address="${escapeStr(c.address)}"
+                  data-status="${c.status}"
+                  data-notes="${escapeStr(c.notes)}"
+                >✏️</button>
+                <button
+                  class="delete-btn p-1.5 rounded hover:bg-red-100 transition"
+                  title="Delete"
+                  data-id="${c.id}"
+                >🗑️</button>
+              </td>
+            </tr>
+          `).join('')}
+        </tbody>
+      </table>
+    `;
 
-      // Card style with modern icons (Lucide)
-      const card = document.createElement("div");
-      card.className = "client-card rounded-xl border border-gray-200 p-6 flex flex-col gap-4 relative group transition hover:shadow-lg";
-
-      card.innerHTML = `
-        <div class="flex items-center gap-4">
-          <div class="bg-indigo-50 rounded-full p-2 flex items-center justify-center">
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <rect x="3" y="3" width="18" height="18" rx="2" />
-              <path d="M9 21V9h6v12" />
-              <path d="M9 12h6" />
-            </svg>
-          </div>
-          <div>
-            <div class="font-semibold text-lg text-gray-900">${c.name}</div>
-            <div class="flex flex-wrap gap-3 mt-1 text-sm text-gray-700">
-              <span class="flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                  <circle cx="12" cy="8" r="4" />
-                  <path d="M4 20c0-4 8-4 8-4s8 0 8 4" />
-                </svg>
-                ${c.contactPerson ? `<span>${c.contactPerson}</span>` : "-"}
-              </span>
-              <span class="flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                  <path d="M22 16.92V19a2 2 0 0 1-2.18 2A19.72 19.72 0 0 1 3 5.18 2 2 0 0 1 5 3h2.09a2 2 0 0 1 2 1.72c.13 1.13.37 2.23.72 3.28a2 2 0 0 1-.45 2.11l-1.27 1.27a16 16 0 0 0 6.29 6.29l1.27-1.27a2 2 0 0 1 2.11-.45c1.05.35 2.15.59 3.28.72a2 2 0 0 1 1.72 2z"/>
-                </svg>
-                ${c.phone ? `<span>${c.phone}</span>` : "-"}
-              </span>
-              <span class="flex items-center gap-1">
-                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 text-indigo-500" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-                  <path d="M12 21s-6-5.686-6-10A6 6 0 0 1 18 11c0 4.314-6 10-6 10z"/>
-                  <circle cx="12" cy="11" r="2"/>
-                </svg>
-                ${c.address ? `<span>${c.address}</span>` : "-"}
-              </span>
-            </div>
-          </div>
-        </div>
-        <div class="flex gap-2 absolute top-4 right-4 opacity-0 group-hover:opacity-100 transition">
-          <button
-            class="edit-btn p-1.5 rounded hover:bg-indigo-100 transition"
-            title="Edit"
-            data-id="${id}"
-            data-name="${escapeStr(c.name)}"
-            data-contact-person="${escapeStr(c.contactPerson)}"
-            data-phone="${escapeStr(c.phone)}"
-            data-address="${escapeStr(c.address)}"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <path d="M12 20h9" />
-              <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19.5 3 21l1.5-4L16.5 3.5z" />
-            </svg>
-          </button>
-          <button
-            class="delete-btn p-1.5 rounded hover:bg-red-100 transition"
-            title="Delete"
-            data-id="${id}"
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 text-red-400 hover:text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="1.5">
-              <polyline points="3 6 5 6 21 6" />
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
-              <line x1="10" y1="11" x2="10" y2="17" />
-              <line x1="14" y1="11" x2="14" y2="17" />
-            </svg>
-          </button>
-        </div>
-      `;
-      list.appendChild(card);
-    }
-
-    // Attach event listeners for edit and delete buttons
+    // --- Attach edit/delete/convert/lost events ---
     document.querySelectorAll(".edit-btn").forEach(btn => {
       btn.addEventListener("click", () => {
-        const { id, name, contactPerson, phone, address } = btn.dataset;
-        editClient(id, name, contactPerson, phone, address);
+        const { id, name, contactPerson, phone, address, status, notes } = btn.dataset;
+        editClient(id, name, contactPerson, phone, address, status, notes);
       });
     });
     document.querySelectorAll(".delete-btn").forEach(btn => {
@@ -248,9 +478,51 @@ document.addEventListener("DOMContentLoaded", () => {
         await deleteClient(id);
       });
     });
+    document.querySelectorAll(".convert-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const { id } = btn.dataset;
+        await db.collection("clients").doc(id).update({ status: "Active" });
+        showToast("Prospect marked as Client!", "success");
+        loadClients();
+      });
+    });
+    document.querySelectorAll(".lost-btn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const { id } = btn.dataset;
+        await db.collection("clients").doc(id).update({ status: "Lost" });
+        showToast("Prospect marked as Lost.", "success");
+        loadClients();
+      });
+    });
+
+    // --- Pagination controls ---
+    renderPagination(currentPage, totalPages);
   }
 
-  // 6. Utility function to safely escape strings for use in HTML attributes
+  // --- 9. Pagination Controls ---
+  function renderPagination(page, totalPages) {
+    if (totalPages <= 1) {
+      pagination.innerHTML = "";
+      return;
+    }
+    let html = '';
+    if (page > 1) {
+      html += `<button class="px-3 py-1 rounded bg-indigo-100 text-indigo-700 font-semibold" id="prev-page">Prev</button>`;
+    }
+    html += `<span class="px-3 py-1 text-gray-700">Page ${page} of ${totalPages}</span>`;
+    if (page < totalPages) {
+      html += `<button class="px-3 py-1 rounded bg-indigo-100 text-indigo-700 font-semibold" id="next-page">Next</button>`;
+    }
+    pagination.innerHTML = html;
+    if (page > 1) {
+      document.getElementById("prev-page").onclick = () => { currentPage--; loadClients(); };
+    }
+    if (page < totalPages) {
+      document.getElementById("next-page").onclick = () => { currentPage++; loadClients(); };
+    }
+  }
+
+  // --- 10. Utility: Escape HTML ---
   function escapeStr(str) {
     return (str || "")
       .replace(/\\/g, '\\\\')
@@ -260,19 +532,31 @@ document.addEventListener("DOMContentLoaded", () => {
       .replace(/'/g, '&#39;');
   }
 
-  // 7. Edit client handler (switches form to edit mode)
-  function editClient(id, name, contactPerson, phone, address) {
+  // --- 11. Format Date ---
+  function formatDate(dateObj) {
+    // If Firestore Timestamp
+    if (dateObj && typeof dateObj.toDate === 'function') {
+      dateObj = dateObj.toDate();
+    }
+    if (!(dateObj instanceof Date)) dateObj = new Date(dateObj);
+    return dateObj.toLocaleDateString('en-IN');
+  }
+
+  // --- 12. Edit Client Handler ---
+  function editClient(id, name, contactPerson, phone, address, status, notes) {
     overlay.classList.remove("hidden");
     document.getElementById("client-name").value = name;
     document.getElementById("client-contact-person").value = contactPerson;
     document.getElementById("client-phone").value = phone;
     document.getElementById("client-address").value = address;
+    document.getElementById("client-status").value = status || "Active";
+    document.getElementById("client-notes").value = notes || "";
     formTitle.textContent = "Edit Client";
     submitLabel.textContent = "Update Client";
     editingClientId = id;
   }
 
-  // 8. Delete client handler with confirmation and feedback
+  // --- 13. Delete Client Handler ---
   async function deleteClient(id) {
     if (confirm("Are you sure you want to delete this client? This cannot be undone.")) {
       await db.collection("clients").doc(id).delete();
@@ -281,7 +565,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  // 9. Toast notification for feedback
+  // --- 14. Toast Notification ---
   function showToast(message, type = "info") {
     let toast = document.getElementById("toast-message");
     if (!toast) {
@@ -292,7 +576,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     toast.textContent = message;
     toast.className =
-      "fixed top-6 right-6 z-50 px-5 py-2.5 rounded-lg shadow-lg text-white font-semibold text-base transition " +
+      "fixed top-6 right-6 z-50 px-5 py-2.5 rounded-lg shadow-lg text-white font-semibold text-base transition toast " +
       (type === "success"
         ? "bg-green-600"
         : type === "error"
@@ -306,21 +590,7 @@ document.addEventListener("DOMContentLoaded", () => {
     }, 2000);
   }
 
-  // 10. Number ring update function
-  function updateClientsRing(count) {
-    const max = 20;
-    const percent = Math.min(count / max, 1);
-    const circle = document.getElementById("clients-ring-bar");
-    const circumference = 2 * Math.PI * 20;
-    const offset = circumference * (1 - percent);
-    if (circle) {
-      circle.setAttribute("stroke-dasharray", circumference.toFixed(2));
-      circle.setAttribute("stroke-dashoffset", offset.toFixed(2));
-    }
-    const countSpan = document.getElementById("clients-count");
-    if (countSpan) countSpan.textContent = count;
-  }
-
-  // 11. Initial load of clients when the page is ready
+    // --- 15. Initial Load ---
   loadClients();
-});
+};
+
