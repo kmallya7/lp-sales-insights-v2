@@ -9,7 +9,7 @@
   <link rel="icon" type="image/png" href="assets/favicon_io/favicon.ico">
 
   <!-- ====== Fonts ====== -->
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
 
   <!-- ====== Tailwind CSS (dev CDN) ====== -->
@@ -32,13 +32,6 @@
       --glass-bg: rgba(255,255,255,0.7);
     }
     html,body { height:100%; font-family: 'Poppins', sans-serif; }
-
-    /* Prevent sidebar nav text from wrapping */
-#sidebar .nav-link .sidebar-label {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
 
     /* overall subtle gradient behind app, but keep bg-gray-50 fallback */
     body { background: linear-gradient(180deg,#ffffff 0%, #fbfbfd 45%, #fff6f0 100%); }
@@ -65,14 +58,13 @@
 
     /* glass-card utility */
     .glass {
-  background: linear-gradient(180deg, rgba(255,255,255,0.90), rgba(255,255,255,0.80));
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  border: 1px solid rgba(255,255,255,0.85);
-  box-shadow: 0 4px 16px rgba(15,23,42,0.04);
-  border-radius: 12px;
-}
-
+      background: linear-gradient(180deg, rgba(255,255,255,0.65), rgba(255,255,255,0.55));
+      backdrop-filter: blur(6px);
+      -webkit-backdrop-filter: blur(6px);
+      border: 1px solid rgba(255,255,255,0.6);
+      box-shadow: var(--card-shadow);
+      border-radius: 12px;
+    }
 
     /* subtle micro-animations for sections */
     .page-section { opacity:0; transform: translateY(8px); transition: opacity .36s ease, transform .36s ease; pointer-events:none; }
@@ -112,38 +104,12 @@
 
     /* small utility for subtle card hover */
     .card-hover:hover { transform: translateY(-4px); transition: transform 180ms ease; }
-
-    /* Glassmorph background image effect */
-#glass-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  width: 100vw;
-  height: 100vh;
-  background: url('assets/Backgrounds/BG 4.png') center/cover no-repeat;
-
-  background-color: #fff6f0;
-}
-
-#glass-bg::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(255,255,255,0.70);
-  backdrop-filter: blur(4px) saturate(120%);
-  -webkit-backdrop-filter: blur(4px) saturate(120%);
-  pointer-events: none;
-}
-
   </style>
 
   <!-- ====== Success Sound ====== -->
   <audio id="successSound" src="assets/ding.wav" preload="auto"></audio>
 </head>
 <body class="bg-gray-50">
-
-  <!-- ====== Glassmorph Background ====== -->
-  <div id="glass-bg"></div>
 
   <!-- ================= SIGN IN PAGE OVERLAY ================= -->
   <div id="signInPage" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-pink-50 to-pink-100">
@@ -189,7 +155,6 @@
     <!-- ====== Navigation Links ====== -->
     <nav id="sidebarNav" class="flex-1 px-4 space-y-1 overflow-y-auto">
       <!-- OPERATIONS HEADING -->
-       <hr class="my-4 border-t border-gray-300" />
       <div class="sidebar-label uppercase font-bold text-xs text-gray-400 mt-8 mb-4 tracking-widest">Operations</div>
       <!-- Each nav-link below is a section in the app -->
       <a href="#workLog" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Work Log">
@@ -199,7 +164,6 @@
         </svg>
         <span class="sidebar-label">Work Log</span>
       </a>
-    
       <a href="#dashboard" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Dashboard">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
           <path stroke-linecap="round" stroke-linejoin="round" d="M10.5 6a7.5 7.5 0 1 0 7.5 7.5h-7.5V6Z" />
@@ -207,13 +171,6 @@
         </svg>
         <span class="sidebar-label">Dashboard</span>
       </a>
-      <a href="#recipeCalculator" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Recipe Calculator">
-  <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
-    <path stroke-linecap="round" stroke-linejoin="round" d="M15.75 15.75V18m-7.5-6.75h.008v.008H8.25v-.008Zm0 2.25h.008v.008H8.25V13.5Zm0 2.25h.008v.008H8.25v-.008Zm0 2.25h.008v.008H8.25V18Zm2.498-6.75h.007v.008h-.007v-.008Zm0 2.25h.007v.008h-.007V13.5Zm0 2.25h.007v.008h-.007v-.008Zm0 2.25h.007v.008h-.007V18Zm2.504-6.75h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V13.5Zm0 2.25h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V18Zm2.498-6.75h.008v.008h-.008v-.008Zm0 2.25h.008v.008h-.008V13.5ZM8.25 6h7.5v2.25h-7.5V6ZM12 2.25c-1.892 0-3.758.11-5.593.322C5.307 2.7 4.5 3.65 4.5 4.757V19.5a2.25 2.25 0 0 0 2.25 2.25h10.5a2.25 2.25 0 0 0 2.25-2.25V4.757c0-1.108-.806-2.057-1.907-2.185A48.507 48.507 0 0 0 12 2.25Z" />
-  </svg>
-  <span class="sidebar-label">Recipe Calculator</span>
-</a>
-
       <a href="#invoice" class="nav-link flex items-center gap-2 text-gray-700 px-3 py-2 group" data-tooltip="Invoice">
         <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor" class="w-6 h-6">
           <path stroke-linecap="round" stroke-linejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 0 0-3.375-3.375h-1.5A1.125 1.125 0 0 1 13.5 7.125v-1.5a3.375 3.375 0 0 0-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 0 0-9-9Z" />
@@ -429,81 +386,15 @@
 
     <!-- ====== Other Sections (hidden by default, shown on nav) ====== -->
     <div id="dashboard" class="page-section hidden"></div>
-<div id="fixedExpenses" class="page-section hidden"></div>
-<div id="inventory" class="page-section hidden"></div>
-<div id="export" class="page-section hidden"></div>
-<div id="clients" class="page-section hidden"></div>
-<div id="invoice" class="page-section hidden">
-  <div id="invoicePrintArea"></div>
-</div>
-<div id="payments" class="page-section hidden"></div>
-<div id="orders" class="page-section hidden"></div>
-
-
-<!-- Ingredient Manager & Recipe Calculator Section -->
-
-<div id="recipeCalculator" class="page-section hidden">
-  <div class="max-w-2xl mx-auto glass rounded-xl p-8 mt-8">
-    <h2 class="text-2xl font-bold mb-6 text-indigo-700">Ingredient Manager</h2>
-    <form id="addIngredientForm" class="space-y-4 mb-8">
-      <div class="grid grid-cols-2 gap-4">
-        <input id="ingredientName" type="text" placeholder="Ingredient Name" class="w-full px-3 py-3 border border-gray-300 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-        <input id="ingredientCost" type="number" placeholder="Package Cost (₹)" class="w-full px-3 py-3 border border-gray-300 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-      </div>
-      <div class="grid grid-cols-2 gap-4">
-        <input id="ingredientSize" type="number" placeholder="Package Size" class="w-full px-3 py-3 border border-gray-300 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-        <select id="ingredientUnit" class="w-full px-3 py-3 border border-gray-300 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-indigo-400">
-          <option value="">Unit</option>
-          <option value="g">g</option>
-          <option value="kg">kg</option>
-          <option value="ml">ml</option>
-          <option value="L">L</option>
-        </select>
-      </div>
-      <button type="submit" class="w-full bg-indigo-600 text-white py-3 rounded-lg text-lg font-semibold hover:bg-indigo-700 transition">Add Ingredient</button>
-    </form>
-    <h3 class="text-lg font-semibold mb-4 text-indigo-600">Ingredients List</h3>
-    <div class="overflow-x-auto mb-8">
-      <table class="min-w-full bg-white rounded-lg shadow">
-        <thead>
-          <tr class="bg-indigo-50">
-            <th class="py-2 px-4 text-left">Name</th>
-            <th class="py-2 px-4 text-left">Size</th>
-            <th class="py-2 px-4 text-left">Unit</th>
-            <th class="py-2 px-4 text-left">Cost (₹)</th>
-            <th class="py-2 px-4 text-left">Actions</th>
-          </tr>
-        </thead>
-        <tbody id="ingredientsTableBody">
-          <!-- Ingredients will be listed here -->
-        </tbody>
-      </table>
+    <div id="fixedExpenses" class="page-section hidden"></div>
+    <div id="inventory" class="page-section hidden"></div>
+    <div id="export" class="page-section hidden"></div>
+    <div id="clients" class="page-section hidden"></div>
+    <div id="invoice" class="page-section hidden">
+      <div id="invoicePrintArea"></div>
     </div>
-    <h2 class="text-2xl font-bold mb-6 text-indigo-700">Recipe Calculator</h2>
-    <form id="recipeForm" class="space-y-6">
-      <div>
-        <label for="ingredientSelect" class="block text-lg font-medium mb-2">Ingredient</label>
-        <select id="ingredientSelect" class="w-full px-3 py-3 border border-gray-300 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-indigo-400">
-          <option value="">Select ingredient</option>
-        </select>
-      </div>
-      <div>
-        <label for="usedAmount" class="block text-lg font-medium mb-2">Amount Used</label>
-        <input id="usedAmount" type="number" class="w-full px-3 py-3 border border-gray-300 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-indigo-400" />
-      </div>
-      <div>
-        <label for="usedUnit" class="block text-lg font-medium mb-2">Unit</label>
-        <select id="usedUnit" class="w-full px-3 py-3 border border-gray-300 rounded-lg text-lg focus:outline-none focus:ring-2 focus:ring-indigo-400">
-          <option value="">Select unit</option>
-        </select>
-      </div>
-      <button type="button" id="calcBtn" class="w-full bg-indigo-600 text-white py-4 rounded-lg text-lg font-semibold hover:bg-indigo-700 transition">Calculate Cost</button>
-    </form>
-    <div id="calcResult" class="mt-8 text-lg font-semibold text-indigo-700"></div>
-  </div>
-</div>
-
-
+    <div id="payments" class="page-section hidden"></div>
+    <div id="orders" class="page-section hidden"></div>
   </main>
 
   <!-- ================= SCRIPTS ================= -->
@@ -529,110 +420,16 @@
   <script src="js/batch.js"></script>
   <script src="js/dailyLog.js"></script>
   <script src="js/dashboard.js"></script>
-  <script src="js/calculations.js"></script>
   <script src="js/inventory.js"></script>
   <script src="js/clients.js"></script>
   <script src="js/invoices.js"></script>
   <script src="js/payments.js"></script>
   <script src="js/orders.js"></script>
 
-  <script>
-  // Firestore setup
-  const db = window.firebase.firestore();
-
-  // Add ingredient to Firestore
-  document.getElementById("addIngredientForm").addEventListener("submit", async function(e) {
-    e.preventDefault();
-    const name = document.getElementById("ingredientName").value.trim();
-    const cost = parseFloat(document.getElementById("ingredientCost").value);
-    const size = parseFloat(document.getElementById("ingredientSize").value);
-    const unit = document.getElementById("ingredientUnit").value;
-    if (!name || isNaN(cost) || isNaN(size) || !unit) {
-      alert("Please fill all fields.");
-      return;
-    }
-    await db.collection("ingredients").add({
-      name, packageCost: cost, packageSize: size, packageUnit: unit,
-      allowedUnits: unit === "g" || unit === "kg" ? ["g", "kg"] : ["ml", "L"]
-    });
-    document.getElementById("addIngredientForm").reset();
-    loadIngredients();
-  });
-
-  // Load ingredients from Firestore and show in table & dropdown
-  async function loadIngredients() {
-    const snapshot = await db.collection("ingredients").get();
-    const tableBody = document.getElementById("ingredientsTableBody");
-    const select = document.getElementById("ingredientSelect");
-    tableBody.innerHTML = "";
-    select.innerHTML = '<option value="">Select ingredient</option>';
-    window.BakingCalculator.ingredients = [];
-    snapshot.forEach(doc => {
-      const ing = doc.data();
-      ing.id = doc.id;
-      window.BakingCalculator.ingredients.push(ing);
-      // Table row
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="py-2 px-4">${ing.name}</td>
-        <td class="py-2 px-4">${ing.packageSize}</td>
-        <td class="py-2 px-4">${ing.packageUnit}</td>
-        <td class="py-2 px-4">${ing.packageCost}</td>
-        <td class="py-2 px-4">
-          <button class="deleteBtn bg-red-500 text-white px-2 py-1 rounded" data-id="${ing.id}">Delete</button>
-        </td>
-      `;
-      tableBody.appendChild(tr);
-      // Dropdown option
-      const opt = document.createElement("option");
-      opt.value = ing.name;
-      opt.textContent = ing.name;
-      select.appendChild(opt);
-    });
-    // Delete logic
-    document.querySelectorAll(".deleteBtn").forEach(btn => {
-      btn.onclick = async function() {
-        await db.collection("ingredients").doc(btn.getAttribute("data-id")).delete();
-        loadIngredients();
-      };
-    });
-  }
-
-  // Allowed units logic for calculator
-  document.getElementById("ingredientSelect").addEventListener("change", function() {
-    const units = window.BakingCalculator.getAllowedUnits(this.value);
-    const unitSelect = document.getElementById("usedUnit");
-    unitSelect.innerHTML = '<option value="">Select unit</option>';
-    units.forEach(u => {
-      const opt = document.createElement("option");
-      opt.value = u;
-      opt.textContent = u;
-      unitSelect.appendChild(opt);
-    });
-  });
-
-  // Calculate cost
-  document.getElementById("calcBtn").addEventListener("click", function() {
-    const name = document.getElementById("ingredientSelect").value;
-    const amount = parseFloat(document.getElementById("usedAmount").value);
-    const unit = document.getElementById("usedUnit").value;
-    if (!name || isNaN(amount) || !unit) {
-      document.getElementById("calcResult").textContent = "Please fill all fields.";
-      return;
-    }
-    const cost = window.BakingCalculator.calculateCost(name, amount, unit);
-    document.getElementById("calcResult").textContent = `Cost for ${amount} ${unit} of ${name}: ₹${cost}`;
-  });
-
-  // Initial load
-  document.addEventListener("DOMContentLoaded", loadIngredients);
-</script>
-
-
   <!-- ====== Section Navigation & Sidebar Logic (keeps your original logic) ====== -->
   <script>
     // List of all main sections
-    const sections = ["workLog", "dashboard", "fixedExpenses", "inventory", "export", "clients", "invoice", "payments", "orders", "recipeCalculator"];
+    const sections = ["workLog", "dashboard", "fixedExpenses", "inventory", "export", "clients", "invoice", "payments", "orders"];
 
     // Show/hide loader spinner
     function toggleLoader(show) {
@@ -669,9 +466,6 @@
           if (target === "payments" && typeof renderPaymentsTable === "function") {
             renderPaymentsTable();
           }
-          if (target === "clients" && typeof renderClientsSection === "function") {
-  renderClientsSection();
-}
           toggleLoader(false);
           const main = document.querySelector('main');
           if (main) {
@@ -827,46 +621,5 @@
       });
     });
   </script>
-  <script>
-  // Populate ingredient dropdown
-  document.addEventListener("DOMContentLoaded", function() {
-    if (window.BakingCalculator) {
-      const select = document.getElementById("ingredientSelect");
-      window.BakingCalculator.ingredients.forEach(ing => {
-        const opt = document.createElement("option");
-        opt.value = ing.name;
-        opt.textContent = ing.name;
-        select.appendChild(opt);
-      });
-
-      // When ingredient changes, update allowed units
-      select.addEventListener("change", function() {
-        const units = window.BakingCalculator.getAllowedUnits(select.value);
-        const unitSelect = document.getElementById("usedUnit");
-        unitSelect.innerHTML = '<option value="">Select unit</option>';
-        units.forEach(u => {
-          const opt = document.createElement("option");
-          opt.value = u;
-          opt.textContent = u;
-          unitSelect.appendChild(opt);
-        });
-      });
-
-      // Calculate cost
-      document.getElementById("calcBtn").addEventListener("click", function() {
-        const name = select.value;
-        const amount = parseFloat(document.getElementById("usedAmount").value);
-        const unit = document.getElementById("usedUnit").value;
-        if (!name || isNaN(amount) || !unit) {
-          document.getElementById("calcResult").textContent = "Please fill all fields.";
-          return;
-        }
-        const cost = window.BakingCalculator.calculateCost(name, amount, unit);
-        document.getElementById("calcResult").textContent = `Cost for ${amount} ${unit} of ${name}: ₹${cost}`;
-      });
-    }
-  });
-</script>
-
 </body>
 </html>
