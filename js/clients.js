@@ -125,11 +125,12 @@ window.renderClientsSection = function() {
         box-shadow: 0 8px 32px 0 rgba(60,72,88,0.18), 0 1.5px 6px 0 rgba(99,102,241,0.08);
       }
       .glass-form {
-        background: rgba(255,255,255,0.35) !important;
-        backdrop-filter: blur(10px) saturate(180%);
-        border: 1px solid rgba(99,102,241,0.10);
-        box-shadow: 0 8px 32px 0 rgba(99,102,241,0.18), 0 1.5px 12px 0 rgba(99,102,241,0.12);
-      }
+  background: rgba(255,255,255,0.85) !important; /* More opaque */
+  backdrop-filter: blur(2px) saturate(120%);     /* Less blur, less saturation */
+  border: 1px solid rgba(99,102,241,0.10);
+  box-shadow: 0 4px 16px 0 rgba(99,102,241,0.10), 0 1.5px 6px 0 rgba(99,102,241,0.08); /* Softer shadow */
+}
+
       .kpi-box {
         min-width: 0;
       }
