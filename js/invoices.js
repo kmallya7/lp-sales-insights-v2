@@ -52,7 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <input type="text" id="clientName" class="w-full p-2 border rounded" placeholder="Client Name">
             <textarea id="clientAddress" class="w-full p-2 border rounded" placeholder="Client Address"></textarea>
             <input type="text" id="clientPhone" class="w-full p-2 border rounded" placeholder="Client Phone">
-            <input type="email" id="clientEmail" class="w-full p-2 border rounded" placeholder="Client Email">
+            <input type="email" id="clientEmail" class="w-full p-2 border rounded" placeholder="Contact">
           </div>
         </div>
         <table class="w-full text-sm border mb-4">
@@ -101,11 +101,11 @@ document.addEventListener("DOMContentLoaded", () => {
         </div>
       </section>
       <!-- All Invoices Section -->
-      <section id="allInvoicesSection" class="bg-white p-6 rounded shadow max-w-5xl mx-auto mt-10">
+      <section id="allInvoicesSection" class="bg-white p-6 rounded shadow max-w-5xl mx-auto mt-10 print:hidden">
+
         <h2 class="text-xl font-bold mb-4 text-orange-900">All Invoices</h2>
         <div class="flex flex-wrap gap-4 mb-2 items-center">
           <input type="text" id="invoiceSearchBox" class="p-2 border rounded" placeholder="Search by invoice #, client, date...">
-          
         </div>
         <form id="invoiceFilterForm" class="flex flex-wrap gap-4 mb-4 items-end">
           <div>
@@ -158,6 +158,22 @@ document.addEventListener("DOMContentLoaded", () => {
       background: #f3f4f6;
       z-index: 1;
     }
+    #invoiceItems textarea.item-name {
+      width: 100%;
+      min-height: 2.2em;
+      max-height: 12em;
+      overflow: hidden;
+      white-space: pre-wrap;
+      word-break: break-word;
+      font-size: 1em;
+      background: #fff;
+      border: 1px solid #d1d5db;
+      border-radius: 0.375rem;
+      padding: 0.25rem 0.5rem;
+      resize: none;
+      box-sizing: border-box;
+      line-height: 1.4;
+    }
   `;
   document.head.appendChild(style);
 
@@ -208,13 +224,74 @@ document.addEventListener("DOMContentLoaded", () => {
   // 2. ADD/REMOVE INVOICE ITEMS
   // ---------------------------
   const db = firebase.firestore();
+
+  // --- CLIENT AUTOFILL & INVOICE NUMBER AUTOGENERATE ---
+
+// Helper: Extract numeric part and increment
+function incrementInvoiceNumber(lastInvoiceNo) {
+  // Example: Z-08 → Z-09
+  const match = lastInvoiceNo.match(/^([A-Za-z]+)-(\d+)$/);
+  if (!match) return ""; // fallback
+  const prefix = match[1];
+  const num = parseInt(match[2], 10) + 1;
+  return `${prefix}-${String(num).padStart(2, "0")}`;
+}
+
+// On client name change/blur
+document.getElementById("clientName").addEventListener("blur", async function() {
+  const clientName = this.value.trim();
+  if (!clientName) return;
+
+  // 1. Fetch client details from Firestore
+  let clientDoc = null;
+  try {
+    const clientSnap = await db.collection("clients")
+      .where("name", "==", clientName)
+      .limit(1)
+      .get();
+    if (!clientSnap.empty) {
+      clientDoc = clientSnap.docs[0].data();
+      document.getElementById("clientAddress").value = clientDoc.address || "";
+      document.getElementById("clientPhone").value = clientDoc.phone || "";
+      document.getElementById("clientEmail").value = clientDoc.email || "";
+    }
+  } catch (err) {
+    console.error("Error fetching client:", err);
+  }
+
+  // 2. Fetch last invoice for this client
+  try {
+    const invoiceSnap = await db.collection("invoices")
+      .where("client.name", "==", clientName)
+      .orderBy("createdAt", "desc")
+      .limit(1)
+      .get();
+    if (!invoiceSnap.empty) {
+      const lastInvoice = invoiceSnap.docs[0].data();
+      const lastInvoiceNo = lastInvoice.invoiceNumber || "";
+      const newInvoiceNo = incrementInvoiceNumber(lastInvoiceNo);
+      if (newInvoiceNo) {
+        document.getElementById("invoiceNumber").value = newInvoiceNo;
+      }
+    } else {
+      // If no previous invoice, generate first invoice number
+      // Example: Zonkk → Z-01
+      const prefix = clientName[0].toUpperCase();
+      document.getElementById("invoiceNumber").value = `${prefix}-01`;
+    }
+  } catch (err) {
+    console.error("Error fetching last invoice:", err);
+  }
+});
+
+
   const itemsBody = document.getElementById("invoiceItems");
 
   function addRow(item = {}) {
     const row = document.createElement("tr");
     row.innerHTML = `
-      <td class="border p-1 text-center align-middle">
-        <input type="text" class="w-full p-1 border rounded text-center" placeholder="Item" value="${item.name || ""}">
+      <td class="border p-1 align-middle">
+        <textarea class="item-name" placeholder="Item" rows="1">${item.name || ""}</textarea>
       </td>
       <td class="border p-1 text-center align-middle">
         <input type="number" class="w-full p-1 border rounded qty text-center" value="${item.qty || 1}">
@@ -233,6 +310,19 @@ document.addEventListener("DOMContentLoaded", () => {
       row.remove();
       updateTotals();
     });
+
+    // --- AUTO-EXPAND TEXTAREA ---
+    const itemTextarea = row.querySelector(".item-name");
+    function autoExpandTextarea(el) {
+      el.style.height = "auto";
+      el.style.height = (el.scrollHeight) + "px";
+    }
+    itemTextarea.addEventListener("input", function() {
+      autoExpandTextarea(this);
+    });
+    // Set initial height
+    autoExpandTextarea(itemTextarea);
+
     itemsBody.appendChild(row);
     updateTotals();
   }
@@ -279,7 +369,7 @@ document.addEventListener("DOMContentLoaded", () => {
 
       itemsBody.querySelectorAll("tr").forEach(row => {
         const item = {
-          name: row.querySelector("input[type='text']").value,
+          name: row.querySelector("textarea.item-name").value,
           qty: parseFloat(row.querySelector(".qty").value) || 0,
           price: parseFloat(row.querySelector(".price").value) || 0,
           amount: row.querySelector(".amount").textContent
@@ -300,6 +390,7 @@ document.addEventListener("DOMContentLoaded", () => {
         });
     }
   });
+
 
   // 5. DOWNLOAD AS PNG (dom-to-image)
   // ---------------------------------
@@ -706,4 +797,5 @@ document.addEventListener("DOMContentLoaded", () => {
       loadAllInvoices({ month, year });
     }
   });
+  
 });

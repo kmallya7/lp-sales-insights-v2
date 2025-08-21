@@ -314,6 +314,10 @@ window.loadDashboard = async function () {
         <h4 class="font-semibold mb-2">Revenue & Profit Over Time</h4>
         <canvas id="lineChart" class="w-full h-64" aria-label="Revenue and Profit Over Time" role="img"></canvas>
       </div>
+      <div class="glass p-4 rounded-2xl shadow mb-6">
+  <h4 class="font-semibold mb-2">Total Revenue & Cost Till Date</h4>
+  <canvas id="tillDateBarChart" class="w-full h-64" aria-label="Total Revenue and Cost Till Date" role="img"></canvas>
+</div>
       <div class="glass p-4 rounded-2xl shadow">
         <h4 class="font-semibold mb-2">Summary Table</h4>
         <table class="w-full text-sm border rounded" aria-label="Summary Table">
@@ -359,6 +363,8 @@ window.loadDashboard = async function () {
   });
 
   await loadDashboardData(new Date().getMonth() + 1, new Date().getFullYear());
+  renderTillDateBarChart();
+
 };
 
 function changeMonth(delta) {
@@ -570,6 +576,78 @@ const prevProfitPerClient = prevClientCount ? prevProfit / prevClientCount : 0;
     setLoading(false);
   }
 }
+
+async function renderTillDateBarChart() {
+  // Get today's date in YYYY-MM-DD format
+  const today = new Date();
+  const todayStr = today.toISOString().slice(0, 10);
+
+  // Fetch all dailyLogs up to today
+  const logsSnap = await window.db.collection("dailyLogs")
+    .where("date", "<=", todayStr)
+    .get();
+
+  let totalRevenue = 0, totalCost = 0;
+  logsSnap.forEach(doc => {
+    const d = doc.data();
+    if (d.items && Array.isArray(d.items)) {
+      d.items.forEach(item => {
+        totalRevenue += item.revenue || 0;
+        totalCost += (item.ingredients || 0) + (item.packaging || 0);
+      });
+    }
+  });
+
+  const ctx = document.getElementById("tillDateBarChart").getContext("2d");
+  if (window.tillDateBarChartInstance) window.tillDateBarChartInstance.destroy();
+  window.tillDateBarChartInstance = new Chart(ctx, {
+  type: 'bar',
+  data: {
+    labels: ["Total Revenue", "Total Cost"],
+    datasets: [{
+      label: "Amount (₹)",
+      data: [totalRevenue, totalCost],
+      backgroundColor: ["#60a5fa", "#f87171"]
+    }]
+  },
+  options: {
+    responsive: true,
+    plugins: {
+      legend: { display: false },
+      tooltip: {
+        callbacks: {
+          label: function(context) {
+            const formatted = context.parsed.y.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+            return `${context.label}: ₹${formatted}`;
+          }
+        }
+      },
+      datalabels: {
+        anchor: 'end',
+        align: 'top',
+        color: '#374151',
+        font: { weight: 'bold', size: 14 },
+        formatter: function(value) {
+          return '₹' + value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        }
+      }
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+        title: { display: true, text: "Amount (₹)" },
+        ticks: {
+          callback: function(value) {
+            return '₹' + value.toLocaleString('en-IN');
+          }
+        }
+      }
+    }
+  },
+  plugins: [ChartDataLabels]
+});
+}
+
 
 function renderEmptyState() {
   $("summary-cards").innerHTML = "";
