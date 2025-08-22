@@ -39,6 +39,16 @@ document.getElementById("addEditIngredientForm").addEventListener("submit", asyn
   };
   if (editIngredientId) {
     await db.collection("ingredients").doc(editIngredientId).set(data);
+    // Update costRows if any entry matches the edited ingredient
+    costRows = costRows.map(row => {
+      if (row.ingredient === name) {
+        // Recalculate cost with updated ingredient details
+        const updatedCost = window.BakingCalculator.calculateCost(name, row.amount, row.unit);
+        return { ...row, cost: updatedCost };
+      }
+      return row;
+    });
+    renderCostTable(); // Re-render the table to show updated cost
     editIngredientId = null;
     document.getElementById("ingredientFormTitle").textContent = "Add Ingredient";
     document.getElementById("ingredientFormBtn").textContent = "Add Ingredient";
@@ -136,8 +146,16 @@ document.getElementById("calcBtn").addEventListener("click", function() {
     alert("Please fill all fields with valid values.");
     return;
   }
+  // Check if ingredient already exists in costRows for the same unit
+  const existingIdx = costRows.findIndex(row => row.ingredient === ingredient && row.unit === unit);
   const cost = window.BakingCalculator.calculateCost(ingredient, amount, unit);
-  costRows.push({ ingredient, amount, unit, cost });
+  if (existingIdx !== -1) {
+    // Update the existing row
+    costRows[existingIdx] = { ingredient, amount, unit, cost };
+  } else {
+    // Add new row
+    costRows.push({ ingredient, amount, unit, cost });
+  }
   renderCostTable();
   document.getElementById("recipeForm").reset();
   document.getElementById("usedUnit").innerHTML = '<option value="">Select unit</option>';
@@ -147,9 +165,9 @@ document.getElementById("calcBtn").addEventListener("click", function() {
 function renderCostTable() {
   const tbody = document.getElementById("costTableBody");
   tbody.innerHTML = "";
-  let total = 0; // <-- Add this line
+  let total = 0;
   costRows.forEach((row, idx) => {
-    total += row.cost; // <-- Add up the cost
+    total += row.cost;
     const tr = document.createElement("tr");
     tr.innerHTML = `
       <td>${row.ingredient}</td>
@@ -176,7 +194,6 @@ function renderCostTable() {
       </div>`
     : "";
 }
-
 
 // Reset calculations
 document.getElementById("resetCalcBtn").addEventListener("click", function() {

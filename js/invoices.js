@@ -126,56 +126,179 @@ document.addEventListener("DOMContentLoaded", () => {
   // 1A. ADD PRINT-SAFE AND RESPONSIVE CSS
   // -------------------------------------
   const style = document.createElement("style");
-  style.innerHTML = `
-    @media print {
-      .avoid-break {
-        break-inside: avoid;
-        page-break-inside: avoid;
-        page-break-before: auto;
-      }
-      .avoid-break * {
-        break-inside: avoid;
-        page-break-inside: avoid;
-      }
+style.innerHTML = `
+  /* GLASSMORPHISM */
+  .glass {
+    background: rgba(255,255,255,0.25);
+    box-shadow: 0 8px 32px 0 rgba(31,38,135,0.18);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    border-radius: 16px;
+    border: 1px solid rgba(255,255,255,0.18);
+  }
+  /* FILTERS & SEARCH */
+  #invoiceFilterForm, #invoiceSearchBox {
+    background: rgba(255,255,255,0.35);
+    box-shadow: 0 2px 8px 0 rgba(31,38,135,0.10);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.18);
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+  }
+  #invoiceSearchBox {
+    font-size: 1rem;
+    border: none;
+    outline: none;
+    background: transparent;
+    color: #222;
+    transition: box-shadow 0.2s;
+  }
+  #invoiceSearchBox:focus {
+    box-shadow: 0 0 0 2px #a5b4fc;
+    background: rgba(255,255,255,0.55);
+  }
+  #filterMonth, #filterYear {
+    background: rgba(255,255,255,0.55);
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1rem;
+    font-size: 1rem;
+    color: #222;
+    outline: none;
+    box-shadow: 0 1px 4px 0 rgba(31,38,135,0.08);
+    transition: box-shadow 0.2s;
+  }
+  #filterMonth:focus, #filterYear:focus {
+    box-shadow: 0 0 0 2px #a5b4fc;
+    background: rgba(255,255,255,0.75);
+  }
+  #clearFilterBtn {
+    background: rgba(240,240,240,0.7);
+    color: #222;
+    border: none;
+    border-radius: 8px;
+    padding: 0.5rem 1.2rem;
+    font-size: 1rem;
+    box-shadow: 0 1px 4px 0 rgba(31,38,135,0.08);
+    transition: background 0.2s;
+  }
+  #clearFilterBtn:hover {
+    background: rgba(220,220,220,0.9);
+  }
+  /* TABLE */
+  #invoicesList table {
+    background: rgba(255,255,255,0.35);
+    box-shadow: 0 2px 8px 0 rgba(31,38,135,0.10);
+    border-radius: 12px;
+    border: 1px solid rgba(255,255,255,0.18);
+    overflow: hidden;
+  }
+  #invoicesList th, #invoicesList td {
+    background: transparent;
+    border: none;
+    padding: 0.75rem 0.5rem;
+    color: #222;
+  }
+  #invoicesList th {
+    font-weight: 600;
+    font-size: 1rem;
+    background: rgba(240,240,255,0.45);
+  }
+  #invoicesList tr {
+    transition: background 0.2s;
+  }
+  #invoicesList tr:hover {
+    background: rgba(200,220,255,0.12);
+  }
+  /* GLASS BUTTONS */
+  .glass-btn {
+    background: rgba(255,255,255,0.45);
+    border: none;
+    border-radius: 8px;
+    box-shadow: 0 1px 4px 0 rgba(31,38,135,0.08);
+    padding: 0.4rem 0.7rem;
+    margin: 0 0.1rem;
+    color: #222;
+    font-size: 1.1rem;
+    cursor: pointer;
+    transition: background 0.2s, box-shadow 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.3em;
+  }
+  .glass-btn:hover {
+    background: rgba(200,220,255,0.25);
+    box-shadow: 0 2px 8px 0 rgba(31,38,135,0.18);
+  }
+  .glass-btn:active {
+    background: rgba(180,200,255,0.35);
+  }
+  .glass-btn.view { color: #2563eb; }
+  .glass-btn.print { color: #059669; }
+  .glass-btn.delete { color: #ef4444; }
+  /* ICONS */
+  .glass-btn svg {
+    width: 1.1em;
+    height: 1.1em;
+    vertical-align: middle;
+    margin-right: 0.1em;
+  }
+  /* PAGINATION */
+  #paginationControls button {
+    background: rgba(255,255,255,0.45);
+    border: none;
+    border-radius: 8px;
+    padding: 0.3rem 0.8rem;
+    color: #222;
+    font-size: 1rem;
+    cursor: pointer;
+    margin: 0 0.2rem;
+    transition: background 0.2s;
+  }
+  #paginationControls button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+  #paginationControls button:hover:not(:disabled) {
+    background: rgba(200,220,255,0.25);
+  }
+  /* Sort dropdown */
+  #sortInvoicesBy {
+    background: rgba(255,255,255,0.55);
+    border: none;
+    border-radius: 8px;
+    padding: 0.4rem 1rem;
+    font-size: 1rem;
+    color: #222;
+    outline: none;
+    box-shadow: 0 1px 4px 0 rgba(31,38,135,0.08);
+    transition: box-shadow 0.2s;
+    margin-left: 0.5em;
+  }
+  #sortInvoicesBy:focus {
+    box-shadow: 0 0 0 2px #a5b4fc;
+    background: rgba(255,255,255,0.75);
+  }
+  /* Responsive */
+  @media (max-width: 600px) {
+    #invoicesList table, #invoicesList th, #invoicesList td {
+      font-size: 0.95rem;
     }
-    #filterMonth, #filterYear {
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      padding: 0.25rem 0.5rem;
-      font-size: 1rem;
-      color: #1f2937;
-      background: #fff;
-      outline: none;
-      transition: border 0.2s;
+    #invoiceFilterForm, #invoiceSearchBox {
+      padding: 0.3rem 0.5rem;
     }
-    #filterMonth:focus, #filterYear:focus {
-      border-color: #fb923c;
-      box-shadow: 0 0 0 1px #fb923c;
+  }
+  /* Print-safe */
+  @media print {
+    .glass, #invoiceFilterForm, #invoiceSearchBox, .glass-btn, #paginationControls button {
+      background: none !important;
+      box-shadow: none !important;
+      border: none !important;
     }
-    thead {
-      position: sticky;
-      top: 0;
-      background: #f3f4f6;
-      z-index: 1;
-    }
-    #invoiceItems textarea.item-name {
-      width: 100%;
-      min-height: 2.2em;
-      max-height: 12em;
-      overflow: hidden;
-      white-space: pre-wrap;
-      word-break: break-word;
-      font-size: 1em;
-      background: #fff;
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      padding: 0.25rem 0.5rem;
-      resize: none;
-      box-sizing: border-box;
-      line-height: 1.4;
-    }
-  `;
-  document.head.appendChild(style);
+  }
+`;
+document.head.appendChild(style);
+
 
   // Center invoice on screen and print, and set max width
   const centerInvoiceStyle = document.createElement("style");
@@ -504,7 +627,8 @@ document.getElementById("clientName").addEventListener("blur", async function() 
         </select>
       </label>
     </div>
-    <table class="w-full text-sm border rounded bg-white">
+    <table class="w-full text-sm border rounded glass">
+
       <thead>
         <tr class="bg-gray-100">
           <th class="border p-2 text-center font-semibold">Invoice #</th>
@@ -520,15 +644,18 @@ document.getElementById("clientName").addEventListener("blur", async function() 
   pageDocs.forEach(d => {
     html += `
       <tr>
-        <td class="border p-2 text-center">${d.invoiceNumber || ""}</td>
-        <td class="border p-2 text-center">${d.invoiceDate || ""}</td>
-        <td class="border p-2 text-center">${d.client?.name || ""}</td>
-        <td class="border p-2 text-center">${d.total || ""}</td>
-        <td class="border p-2 text-center">
-          <button class="text-blue-600 viewInvoiceBtn" data-id="${d.id}">View</button>
-          <button class="text-blue-600 printInvoiceBtn" data-id="${d.id}">Print</button>
-          <button class="text-red-600 deleteInvoiceBtn" data-id="${d.id}">Delete</button>
-        </td>
+        <td class="text-center">
+  <button class="glass-btn view" title="View" data-id="${d.id}">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M2.05 12a9.94 9.94 0 0 1 19.9 0 9.94 9.94 0 0 1-19.9 0z"/></svg>
+  </button>
+  <button class="glass-btn print" title="Print" data-id="${d.id}">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><rect x="6" y="8" width="12" height="8" rx="2"/><path d="M6 8V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v2"/><path d="M6 16v2a2 2 0 0 0 2 2h8a2 2 0 0 0 2-2v-2"/></svg>
+  </button>
+  <button class="glass-btn delete" title="Delete" data-id="${d.id}">
+    <svg fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m5 0V4a2 2 0 0 1 2-2h0a2 2 0 0 1 2 2v2"/></svg>
+  </button>
+</td>
+
       </tr>
     `;
   });
@@ -566,27 +693,29 @@ document.getElementById("clientName").addEventListener("blur", async function() 
   });
 
   // Attach event listeners for view, print, delete
-  document.querySelectorAll(".viewInvoiceBtn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-id");
-      await showInvoiceDetails(id);
-    });
+document.querySelectorAll(".glass-btn.view").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const id = btn.getAttribute("data-id");
+    await showInvoiceDetails(id);
   });
-  document.querySelectorAll(".printInvoiceBtn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-id");
-      await showInvoiceDetails(id, true);
-      setTimeout(() => window.print(), 500);
-    });
+});
+document.querySelectorAll(".glass-btn.print").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const id = btn.getAttribute("data-id");
+    await showInvoiceDetails(id, true);
+    setTimeout(() => window.print(), 500);
   });
-  document.querySelectorAll(".deleteInvoiceBtn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-id");
-      if (confirm("Are you sure you want to delete this invoice?")) {
-        await deleteInvoice(id);
-      }
-    });
+});
+document.querySelectorAll(".glass-btn.delete").forEach(btn => {
+  btn.addEventListener("click", async () => {
+    const id = btn.getAttribute("data-id");
+    if (confirm("Are you sure you want to delete this invoice?")) {
+      await deleteInvoice(id);
+    }
   });
+});
+
+
 
   // Sorting
   document.getElementById("sortInvoicesBy")?.addEventListener("change", function() {
