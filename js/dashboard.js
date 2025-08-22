@@ -315,9 +315,10 @@ window.loadDashboard = async function () {
         <canvas id="lineChart" class="w-full h-64" aria-label="Revenue and Profit Over Time" role="img"></canvas>
       </div>
       <div class="glass p-4 rounded-2xl shadow mb-6">
-  <h4 class="font-semibold mb-2">Total Revenue & Cost Till Date</h4>
+  <h4 class="font-semibold mb-2 text-lg text-gray-800">Total Revenue & Cost Till Date</h4>
   <canvas id="tillDateBarChart" class="w-full h-64" aria-label="Total Revenue and Cost Till Date" role="img"></canvas>
 </div>
+
       <div class="glass p-4 rounded-2xl shadow">
         <h4 class="font-semibold mb-2">Summary Table</h4>
         <table class="w-full text-sm border rounded" aria-label="Summary Table">
@@ -601,52 +602,53 @@ async function renderTillDateBarChart() {
   const ctx = document.getElementById("tillDateBarChart").getContext("2d");
   if (window.tillDateBarChartInstance) window.tillDateBarChartInstance.destroy();
   window.tillDateBarChartInstance = new Chart(ctx, {
-  type: 'bar',
-  data: {
-    labels: ["Total Revenue", "Total Cost"],
-    datasets: [{
-      label: "Amount (₹)",
-      data: [totalRevenue, totalCost],
-      backgroundColor: ["#60a5fa", "#f87171"]
-    }]
-  },
-  options: {
-    responsive: true,
-    plugins: {
-      legend: { display: false },
-      tooltip: {
-        callbacks: {
-          label: function(context) {
-            const formatted = context.parsed.y.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-            return `${context.label}: ₹${formatted}`;
+    type: 'bar',
+    data: {
+      labels: ["Total Revenue", "Total Cost"],
+      datasets: [{
+        label: "Amount (₹)",
+        data: [totalRevenue, totalCost],
+        backgroundColor: ["#60a5fa", "#f87171"]
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        title: {
+          display: true,
+          text: "Total Revenue & Cost Till Date",
+          font: { size: 18, weight: 'bold', family: 'Inter, system-ui, sans-serif' },
+          color: '#374151',
+          padding: { top: 10, bottom: 20 }
+        },
+        legend: { display: false },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              const formatted = context.parsed.y.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+              return `${context.label}: ₹${formatted}`;
+            }
           }
         }
+        // REMOVE datalabels config here
       },
-      datalabels: {
-        anchor: 'end',
-        align: 'top',
-        color: '#374151',
-        font: { weight: 'bold', size: 14 },
-        formatter: function(value) {
-          return '₹' + value.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
-        }
-      }
-    },
-    scales: {
-      y: {
-        beginAtZero: true,
-        title: { display: true, text: "Amount (₹)" },
-        ticks: {
-          callback: function(value) {
-            return '₹' + value.toLocaleString('en-IN');
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "Amount (₹)" },
+          ticks: {
+            callback: function(value) {
+              return '₹' + value.toLocaleString('en-IN');
+            }
           }
         }
       }
     }
-  },
-  plugins: [ChartDataLabels]
-});
+    // REMOVE plugins: [ChartDataLabels] here
+  });
 }
+
+
 
 
 function renderEmptyState() {
