@@ -1,5 +1,10 @@
 // Dashboard.js
 
+if (window.ChartDataLabels && window.Chart) {
+  Chart.register(window.ChartDataLabels);
+}
+
+
 // --- Inject Google Fonts & Visual Upgrade CSS ---
 (function addVisualUpgradeCSS() {
   // Load Inter font
@@ -319,6 +324,17 @@ window.loadDashboard = async function () {
   <canvas id="tillDateBarChart" class="w-full h-64" aria-label="Total Revenue and Cost Till Date" role="img"></canvas>
 </div>
 
+<div class="glass p-4 rounded-2xl shadow mb-6">
+  <h4 class="font-semibold mb-2 text-lg text-gray-800">Monthly Revenue Trend</h4>
+  <canvas id="monthlyRevenueLineChart" class="w-full h-64" aria-label="Monthly Revenue Trend" role="img"></canvas>
+</div>
+
+<div class="glass p-4 rounded-2xl shadow mb-6">
+  <h4 class="font-semibold mb-2 text-lg text-gray-800">Daily Orders Trend</h4>
+  <canvas id="dailyOrdersAreaChart" class="w-full h-64" aria-label="Daily Orders Trend" role="img"></canvas>
+</div>
+
+
       <div class="glass p-4 rounded-2xl shadow">
         <h4 class="font-semibold mb-2">Summary Table</h4>
         <table class="w-full text-sm border rounded" aria-label="Summary Table">
@@ -363,8 +379,16 @@ window.loadDashboard = async function () {
     }
   });
 
-  await loadDashboardData(new Date().getMonth() + 1, new Date().getFullYear());
-  renderTillDateBarChart();
+  const m = new Date().getMonth() + 1;
+const y = new Date().getFullYear();
+const dayLimit = null;
+await loadDashboardData(m, y, dayLimit);
+renderTillDateBarChart();
+await renderMonthlyRevenueLineChart();
+await renderDailyOrdersAreaChart(m, y, dayLimit);
+
+
+
 
 };
 
@@ -377,7 +401,9 @@ function changeMonth(delta) {
   $("filter-month").value = m;
   $("filter-year").value = y;
   loadDashboardData(m, y);
+  renderDailyOrdersAreaChart(m, y, null);
 }
+
 
 function applyFilters() {
   const m = parseInt($("filter-month").value);
@@ -385,7 +411,9 @@ function applyFilters() {
   const usePartial = $("partial-toggle").checked;
   const dayLimit = usePartial ? new Date().getDate() : null;
   loadDashboardData(m, y, dayLimit);
+  renderDailyOrdersAreaChart(m, y, dayLimit);
 }
+
 
 // --- Data Fetching and Rendering ---
 
@@ -1032,25 +1060,59 @@ function renderLineChart(allItems) {
           data: revenues,
           borderColor: "#60a5fa",
           backgroundColor: "rgba(96,165,250,0.1)",
-          fill: true
+          fill: true,
+          datalabels: {
+            anchor: 'end',
+            align: 'top',
+            color: '#374151',
+            font: { weight: 'bold', size: 13 },
+            formatter: function(value) {
+              return '₹' + value.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+            }
+          }
         },
         {
           label: "Profit",
           data: profits,
           borderColor: "#34d399",
           backgroundColor: "rgba(52,211,153,0.1)",
-          fill: true
+          fill: true,
+          datalabels: {
+            anchor: 'end',
+            align: 'top',
+            color: '#374151',
+            font: { weight: 'bold', size: 13 },
+            formatter: function(value) {
+              return '₹' + value.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+            }
+          }
         }
       ]
     },
     options: {
       responsive: true,
       plugins: {
-        legend: { position: 'top' }
+        legend: { position: 'top' },
+        datalabels: {
+          display: true
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "Amount (₹)" },
+          ticks: {
+            callback: function(value) {
+              return '₹' + value.toLocaleString('en-IN');
+            }
+          }
+        }
       }
-    }
+    },
+    plugins: [ChartDataLabels]
   });
 }
+
 
 // --- CSV Export ---
 
@@ -1092,3 +1154,177 @@ async function exportDashboardCSV() {
   document.body.removeChild(a);
   URL.revokeObjectURL(url);
 }
+
+async function renderMonthlyRevenueLineChart() {
+  // Fetch all logs
+  const logsSnap = await window.db.collection("dailyLogs").get();
+
+  // Prepare monthly totals
+  const monthlyTotals = {};
+  logsSnap.forEach(doc => {
+    const d = doc.data();
+    if (!d.date) return;
+    const [year, month] = d.date.split('-');
+    const key = `${year}-${month}`;
+    if (!monthlyTotals[key]) monthlyTotals[key] = 0;
+    if (d.items && Array.isArray(d.items)) {
+      d.items.forEach(item => {
+        monthlyTotals[key] += item.revenue || 0;
+      });
+    }
+  });
+
+  // Sort months
+  const sortedKeys = Object.keys(monthlyTotals).sort();
+  const labels = sortedKeys.map(key => {
+    const [year, month] = key.split('-');
+    return `${new Date(year, month - 1).toLocaleString('default', { month: 'short' })} ${year}`;
+  });
+  const data = sortedKeys.map(key => monthlyTotals[key]);
+
+  // Draw chart
+  const ctx = document.getElementById("monthlyRevenueLineChart").getContext("2d");
+  if (window.monthlyRevenueLineChartInstance) window.monthlyRevenueLineChartInstance.destroy();
+  window.monthlyRevenueLineChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: "Total Revenue",
+        data,
+        borderColor: "#6366f1",
+        backgroundColor: "rgba(99,102,241,0.08)",
+        fill: true,
+        pointBackgroundColor: "#6366f1",
+        pointRadius: 5,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          anchor: 'end',
+          align: 'top',
+          color: '#374151',
+          font: { weight: 'bold', size: 13 },
+          formatter: function(value) {
+            // Indian number format
+            return '₹' + value.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return `₹${context.parsed.y.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "Revenue (₹)" },
+          ticks: {
+            callback: function(value) {
+              return '₹' + value.toLocaleString('en-IN');
+            }
+          }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+async function renderDailyOrdersAreaChart(month, year, dayLimit = null) {
+  // Prepare date range
+  const datePrefix = `${year}-${String(month).padStart(2, '0')}`;
+  const endDay = dayLimit || new Date(year, month, 0).getDate();
+  const endDate = `${datePrefix}-${String(endDay).padStart(2, '0')}`;
+
+  // Fetch logs for the month
+  const logsSnap = await window.db.collection("dailyLogs")
+    .where("date", ">=", `${datePrefix}-01`)
+    .where("date", "<=", endDate)
+    .get();
+
+  // Count orders per day
+  const orderCountMap = {};
+  for (let d = 1; d <= endDay; d++) {
+    const dateStr = `${datePrefix}-${String(d).padStart(2, '0')}`;
+    orderCountMap[dateStr] = 0;
+  }
+  logsSnap.forEach(doc => {
+    const d = doc.data();
+    if (d.date && orderCountMap.hasOwnProperty(d.date)) {
+      orderCountMap[d.date]++;
+    }
+  });
+
+  // Prepare chart data
+  const labels = Object.keys(orderCountMap).map(dateStr => {
+    const d = new Date(dateStr);
+    return d.toLocaleDateString('en-GB', { day: '2-digit', month: 'short' });
+  });
+  const data = Object.values(orderCountMap);
+
+  // --- Move debug logs here ---
+  console.log("Daily Orders Area Chart - labels:", labels);
+  console.log("Daily Orders Area Chart - data:", data);
+
+  // Draw area chart
+  const ctx = document.getElementById("dailyOrdersAreaChart").getContext("2d");
+  if (window.dailyOrdersAreaChartInstance) window.dailyOrdersAreaChartInstance.destroy();
+  window.dailyOrdersAreaChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: "Orders",
+        data,
+        borderColor: "#6366f1",
+        backgroundColor: "rgba(99,102,241,0.18)",
+        fill: true,
+        pointBackgroundColor: "#6366f1",
+        pointRadius: 4,
+        tension: 0.3,
+        datalabels: {
+          anchor: 'end',
+          align: 'top',
+          color: '#374151',
+          font: { weight: 'bold', size: 13 },
+          formatter: function(value) {
+            return value;
+          }
+        }
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        datalabels: { display: true },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return `Orders: ${context.parsed.y}`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "Order Count" },
+          ticks: {
+            stepSize: 1
+          }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+
