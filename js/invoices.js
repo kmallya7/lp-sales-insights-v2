@@ -123,6 +123,11 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
   }
 
+  const notyf = new Notyf({
+  duration: 2500,
+  position: { x: 'Center', y: 'top' }
+});
+
   // 1A. ADD PRINT-SAFE AND RESPONSIVE CSS
   // -------------------------------------
   const style = document.createElement("style");
@@ -218,6 +223,7 @@ document.addEventListener("DOMContentLoaded", () => {
         display: block !important;
       }
     }
+      
   `;
   document.head.appendChild(centerInvoiceStyle);
 
@@ -379,14 +385,14 @@ document.getElementById("clientName").addEventListener("blur", async function() 
 
       db.collection("invoices").add(invoiceData)
         .then(() => {
-          alert("Invoice saved successfully!");
+          notyf.success("Invoice saved successfully!");
           document.getElementById("successSound")?.play();
           loadAllInvoices();
           resetInvoiceForm();
         })
         .catch(err => {
           console.error("Error saving invoice:", err);
-          alert("Failed to save invoice.");
+          notyf.error("Failed to save invoice.");
         });
     }
   });
@@ -518,20 +524,20 @@ document.getElementById("clientName").addEventListener("blur", async function() 
   `;
 
   pageDocs.forEach(d => {
-    html += `
-      <tr>
-        <td class="border p-2 text-center">${d.invoiceNumber || ""}</td>
-        <td class="border p-2 text-center">${d.invoiceDate || ""}</td>
-        <td class="border p-2 text-center">${d.client?.name || ""}</td>
-        <td class="border p-2 text-center">${d.total || ""}</td>
-        <td class="border p-2 text-center">
-          <button class="text-blue-600 viewInvoiceBtn" data-id="${d.id}">View</button>
-          <button class="text-blue-600 printInvoiceBtn" data-id="${d.id}">Print</button>
-          <button class="text-red-600 deleteInvoiceBtn" data-id="${d.id}">Delete</button>
-        </td>
-      </tr>
-    `;
-  });
+  html += `
+    <tr>
+      <td class="border p-2 text-center">${d.invoiceNumber || ""}</td>
+      <td class="border p-2 text-center">${d.invoiceDate || ""}</td>
+      <td class="border p-2 text-center">${d.client?.name || ""}</td>
+      <td class="border p-2 text-center">${d.total || ""}</td>
+      <td class="border p-2 text-center flex gap-2 justify-center">
+        <button class="viewInvoiceBtn" data-id="${d.id}" title="View"><i data-feather="eye"></i></button>
+        <button class="printInvoiceBtn" data-id="${d.id}" title="Print"><i data-feather="printer"></i></button>
+        <button class="deleteInvoiceBtn" data-id="${d.id}" title="Delete"><i data-feather="trash-2"></i></button>
+      </td>
+    </tr>
+  `;
+});
 
   html += `
       </tbody>
@@ -550,6 +556,8 @@ document.getElementById("clientName").addEventListener("blur", async function() 
   `;
 
   invoicesList.innerHTML = html;
+
+    if (window.feather) feather.replace();
 
   // Pagination event listeners
   document.getElementById("prevPageBtn")?.addEventListener("click", () => {
@@ -627,15 +635,15 @@ document.getElementById("clientName").addEventListener("blur", async function() 
   }
 
   async function deleteInvoice(id) {
-    try {
-      await db.collection("invoices").doc(id).delete();
-      alert("Invoice deleted.");
-      loadAllInvoices();
-    } catch (err) {
-      alert("Failed to delete invoice.");
-      console.error(err);
-    }
+  try {
+    await db.collection("invoices").doc(id).delete();
+    notyf.success("Invoice deleted.");
+    loadAllInvoices();
+  } catch (err) {
+    notyf.error("Failed to delete invoice.");
+    console.error(err);
   }
+}
 
   function loadAllInvoices(filter = {}) {
     const invoicesList = document.getElementById("invoicesList");
@@ -798,4 +806,92 @@ document.getElementById("clientName").addEventListener("blur", async function() 
     }
   });
   
+});
+
+// --- CLIENT AUTOCOMPLETE ---
+let allClients = [];
+async function fetchClients() {
+  const snap = await db.collection("clients").get();
+  allClients = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+}
+fetchClients();
+
+// Create dropdown element
+const clientNameInput = document.getElementById("clientName");
+const dropdown = document.createElement("div");
+dropdown.style.position = "absolute";
+dropdown.style.background = "#fff";
+dropdown.style.border = "1px solid #ccc";
+dropdown.style.zIndex = 1000;
+dropdown.style.display = "none";
+dropdown.className = "autocomplete-dropdown";
+clientNameInput.parentNode.appendChild(dropdown);
+
+clientNameInput.addEventListener("input", function() {
+  const val = this.value.trim().toLowerCase();
+  if (!val) {
+    dropdown.style.display = "none";
+    return;
+  }
+  // Filter clients
+  const matches = allClients.filter(c => c.name && c.name.toLowerCase().startsWith(val));
+  if (matches.length === 0) {
+    dropdown.style.display = "none";
+    return;
+  }
+  // Show dropdown
+  dropdown.innerHTML = matches.map(c => `
+    <div class="autocomplete-item" style="padding:6px;cursor:pointer;" data-id="${c.id}">
+      <b>${c.name}</b> <span style="color:#888;">${c.contactPerson || ""}</span>
+    </div>
+  `).join("");
+  dropdown.style.display = "block";
+  dropdown.style.width = clientNameInput.offsetWidth + "px";
+});
+
+// Handle selection
+dropdown.addEventListener("mousedown", async function(e) {
+  const item = e.target.closest(".autocomplete-item");
+  if (!item) return;
+  const client = allClients.find(c => c.id === item.dataset.id);
+  if (client) {
+    clientNameInput.value = client.name;
+    document.getElementById("clientAddress").value = client.address || "";
+    document.getElementById("clientPhone").value = client.phone || "";
+    document.getElementById("clientEmail").value = client.contactPerson || ""; // Or use a separate field for contact person
+    dropdown.style.display = "none";
+
+    // --- Fetch and increment last invoice number for this client ---
+    try {
+      const invoiceSnap = await db.collection("invoices")
+        .where("client.name", "==", client.name)
+        .orderBy("createdAt", "desc")
+        .limit(1)
+        .get();
+      if (!invoiceSnap.empty) {
+        const lastInvoice = invoiceSnap.docs[0].data();
+        const lastInvoiceNo = lastInvoice.invoiceNumber || "";
+        const newInvoiceNo = incrementInvoiceNumber(lastInvoiceNo);
+        if (newInvoiceNo) {
+          document.getElementById("invoiceNumber").value = newInvoiceNo;
+        }
+      } else {
+        // If no previous invoice, generate first invoice number
+        // Use first two letters of client name as prefix, or customize as needed
+        const prefix = client.name
+          .split(" ")
+          .map(w => w[0])
+          .join("")
+          .toUpperCase();
+        document.getElementById("invoiceNumber").value = `${prefix}-01`;
+      }
+    } catch (err) {
+      console.error("Error fetching last invoice:", err);
+    }
+  }
+});
+
+// Hide dropdown on blur
+clientNameInput.addEventListener("blur", function() {
+  setTimeout(() => { dropdown.style.display = "none"; }, 150);
 });

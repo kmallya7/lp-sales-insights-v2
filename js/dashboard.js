@@ -324,10 +324,18 @@ window.loadDashboard = async function () {
   <canvas id="tillDateBarChart" class="w-full h-64" aria-label="Total Revenue and Cost Till Date" role="img"></canvas>
 </div>
 
-<div class="glass p-4 rounded-2xl shadow mb-6">
-  <h4 class="font-semibold mb-2 text-lg text-gray-800">Monthly Revenue Trend</h4>
-  <canvas id="monthlyRevenueLineChart" class="w-full h-64" aria-label="Monthly Revenue Trend" role="img"></canvas>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+  <div class="glass p-4 rounded-2xl shadow">
+    <h4 class="font-semibold mb-2 text-lg text-gray-800">Monthly Revenue Trend</h4>
+    <canvas id="monthlyRevenueLineChart" class="w-full h-64" aria-label="Monthly Revenue Trend" role="img"></canvas>
+  </div>
+  <div class="glass p-4 rounded-2xl shadow">
+    <h4 class="font-semibold mb-2 text-lg text-gray-800">Monthly Orders Trend</h4>
+    <canvas id="monthlyOrdersLineChart" class="w-full h-64" aria-label="Monthly Orders Trend" role="img"></canvas>
+    <div id="monthlyOrdersPctChange" class="mt-2 text-sm"></div>
+  </div>
 </div>
+
 
 <div class="glass p-4 rounded-2xl shadow mb-6">
   <h4 class="font-semibold mb-2 text-lg text-gray-800">Daily Orders Trend</h4>
@@ -385,6 +393,7 @@ const dayLimit = null;
 await loadDashboardData(m, y, dayLimit);
 renderTillDateBarChart();
 await renderMonthlyRevenueLineChart();
+await renderMonthlyOrdersLineChart();
 await renderDailyOrdersAreaChart(m, y, dayLimit);
 
 
@@ -1237,6 +1246,103 @@ async function renderMonthlyRevenueLineChart() {
     plugins: [ChartDataLabels]
   });
 }
+
+async function renderMonthlyOrdersLineChart() {
+  // Fetch all logs
+  const logsSnap = await window.db.collection("dailyLogs").get();
+
+  // Prepare monthly order counts
+  const monthlyOrderCounts = {};
+  logsSnap.forEach(doc => {
+    const d = doc.data();
+    if (!d.date) return;
+    const [year, month] = d.date.split('-');
+    const key = `${year}-${month}`;
+    if (!monthlyOrderCounts[key]) monthlyOrderCounts[key] = 0;
+    monthlyOrderCounts[key] += 1;
+  });
+
+  // Sort months
+  const sortedKeys = Object.keys(monthlyOrderCounts).sort();
+  const labels = sortedKeys.map(key => {
+    const [year, month] = key.split('-');
+    return `${new Date(year, month - 1).toLocaleString('default', { month: 'short' })} ${year}`;
+  });
+  const data = sortedKeys.map(key => monthlyOrderCounts[key]);
+
+  // Calculate % change for the latest month
+  let pctChangeStr = "";
+  if (data.length > 1) {
+    const prev = data[data.length - 2];
+    const curr = data[data.length - 1];
+    if (!prev && !curr) pctChangeStr = "0%";
+    else if (!prev && curr) pctChangeStr = "▲ 100%";
+    else if (prev && !curr) pctChangeStr = "▼ 100%";
+    else {
+      const pct = ((curr - prev) / Math.abs(prev)) * 100;
+      pctChangeStr = (pct >= 0 ? "▲ " : "▼ ") + Math.abs(pct).toFixed(1) + "%";
+    }
+  }
+
+  // Draw chart
+  const ctx = document.getElementById("monthlyOrdersLineChart").getContext("2d");
+  if (window.monthlyOrdersLineChartInstance) window.monthlyOrdersLineChartInstance.destroy();
+  window.monthlyOrdersLineChartInstance = new Chart(ctx, {
+    type: 'line',
+    data: {
+      labels,
+      datasets: [{
+        label: "Order Count",
+        data,
+        borderColor: "#f59e42",
+        backgroundColor: "rgba(245,158,66,0.08)",
+        fill: true,
+        pointBackgroundColor: "#f59e42",
+        pointRadius: 5,
+        tension: 0.3
+      }]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { display: false },
+        datalabels: {
+          anchor: 'end',
+          align: 'top',
+          color: '#374151',
+          font: { weight: 'bold', size: 13 },
+          formatter: function(value) {
+            return value;
+          }
+        },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              return `Orders: ${context.parsed.y}`;
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "Order Count" },
+          ticks: { stepSize: 1 }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+
+  // Show % change below the chart
+  const pctDiv = document.getElementById("monthlyOrdersPctChange");
+  if (pctDiv) {
+    pctDiv.innerHTML = data.length > 1
+      ? `<span class="font-semibold">Latest Month % Change:</span> <span class="${pctChangeStr.startsWith('▲') ? 'text-green-600' : 'text-red-600'}">${pctChangeStr}</span>`
+      : "";
+  }
+}
+
 async function renderDailyOrdersAreaChart(month, year, dayLimit = null) {
   // Prepare date range
   const datePrefix = `${year}-${String(month).padStart(2, '0')}`;
