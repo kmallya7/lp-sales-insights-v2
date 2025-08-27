@@ -198,6 +198,7 @@ function setError(msg) {
   show($("dashboard-error"));
 }
 
+
 // --- Main Dashboard Loader ---
 
 window.loadDashboard = async function () {
@@ -336,6 +337,11 @@ window.loadDashboard = async function () {
   </div>
 </div>
 
+<div class="glass p-4 rounded-2xl shadow mb-6" id="monthlyRevenueComboChart-container">
+  <h4 class="font-semibold mb-2 text-lg text-gray-800">Monthly Revenue Trend & Difference</h4>
+  <canvas id="monthlyRevenueComboChart" class="w-full h-64" aria-label="Monthly Revenue Trend & Difference" role="img"></canvas>
+</div>
+
 
 <div class="glass p-4 rounded-2xl shadow mb-6">
   <h4 class="font-semibold mb-2 text-lg text-gray-800">Daily Orders Trend</h4>
@@ -395,6 +401,8 @@ renderTillDateBarChart();
 await renderMonthlyRevenueLineChart();
 await renderMonthlyOrdersLineChart();
 await renderDailyOrdersAreaChart(m, y, dayLimit);
+await renderMonthlyRevenueComboChart();
+
 
 
 
@@ -1432,5 +1440,129 @@ async function renderDailyOrdersAreaChart(month, year, dayLimit = null) {
     plugins: [ChartDataLabels]
   });
 }
+
+// Add this function to Dashboard.js
+
+async function renderMonthlyRevenueComboChart() {
+  const chartId = "monthlyRevenueComboChart";
+
+  // Fetch all logs
+  const logsSnap = await window.db.collection("dailyLogs").get();
+
+  // Prepare monthly totals
+  const monthlyTotals = {};
+  logsSnap.forEach(doc => {
+    const d = doc.data();
+    if (!d.date) return;
+    const [year, month] = d.date.split('-');
+    const key = `${year}-${month}`;
+    if (!monthlyTotals[key]) monthlyTotals[key] = 0;
+    if (d.items && Array.isArray(d.items)) {
+      d.items.forEach(item => {
+        monthlyTotals[key] += item.revenue || 0;
+      });
+    }
+  });
+
+  // Sort months
+  const sortedKeys = Object.keys(monthlyTotals).sort();
+  const labels = sortedKeys.map(key => {
+    const [year, month] = key.split('-');
+    return `${new Date(year, month - 1).toLocaleString('default', { month: 'short' })} ${year}`;
+  });
+  const revenueData = sortedKeys.map(key => monthlyTotals[key]);
+
+  // Calculate month-on-month difference
+  const diffData = revenueData.map((val, idx) => {
+    if (idx === 0) return 0;
+    return val - revenueData[idx - 1];
+  });
+
+
+  const ctx = document.getElementById(chartId).getContext("2d");
+  if (window.monthlyRevenueComboChartInstance) window.monthlyRevenueComboChartInstance.destroy();
+
+  window.monthlyRevenueComboChartInstance = new Chart(ctx, {
+    type: 'bar',
+    data: {
+      labels,
+      datasets: [
+        {
+          type: 'bar',
+          label: "Revenue",
+          data: revenueData,
+          backgroundColor: "#6366f1",
+          borderRadius: 8,
+          datalabels: {
+            anchor: 'end',
+            align: 'top',
+            color: '#374151',
+            font: { weight: 'bold', size: 13 },
+            formatter: function(value) {
+              return '₹' + value.toLocaleString('en-IN', { maximumFractionDigits: 0 });
+            }
+          }
+        },
+        {
+          type: 'line',
+          label: "Difference from Previous Month",
+          data: diffData,
+          borderColor: "#34d399",
+          backgroundColor: "rgba(52,211,153,0.1)",
+          fill: false,
+          pointBackgroundColor: "#34d399",
+          pointRadius: 5,
+          tension: 0.3,
+          datalabels: {
+            anchor: 'end',
+            align: 'bottom',
+            color: '#34d399',
+            font: { weight: 'bold', size: 13 },
+            formatter: function(value) {
+              // Show + or - sign
+              const sign = value > 0 ? "+" : value < 0 ? "−" : "";
+              return sign + '₹' + Math.abs(value).toLocaleString('en-IN', { maximumFractionDigits: 0 });
+            }
+          }
+        }
+      ]
+    },
+    options: {
+      responsive: true,
+      plugins: {
+        legend: { position: 'top' },
+        datalabels: { display: true },
+        tooltip: {
+          callbacks: {
+            label: function(context) {
+              if (context.dataset.label === "Revenue") {
+                return `Revenue: ₹${context.parsed.y.toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+              } else {
+                const sign = context.parsed.y > 0 ? "+" : context.parsed.y < 0 ? "−" : "";
+                return `Difference: ${sign}₹${Math.abs(context.parsed.y).toLocaleString('en-IN', { maximumFractionDigits: 2 })}`;
+              }
+            }
+          }
+        }
+      },
+      scales: {
+        y: {
+          beginAtZero: true,
+          title: { display: true, text: "Amount (₹)" },
+          ticks: {
+            callback: function(value) {
+              return '₹' + value.toLocaleString('en-IN');
+            }
+          }
+        }
+      }
+    },
+    plugins: [ChartDataLabels]
+  });
+}
+
+// Call this function after your dashboard loads
+// Example: await renderMonthlyRevenueComboChart();
+
 
 
