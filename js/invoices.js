@@ -15,8 +15,7 @@
 // 5. Download as PNG (dom-to-image)
 // 6. Print Invoice
 // 7. All Invoices Table (view, print, delete, filter, sort, search, pagination)
-// 8. Utility: Populate Month/Year Dropdowns
-// 9. Initial Load
+// 8. Initial Load
 //
 // Make sure Firebase is initialized before this script runs!
 // ===============================
@@ -102,31 +101,48 @@ document.addEventListener("DOMContentLoaded", () => {
       </section>
       <!-- All Invoices Section -->
       <section id="allInvoicesSection" class="bg-white p-6 rounded shadow max-w-5xl mx-auto mt-10 print:hidden">
-
         <h2 class="text-xl font-bold mb-4 text-orange-900">All Invoices</h2>
-        <div class="flex flex-wrap gap-4 mb-2 items-center">
-          <input type="text" id="invoiceSearchBox" class="p-2 border rounded" placeholder="Search by invoice #, client, date...">
+        <div id="invoiceControlsRow" class="flex flex-row gap-4 mb-4 items-end w-full">
+          <input
+            type="month"
+            id="filterMonthYear"
+            class="p-2 border rounded flex-1 min-w-[160px] max-w-[200px] h-10"
+            style="height: 40px;"
+            aria-label="Filter by month"
+          />
+          <input
+            type="text"
+            id="invoiceSearchBox"
+            class="p-2 border rounded flex-1 min-w-[180px] max-w-[260px] h-10"
+            placeholder="Search by invoice #, client, date..."
+            style="height: 40px;"
+            aria-label="Search invoices"
+          />
+          <select
+            id="sortInvoicesBy"
+            class="p-2 border rounded flex-1 min-w-[160px] max-w-[220px] h-10"
+            style="height: 40px;"
+            aria-label="Sort invoices"
+          >
+            <option value="invoiceNumber-desc">Invoice # (desc)</option>
+            <option value="invoiceNumber-asc">Invoice # (asc)</option>
+            <option value="invoiceDate-desc" selected>Date (newest)</option>
+            <option value="invoiceDate-asc">Date (oldest)</option>
+            <option value="client-asc">Client (A-Z)</option>
+            <option value="client-desc">Client (Z-A)</option>
+            <option value="total-desc">Total (high-low)</option>
+            <option value="total-asc">Total (low-high)</option>
+          </select>
         </div>
-        <form id="invoiceFilterForm" class="flex flex-wrap gap-4 mb-4 items-end">
-          <div>
-            <label class="block text-sm text-gray-700 mb-1" for="filterMonth">Month</label>
-            <select id="filterMonth" class="p-2 border rounded"></select>
-          </div>
-          <div>
-            <label class="block text-sm text-gray-700 mb-1" for="filterYear">Year</label>
-            <select id="filterYear" class="p-2 border rounded"></select>
-          </div>
-          <button type="button" id="clearFilterBtn" class="bg-gray-300 text-gray-800 px-4 py-2 rounded hover:bg-gray-400">Clear</button>
-        </form>
         <div id="invoicesList" class="overflow-x-auto"></div>
       </section>
     `;
   }
 
   const notyf = new Notyf({
-  duration: 2500,
-  position: { x: 'Center', y: 'top' }
-});
+    duration: 2500,
+    position: { x: 'Center', y: 'top' }
+  });
 
   // 1A. ADD PRINT-SAFE AND RESPONSIVE CSS
   // -------------------------------------
@@ -143,17 +159,14 @@ document.addEventListener("DOMContentLoaded", () => {
         page-break-inside: avoid;
       }
     }
-    #filterMonth, #filterYear {
-      border: 1px solid #d1d5db;
-      border-radius: 0.375rem;
-      padding: 0.25rem 0.5rem;
+    #filterMonthYear, #invoiceSearchBox, #sortInvoicesBy {
+      height: 40px;
+      min-width: 160px;
+      max-width: 260px;
       font-size: 1rem;
-      color: #1f2937;
-      background: #fff;
-      outline: none;
-      transition: border 0.2s;
+      box-sizing: border-box;
     }
-    #filterMonth:focus, #filterYear:focus {
+    #filterMonthYear:focus, #invoiceSearchBox:focus, #sortInvoicesBy:focus {
       border-color: #fb923c;
       box-shadow: 0 0 0 1px #fb923c;
     }
@@ -179,6 +192,43 @@ document.addEventListener("DOMContentLoaded", () => {
       box-sizing: border-box;
       line-height: 1.4;
     }
+      .glass-loader {
+  backdrop-filter: blur(8px) saturate(180%);
+  -webkit-backdrop-filter: blur(8px) saturate(180%);
+  background: rgba(255,255,255,0.6);
+  border-radius: 1rem;
+  box-shadow: 0 4px 24px rgba(0,0,0,0.08);
+  transition: background 0.3s, backdrop-filter 0.3s;
+  min-height: 80px;
+  min-width: 200px;
+  margin: 0 auto;
+
+  .spinner {
+  width: 32px;
+  height: 32px;
+  border: 4px solid rgba(255,255,255,0.5);
+  border-top: 4px solid #fb923c;
+  border-radius: 50%;
+  animation: spin 1s linear infinite;
+  margin-bottom: 8px;
+}
+#invoicesList {
+  overflow-y: visible !important;
+  max-height: none !important;
+  min-height: unset !important;
+  scrollbar-width: none; /* Firefox */
+}
+#invoicesList::-webkit-scrollbar {
+  display: none; /* Chrome, Safari, Edge */
+}
+
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+}
+
   `;
   document.head.appendChild(style);
 
@@ -223,7 +273,6 @@ document.addEventListener("DOMContentLoaded", () => {
         display: block !important;
       }
     }
-      
   `;
   document.head.appendChild(centerInvoiceStyle);
 
@@ -232,64 +281,60 @@ document.addEventListener("DOMContentLoaded", () => {
   const db = firebase.firestore();
 
   // --- CLIENT AUTOFILL & INVOICE NUMBER AUTOGENERATE ---
-
-// Helper: Extract numeric part and increment
-function incrementInvoiceNumber(lastInvoiceNo) {
-  // Example: Z-08 → Z-09
-  const match = lastInvoiceNo.match(/^([A-Za-z]+)-(\d+)$/);
-  if (!match) return ""; // fallback
-  const prefix = match[1];
-  const num = parseInt(match[2], 10) + 1;
-  return `${prefix}-${String(num).padStart(2, "0")}`;
-}
-
-// On client name change/blur
-document.getElementById("clientName").addEventListener("blur", async function() {
-  const clientName = this.value.trim();
-  if (!clientName) return;
-
-  // 1. Fetch client details from Firestore
-  let clientDoc = null;
-  try {
-    const clientSnap = await db.collection("clients")
-      .where("name", "==", clientName)
-      .limit(1)
-      .get();
-    if (!clientSnap.empty) {
-      clientDoc = clientSnap.docs[0].data();
-      document.getElementById("clientAddress").value = clientDoc.address || "";
-      document.getElementById("clientPhone").value = clientDoc.phone || "";
-      document.getElementById("clientEmail").value = clientDoc.email || "";
-    }
-  } catch (err) {
-    console.error("Error fetching client:", err);
+  function incrementInvoiceNumber(lastInvoiceNo) {
+    // Example: Z-08 → Z-09
+    const match = lastInvoiceNo.match(/^([A-Za-z]+)-(\d+)$/);
+    if (!match) return ""; // fallback
+    const prefix = match[1];
+    const num = parseInt(match[2], 10) + 1;
+    return `${prefix}-${String(num).padStart(2, "0")}`;
   }
 
-  // 2. Fetch last invoice for this client
-  try {
-    const invoiceSnap = await db.collection("invoices")
-      .where("client.name", "==", clientName)
-      .orderBy("createdAt", "desc")
-      .limit(1)
-      .get();
-    if (!invoiceSnap.empty) {
-      const lastInvoice = invoiceSnap.docs[0].data();
-      const lastInvoiceNo = lastInvoice.invoiceNumber || "";
-      const newInvoiceNo = incrementInvoiceNumber(lastInvoiceNo);
-      if (newInvoiceNo) {
-        document.getElementById("invoiceNumber").value = newInvoiceNo;
+  document.getElementById("clientName").addEventListener("blur", async function() {
+    const clientName = this.value.trim();
+    if (!clientName) return;
+
+    // 1. Fetch client details from Firestore
+    let clientDoc = null;
+    try {
+      const clientSnap = await db.collection("clients")
+        .where("name", "==", clientName)
+        .limit(1)
+        .get();
+      if (!clientSnap.empty) {
+        clientDoc = clientSnap.docs[0].data();
+        document.getElementById("clientAddress").value = clientDoc.address || "";
+        document.getElementById("clientPhone").value = clientDoc.phone || "";
+        document.getElementById("clientEmail").value = clientDoc.email || "";
       }
-    } else {
-      // If no previous invoice, generate first invoice number
-      // Example: Zonkk → Z-01
-      const prefix = clientName[0].toUpperCase();
-      document.getElementById("invoiceNumber").value = `${prefix}-01`;
+    } catch (err) {
+      console.error("Error fetching client:", err);
     }
-  } catch (err) {
-    console.error("Error fetching last invoice:", err);
-  }
-});
 
+    // 2. Fetch last invoice for this client
+    try {
+      const invoiceSnap = await db.collection("invoices")
+        .where("client.name", "==", clientName)
+        .orderBy("createdAt", "desc")
+        .limit(1)
+        .get();
+      if (!invoiceSnap.empty) {
+        const lastInvoice = invoiceSnap.docs[0].data();
+        const lastInvoiceNo = lastInvoice.invoiceNumber || "";
+        const newInvoiceNo = incrementInvoiceNumber(lastInvoiceNo);
+        if (newInvoiceNo) {
+          document.getElementById("invoiceNumber").value = newInvoiceNo;
+        }
+      } else {
+        // If no previous invoice, generate first invoice number
+        // Example: Zonkk → Z-01
+        const prefix = clientName[0].toUpperCase();
+        document.getElementById("invoiceNumber").value = `${prefix}-01`;
+      }
+    } catch (err) {
+      console.error("Error fetching last invoice:", err);
+    }
+  });
 
   const itemsBody = document.getElementById("invoiceItems");
 
@@ -397,7 +442,6 @@ document.getElementById("clientName").addEventListener("blur", async function() 
     }
   });
 
-
   // 5. DOWNLOAD AS PNG (dom-to-image)
   // ---------------------------------
   const setupPngDownload = () => {
@@ -475,137 +519,122 @@ document.getElementById("clientName").addEventListener("blur", async function() 
   let allInvoicesDocs = [];
 
   function renderInvoicesTable(docs) {
-  const invoicesList = document.getElementById("invoicesList");
-  if (!invoicesList) return;
+    const invoicesList = document.getElementById("invoicesList");
+    if (!invoicesList) return;
 
-  // Filter by search box
-  const searchVal = document.getElementById("invoiceSearchBox")?.value?.toLowerCase() || "";
-  filteredInvoices = docs.filter(d => {
-    return (
-      (d.invoiceNumber || "").toLowerCase().includes(searchVal) ||
-      (d.client?.name || "").toLowerCase().includes(searchVal) ||
-      (d.invoiceDate || "").toLowerCase().includes(searchVal)
-    );
-  });
+    // Filter by search box
+    const searchVal = document.getElementById("invoiceSearchBox")?.value?.toLowerCase() || "";
+    filteredInvoices = docs.filter(d => {
+      return (
+        (d.invoiceNumber || "").toLowerCase().includes(searchVal) ||
+        (d.client?.name || "").toLowerCase().includes(searchVal) ||
+        (d.invoiceDate || "").toLowerCase().includes(searchVal)
+      );
+    });
 
-  // Pagination
-  const totalPages = Math.ceil(filteredInvoices.length / invoicesPerPage);
-  if (currentPage > totalPages) currentPage = totalPages || 1;
-  const startIdx = (currentPage - 1) * invoicesPerPage;
-  const pageDocs = filteredInvoices.slice(startIdx, startIdx + invoicesPerPage);
+    // Pagination
+    const totalPages = Math.ceil(filteredInvoices.length / invoicesPerPage);
+    if (currentPage > totalPages) currentPage = totalPages || 1;
+    const startIdx = (currentPage - 1) * invoicesPerPage;
+    const pageDocs = filteredInvoices.slice(startIdx, startIdx + invoicesPerPage);
 
-  // Table HTML
-  let html = `
-    <div class="flex flex-wrap gap-4 mb-2 items-center">
-      <label class="text-sm text-gray-700">Sort by:
-        <select id="sortInvoicesBy" class="p-1 border rounded ml-1">
-          <option value="invoiceNumber-desc">Invoice # (desc)</option>
-          <option value="invoiceNumber-asc">Invoice # (asc)</option>
-          <option value="invoiceDate-desc">Date (newest)</option>
-          <option value="invoiceDate-asc">Date (oldest)</option>
-          <option value="client-asc">Client (A-Z)</option>
-          <option value="client-desc">Client (Z-A)</option>
-          <option value="total-desc">Total (high-low)</option>
-          <option value="total-asc">Total (low-high)</option>
-        </select>
-      </label>
-    </div>
-    <table class="w-full text-sm border rounded bg-white">
-      <thead>
-        <tr class="bg-gray-100">
-          <th class="border p-2 text-center font-semibold">Invoice #</th>
-          <th class="border p-2 text-center font-semibold">Date</th>
-          <th class="border p-2 text-center font-semibold">Client</th>
-          <th class="border p-2 text-center font-semibold">Total</th>
-          <th class="border p-2 text-center font-semibold">Actions</th>
+    // Table HTML
+    let html = `
+      <table class="w-full text-sm border rounded bg-white">
+        <thead>
+          <tr class="bg-gray-100">
+            <th class="border p-2 text-center font-semibold">Invoice #</th>
+            <th class="border p-2 text-center font-semibold">Date</th>
+            <th class="border p-2 text-center font-semibold">Client</th>
+            <th class="border p-2 text-center font-semibold">Total</th>
+            <th class="border p-2 text-center font-semibold">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+    `;
+
+    pageDocs.forEach(d => {
+      html += `
+        <tr>
+          <td class="border p-2 text-center">${d.invoiceNumber || ""}</td>
+          <td class="border p-2 text-center">${d.invoiceDate || ""}</td>
+          <td class="border p-2 text-center">${d.client?.name || ""}</td>
+          <td class="border p-2 text-center">${d.total || ""}</td>
+          <td class="border p-2 text-center flex gap-2 justify-center">
+            <button class="viewInvoiceBtn" data-id="${d.id}" title="View"><i data-feather="eye"></i></button>
+            <button class="printInvoiceBtn" data-id="${d.id}" title="Print"><i data-feather="printer"></i></button>
+            <button class="deleteInvoiceBtn" data-id="${d.id}" title="Delete"><i data-feather="trash-2"></i></button>
+          </td>
         </tr>
-      </thead>
-      <tbody>
-  `;
+      `;
+    });
 
-  pageDocs.forEach(d => {
-  html += `
-    <tr>
-      <td class="border p-2 text-center">${d.invoiceNumber || ""}</td>
-      <td class="border p-2 text-center">${d.invoiceDate || ""}</td>
-      <td class="border p-2 text-center">${d.client?.name || ""}</td>
-      <td class="border p-2 text-center">${d.total || ""}</td>
-      <td class="border p-2 text-center flex gap-2 justify-center">
-        <button class="viewInvoiceBtn" data-id="${d.id}" title="View"><i data-feather="eye"></i></button>
-        <button class="printInvoiceBtn" data-id="${d.id}" title="Print"><i data-feather="printer"></i></button>
-        <button class="deleteInvoiceBtn" data-id="${d.id}" title="Delete"><i data-feather="trash-2"></i></button>
-      </td>
-    </tr>
-  `;
-});
+    html += `
+        </tbody>
+      </table>
+      <div id="paginationControls" class="flex justify-center items-center gap-2 mt-4">
+        ${
+          totalPages > 1
+            ? `
+              <button ${currentPage === 1 ? "disabled" : ""} id="prevPageBtn" class="px-2 py-1 border rounded">Prev</button>
+              <span>Page ${currentPage} of ${totalPages}</span>
+              <button ${currentPage === totalPages ? "disabled" : ""} id="nextPageBtn" class="px-2 py-1 border rounded">Next</button>
+            `
+            : ""
+        }
+      </div>
+    `;
 
-  html += `
-      </tbody>
-    </table>
-    <div id="paginationControls" class="flex justify-center items-center gap-2 mt-4">
-      ${
-        totalPages > 1
-          ? `
-            <button ${currentPage === 1 ? "disabled" : ""} id="prevPageBtn" class="px-2 py-1 border rounded">Prev</button>
-            <span>Page ${currentPage} of ${totalPages}</span>
-            <button ${currentPage === totalPages ? "disabled" : ""} id="nextPageBtn" class="px-2 py-1 border rounded">Next</button>
-          `
-          : ""
-      }
-    </div>
-  `;
-
-  invoicesList.innerHTML = html;
+    invoicesList.innerHTML = html;
 
     if (window.feather) feather.replace();
 
-  // Pagination event listeners
-  document.getElementById("prevPageBtn")?.addEventListener("click", () => {
-    if (currentPage > 1) {
-      currentPage--;
-      renderInvoicesTable(allInvoicesDocs);
-    }
-  });
-  document.getElementById("nextPageBtn")?.addEventListener("click", () => {
-    if (currentPage < totalPages) {
-      currentPage++;
-      renderInvoicesTable(allInvoicesDocs);
-    }
-  });
-
-  // Attach event listeners for view, print, delete
-  document.querySelectorAll(".viewInvoiceBtn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-id");
-      await showInvoiceDetails(id);
-    });
-  });
-  document.querySelectorAll(".printInvoiceBtn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-id");
-      await showInvoiceDetails(id, true);
-      setTimeout(() => window.print(), 500);
-    });
-  });
-  document.querySelectorAll(".deleteInvoiceBtn").forEach(btn => {
-    btn.addEventListener("click", async () => {
-      const id = btn.getAttribute("data-id");
-      if (confirm("Are you sure you want to delete this invoice?")) {
-        await deleteInvoice(id);
+    // Pagination event listeners
+    document.getElementById("prevPageBtn")?.addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        renderInvoicesTable(allInvoicesDocs);
       }
     });
-  });
+    document.getElementById("nextPageBtn")?.addEventListener("click", () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        renderInvoicesTable(allInvoicesDocs);
+      }
+    });
 
-  // Sorting
-  document.getElementById("sortInvoicesBy")?.addEventListener("change", function() {
-    sortAndRenderInvoices();
-  });
-}
+    // Attach event listeners for view, print, delete
+    document.querySelectorAll(".viewInvoiceBtn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        await showInvoiceDetails(id);
+      });
+    });
+    document.querySelectorAll(".printInvoiceBtn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        await showInvoiceDetails(id, true);
+        setTimeout(() => window.print(), 500);
+      });
+    });
+    document.querySelectorAll(".deleteInvoiceBtn").forEach(btn => {
+      btn.addEventListener("click", async () => {
+        const id = btn.getAttribute("data-id");
+        if (confirm("Are you sure you want to delete this invoice?")) {
+          await deleteInvoice(id);
+        }
+      });
+    });
 
+    // Sorting
+    document.getElementById("sortInvoicesBy")?.addEventListener("change", function() {
+      sortAndRenderInvoices();
+    });
+  }
 
   function sortAndRenderInvoices() {
     let docs = [...allInvoicesDocs];
-    const sortVal = document.getElementById("sortInvoicesBy")?.value || "invoiceNumber-desc";
+    const sortVal = document.getElementById("sortInvoicesBy")?.value || "invoiceDate-desc";
 
     docs.sort((a, b) => {
       switch (sortVal) {
@@ -635,33 +664,36 @@ document.getElementById("clientName").addEventListener("blur", async function() 
   }
 
   async function deleteInvoice(id) {
-  try {
-    await db.collection("invoices").doc(id).delete();
-    notyf.success("Invoice deleted.");
-    loadAllInvoices();
-  } catch (err) {
-    notyf.error("Failed to delete invoice.");
-    console.error(err);
+    try {
+      await db.collection("invoices").doc(id).delete();
+      notyf.success("Invoice deleted.");
+      loadAllInvoices();
+    } catch (err) {
+      notyf.error("Failed to delete invoice.");
+      console.error(err);
+    }
   }
-}
 
-  function loadAllInvoices(filter = {}) {
+  function loadAllInvoices() {
     const invoicesList = document.getElementById("invoicesList");
     if (!invoicesList) return;
-    invoicesList.innerHTML = "Loading...";
+    invoicesList.innerHTML = `
+  <div id="loadingOverlay" class="glass-loader flex flex-col items-center justify-center w-full h-32">
+    <div class="spinner mb-2"></div>
+    <span class="text-lg font-semibold text-gray-700">Loading...</span>
+  </div>
+`;
 
     let query = db.collection("invoices");
-    let filterMonth = filter.month;
-    let filterYear = filter.year;
-
-    if (!filterMonth || !filterYear) {
+    let filterMonthYear = document.getElementById("filterMonthYear")?.value;
+    if (!filterMonthYear) {
       const now = new Date();
-      filterMonth = String(now.getMonth() + 1).padStart(2, "0");
-      filterYear = String(now.getFullYear());
-      if (document.getElementById("filterMonth")) document.getElementById("filterMonth").value = filterMonth;
-      if (document.getElementById("filterYear")) document.getElementById("filterYear").value = filterYear;
+      const month = String(now.getMonth() + 1).padStart(2, "0");
+      const year = now.getFullYear();
+      filterMonthYear = `${year}-${month}`;
+      if (document.getElementById("filterMonthYear")) document.getElementById("filterMonthYear").value = filterMonthYear;
     }
-
+    const [filterYear, filterMonth] = filterMonthYear.split("-");
     const start = `${filterYear}-${filterMonth}-01`;
     const endDate = new Date(parseInt(filterYear), parseInt(filterMonth), 0);
     const end = `${filterYear}-${filterMonth}-${String(endDate.getDate()).padStart(2, "0")}`;
@@ -741,71 +773,32 @@ document.getElementById("clientName").addEventListener("blur", async function() 
     }
   });
 
-  // 8. UTILITY: POPULATE MONTH/YEAR DROPDOWNS
-  function populateMonthDropdown() {
-    const monthSelect = document.getElementById("filterMonth");
-    if (!monthSelect) return;
-    const months = [
-      "01", "02", "03", "04", "05", "06",
-      "07", "08", "09", "10", "11", "12"
-    ];
-    const monthNames = [
-      "January", "February", "March", "April", "May", "June",
-      "July", "August", "September", "October", "November", "December"
-    ];
-    let html = "";
-    for (let i = 0; i < 12; i++) {
-      html += `<option value="${months[i]}">${monthNames[i]}</option>`;
+  // --- FILTER FORM EVENTS ---
+  document.addEventListener("change", function(e) {
+    if (e.target && e.target.id === "filterMonthYear") {
+      loadAllInvoices();
     }
-    monthSelect.innerHTML = html;
-    const now = new Date();
-    monthSelect.value = String(now.getMonth() + 1).padStart(2, "0");
-  }
-  function populateYearDropdown() {
-    const yearSelect = document.getElementById("filterYear");
-    if (!yearSelect) return;
-    const currentYear = new Date().getFullYear();
-    let html = "";
-    for (let y = currentYear; y >= currentYear - 10; y--) {
-      html += `<option value="${y}">${y}</option>`;
+    if (e.target && e.target.id === "sortInvoicesBy") {
+      sortAndRenderInvoices();
     }
-    yearSelect.innerHTML = html;
-    yearSelect.value = currentYear;
-  }
-  populateMonthDropdown();
-  populateYearDropdown();
+  });
 
-  // 9. INITIAL LOAD
+  // 8. INITIAL LOAD
+  // Set default value for month picker to current month
+  const monthInput = document.getElementById("filterMonthYear");
+  if (monthInput) {
+    const now = new Date();
+    const month = String(now.getMonth() + 1).padStart(2, "0");
+    const year = now.getFullYear();
+    monthInput.value = `${year}-${month}`;
+  }
+
   const today = new Date();
   const formattedDate = today.toISOString().split("T")[0];
   document.getElementById("invoiceDate").value = formattedDate;
   document.getElementById("dueDate").value = formattedDate;
 
   loadAllInvoices();
-
-  // --- FILTER FORM EVENTS ---
-  document.addEventListener("change", function(e) {
-    if (e.target && (e.target.id === "filterMonth" || e.target.id === "filterYear")) {
-      const month = document.getElementById("filterMonth").value;
-      const year = document.getElementById("filterYear").value;
-      loadAllInvoices({
-        month: month || undefined,
-        year: year || undefined
-      });
-    }
-  });
-
-  document.addEventListener("click", function(e) {
-    if (e.target && e.target.id === "clearFilterBtn") {
-      const now = new Date();
-      const month = String(now.getMonth() + 1).padStart(2, "0");
-      const year = String(now.getFullYear());
-      document.getElementById("filterMonth").value = month;
-      document.getElementById("filterYear").value = year;
-      loadAllInvoices({ month, year });
-    }
-  });
-  
 });
 
 // --- CLIENT AUTOCOMPLETE ---
