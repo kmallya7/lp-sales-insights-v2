@@ -98,29 +98,28 @@ document.addEventListener("DOMContentLoaded", () => {
     `;
   }
 
-  // --- Helper: Render filter controls ---
+  // --- Helper: Render filter controls (no Apply button, auto-update) ---
   function renderFilterControls(selectedMonthYear, clients, selectedClient, selectedStatus, dateRange) {
     return `
-      <form id="dashboard-filter-form" class="mb-4 flex flex-wrap gap-3 items-center">
-        <label class="font-medium text-gray-700 text-[13px]">Month:</label>
-        <input type="month" id="filter-month" name="month" value="${selectedMonthYear}" class="border rounded px-2 py-1 focus:ring-2 focus:ring-[#C8AFF0] text-[13px]" />
-        <label class="font-medium text-gray-700 text-[13px]">Client:</label>
-        <select id="filter-client" name="client" class="border rounded px-2 py-1 focus:ring-2 focus:ring-[#C8AFF0] text-[13px]">
+      <div id="dashboard-filter-form" class="mb-4 flex flex-wrap gap-3 items-center border border-[#C8AFF0] rounded-lg p-3 bg-[#F6F2FF]">
+        <label class="font-medium text-gray-700 text-[13px]" for="filter-month">Month:</label>
+        <input type="month" id="filter-month" name="month" value="${selectedMonthYear}" class="border rounded px-2 py-1 focus:ring-2 focus:ring-[#C8AFF0] text-[13px]" aria-label="Filter by month" />
+        <label class="font-medium text-gray-700 text-[13px]" for="filter-client">Client:</label>
+        <select id="filter-client" name="client" class="border rounded px-2 py-1 focus:ring-2 focus:ring-[#C8AFF0] text-[13px]" aria-label="Filter by client">
           <option value="">All</option>
           ${clients.map(c => `<option value="${c}" ${selectedClient === c ? 'selected' : ''}>${c}</option>`).join('')}
         </select>
-        <label class="font-medium text-gray-700 text-[13px]">Status:</label>
-        <select id="filter-status" name="status" class="border rounded px-2 py-1 focus:ring-2 focus:ring-[#C8AFF0] text-[13px]">
+        <label class="font-medium text-gray-700 text-[13px]" for="filter-status">Status:</label>
+        <select id="filter-status" name="status" class="border rounded px-2 py-1 focus:ring-2 focus:ring-[#C8AFF0] text-[13px]" aria-label="Filter by status">
           <option value="">All</option>
           <option value="open" ${selectedStatus === 'open' ? 'selected' : ''}>Open</option>
           <option value="closed" ${selectedStatus === 'closed' ? 'selected' : ''}>Closed</option>
         </select>
-        <label class="font-medium text-gray-700 text-[13px]">Date Range:</label>
-        <input type="date" id="filter-date-from" name="dateFrom" value="${dateRange.from || ''}" class="border rounded px-2 py-1 focus:ring-2 focus:ring-[#C8AFF0] text-[13px]" />
+        <label class="font-medium text-gray-700 text-[13px]" for="filter-date-from">Date Range:</label>
+        <input type="date" id="filter-date-from" name="dateFrom" value="${dateRange.from || ''}" class="border rounded px-2 py-1 focus:ring-2 focus:ring-[#C8AFF0] text-[13px]" aria-label="Date from" />
         <span>-</span>
-        <input type="date" id="filter-date-to" name="dateTo" value="${dateRange.to || ''}" class="border rounded px-2 py-1 focus:ring-2 focus:ring-[#C8AFF0] text-[13px]" />
-        <button type="submit" class="bg-[#C8AFF0] text-black px-3 py-1 rounded-md shadow hover:bg-[#b39ddb] focus:outline-none focus:ring-2 focus:ring-[#C8AFF0] transition text-xs">Apply</button>
-      </form>
+        <input type="date" id="filter-date-to" name="dateTo" value="${dateRange.to || ''}" class="border rounded px-2 py-1 focus:ring-2 focus:ring-[#C8AFF0] text-[13px]" aria-label="Date to" />
+      </div>
     `;
   }
 
@@ -315,21 +314,32 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }, 300);
 
-    // --- Filter controls events ---
-    document.getElementById('dashboard-filter-form').onsubmit = e => {
-      e.preventDefault();
-      const month = document.getElementById('filter-month').value;
-      const client = document.getElementById('filter-client').value;
-      const status = document.getElementById('filter-status').value;
-      const dateFrom = document.getElementById('filter-date-from').value;
-      const dateTo = document.getElementById('filter-date-to').value;
-      renderPaymentsDashboard({
-        selectedMonthYear: month,
-        selectedClient: client,
-        selectedStatus: status,
-        dateRange: { from: dateFrom, to: dateTo }
-      });
-    };
+    // --- Filter controls events (auto-update on change) ---
+    const filterIds = [
+      'filter-month',
+      'filter-client',
+      'filter-status',
+      'filter-date-from',
+      'filter-date-to'
+    ];
+    filterIds.forEach(id => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.onchange = () => {
+          const month = document.getElementById('filter-month').value;
+          const client = document.getElementById('filter-client').value;
+          const status = document.getElementById('filter-status').value;
+          const dateFrom = document.getElementById('filter-date-from').value;
+          const dateTo = document.getElementById('filter-date-to').value;
+          renderPaymentsDashboard({
+            selectedMonthYear: month,
+            selectedClient: client,
+            selectedStatus: status,
+            dateRange: { from: dateFrom, to: dateTo }
+          });
+        };
+      }
+    });
 
     // Add event listeners for log payment buttons
     document.querySelectorAll('.log-payment-btn').forEach(btn => {
@@ -506,9 +516,16 @@ document.addEventListener("DOMContentLoaded", () => {
       #payments h2, #payments h3 {
         font-size: 1rem !important;
       }
+      #dashboard-filter-form {
+        flex-direction: column !important;
+        gap: 8px !important;
+      }
     }
     .rounded-xl, .rounded-lg {
       box-shadow: 0 4px 24px 0 rgba(59,47,127,0.10);
+    }
+    #dashboard-filter-form label {
+      margin-bottom: 0 !important;
     }
   `;
   document.head.appendChild(style);

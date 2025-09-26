@@ -1,37 +1,24 @@
-<!-- index.html (premium-light — preserves your original IDs & script links) -->
+<!-- index.html (responsive version) -->
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <!-- ====== Meta & Favicon ====== -->
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>LP Sales & Insights</title>
   <link rel="icon" type="image/png" href="assets/favicon_io/favicon.ico">
-  <!-- Notyf CSS & JS -->
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
-
-
-  <!-- ====== Fonts ====== -->
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link href="https://fonts.googleapis.com/css2?family=Great+Vibes&display=swap" rel="stylesheet">
-
-  <!-- ====== Tailwind CSS (dev CDN) ====== -->
   <script src="https://cdn.tailwindcss.com"></script>
-
-  <!-- ====== External Libraries (leave as your project expects) ====== -->
-<script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
-<script src="https://unpkg.com/feather-icons"></script>
-<script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/src/dom-to-image.min.js"></script>
-<script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
-<script src="https://unpkg.com/feather-icons"></script>
-
-
-
-  <!-- ====== Visual polish (keeps your classes/IDs — only cosmetic) ====== -->
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-firestore-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.10.0/firebase-auth-compat.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.2.0"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
+  <script src="https://cdn.jsdelivr.net/npm/dom-to-image@2.6.0/src/dom-to-image.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
+  <script src="https://unpkg.com/feather-icons"></script>
   <style>
     :root{
       --accent: #fdba74;
@@ -40,20 +27,9 @@
       --glass-bg: rgba(255,255,255,0.7);
     }
     html,body { height:100%; font-family: 'Poppins', sans-serif; }
-
-    /* Prevent sidebar nav text from wrapping */
-#sidebar .nav-link .sidebar-label {
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-
-    /* overall subtle gradient behind app, but keep bg-gray-50 fallback */
     body { background: linear-gradient(180deg,#ffffff 0%, #fbfbfd 45%, #fff6f0 100%); }
-
-    /* nav link premium active */
     .nav-link.active {
-      background: #c8aff0f2; /* Light purple */
+      background: #c8aff0f2;
       color: #1f2937;
       border-left: 4px solid var(--accent);
       font-weight: 600;
@@ -61,48 +37,35 @@
       box-shadow: 0 4px 18px rgba(253,186,116,0.09);
     }
     .nav-link {
-  border-radius: 0.6rem; /* always rounded */
-  transition: background 200ms ease, color 200ms ease, transform 150ms ease;
-  color: #374151;
-}
+      border-radius: 0.6rem;
+      transition: background 200ms ease, color 200ms ease, transform 150ms ease;
+      color: #374151;
+    }
     .nav-link:hover {
-      transform: translateY(-2px);  /* subtle lift on hover */
-      background: #c8aff0f2; /* Light purple */
+      transform: translateY(-2px);
+      background: #c8aff0f2;
       color: #111827;
     }
-
-    /* glass-card utility */
     .glass {
-  background: linear-gradient(180deg, rgba(255,255,255,0.90), rgba(255,255,255,0.80));
-  backdrop-filter: blur(2px);
-  -webkit-backdrop-filter: blur(2px);
-  border: 1px solid rgba(255,255,255,0.85);
-  box-shadow: 0 4px 16px rgba(15,23,42,0.04);
-  border-radius: 12px;
-}
-
-
-    /* subtle micro-animations for sections */
+      background: linear-gradient(180deg, rgba(255,255,255,0.90), rgba(255,255,255,0.80));
+      backdrop-filter: blur(2px);
+      -webkit-backdrop-filter: blur(2px);
+      border: 1px solid rgba(255,255,255,0.85);
+      box-shadow: 0 4px 16px rgba(15,23,42,0.04);
+      border-radius: 12px;
+    }
     .page-section { opacity:0; transform: translateY(8px); transition: opacity .36s ease, transform .36s ease; pointer-events:none; }
     .page-section.show { opacity:1; transform: translateY(0); pointer-events:auto; }
-
-    /* loader */
     #loader { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:60; }
-
-    /* sidebar collapsed helper (keeps same classes you use) */
     .sidebar-collapsed { width:4rem !important; min-width:4rem !important; max-width:4rem !important; transition: width 220ms; }
     .sidebar-collapsed .sidebar-label{ display:none !important; }
     .sidebar-collapsed .nav-link{ justify-content:center; padding-left:0.5rem; padding-right:0.5rem; }
-
-    /* print styles: keep original rules working */
     @media print {
       body * { visibility: hidden; }
       #invoicePrintArea, #invoicePrintArea * { visibility: visible; }
       aside, .nav-link, .bg-white.shadow-sm.border-b,
       #addItemBtn, .deleteBtn, button[onclick="printInvoice()"] { display: none !important; }
     }
-
-    /* responsive tweaks */
     @media (max-width: 768px) {
       #sidebar { transform: translateX(-100%); position:fixed; z-index:40; height:100vh; }
       #sidebar.open { transform: translateX(0); }
@@ -111,63 +74,96 @@
     @media (min-width: 769px) {
       #sidebarToggle { display:none !important; }
     }
-
-    /* signature font helper */
     .font-signature { font-family: 'Great Vibes', cursive; }
-
-    /* top greeting smaller */
     #greetingText { font-weight:600; color:var(--muted); }
-
-    /* small utility for subtle card hover */
     .card-hover:hover { transform: translateY(-4px); transition: transform 180ms ease; }
-
-    /* Glassmorph background image effect */
-#glass-bg {
-  position: fixed;
-  inset: 0;
-  z-index: 0;
-  width: 100vw;
-  height: 100vh;
-  background: url('assets/Backgrounds/BG 4.png') center/cover no-repeat;
-
-  background-color: #fff6f0;
-}
-
-#glass-bg::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background: rgba(255,255,255,0.70);
-  backdrop-filter: blur(4px) saturate(120%);
-  -webkit-backdrop-filter: blur(4px) saturate(120%);
-  pointer-events: none;
-}
-
+    #glass-bg {
+      position: fixed;
+      inset: 0;
+      z-index: 0;
+      width: 100vw;
+      height: 100vh;
+      background: url('assets/Backgrounds/BG 4.png') center/cover no-repeat;
+      background-color: #fff6f0;
+    }
+    #glass-bg::after {
+      content: "";
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.70);
+      backdrop-filter: blur(4px) saturate(120%);
+      -webkit-backdrop-filter: blur(4px) saturate(120%);
+      pointer-events: none;
+    }
+    /* Responsive container for main content */
+    .container {
+      max-width: 80rem; /* 1280px */
+      margin-left: auto;
+      margin-right: auto;
+      width: 100%;
+      padding-left: 1rem;
+      padding-right: 1rem;
+    }
+    /* Responsive card width */
+    .responsive-card {
+      width: 100%;
+      max-width: 38rem; /* 608px */
+      margin-left: auto;
+      margin-right: auto;
+    }
+    /* Table responsiveness */
+    .table-wrap {
+      overflow-x: auto;
+    }
+    table {
+      width: 100%;
+      table-layout: fixed;
+      border-collapse: collapse;
+    }
+    th, td {
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    /* Chart container */
+    .chart {
+      width: 100%;
+      height: 280px;
+    }
+    canvas {
+      width: 100% !important;
+      height: 100% !important;
+      display: block;
+    }
+    html { box-sizing: border-box; -webkit-text-size-adjust: 100%; }
+    *, *::before, *::after { box-sizing: inherit; }
   </style>
-
-  <!-- ====== Success Sound ====== -->
   <audio id="successSound" src="assets/ding.wav" preload="auto"></audio>
 </head>
+
 <body class="bg-gray-50">
-
-  <!-- ====== Glassmorph Background ====== -->
   <div id="glass-bg"></div>
-
-  <!-- ================= SIGN IN PAGE OVERLAY ================= -->
   <div id="signInPage" class="fixed inset-0 z-50 flex flex-col items-center justify-center bg-gradient-to-br from-pink-50 to-pink-100">
     <div class="glass max-w-md w-full rounded-2xl px-7 py-10 flex flex-col items-center">
       <img src="assets/LP Logo.png" alt="Lush Patisserie" class="mb-5 h-20 w-20 rounded-full shadow" />
       <h1 class="text-3xl font-bold text-center text-gray-900 mb-1">Welcome to Lush Patisserie</h1>
       <p class="text-sm text-gray-600 mb-6 text-center">Sign in to access your sales, insights, and more.</p>
-
       <button id="signInGoogleBtn"
         class="flex items-center gap-3 bg-gray-900 hover:bg-gray-800 text-white px-6 py-3 rounded-lg text-lg font-semibold shadow transition">
-        <!-- Google Icon SVG (kept inline for compatibility) -->
         <svg class="w-6 h-6" viewBox="0 0 48 48" xmlns="http://www.w3.org/2000/svg"><g><path fill="#4285F4" d="M44.5 20H24v8.5h11.7C34.7 33.1 30.1 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.5 5.1 29.6 3 24 3 12.4 3 3 12.4 3 24s9.4 21 21 21c10.5 0 20-7.6 20-21 0-1.3-.1-2.7-.3-4z"/><path fill="#34A853" d="M6.3 14.7l7 5.1C15.5 16.1 19.4 13 24 13c3.1 0 5.9 1.1 8.1 2.9l6.4-6.4C34.5 5.1 29.6 3 24 3c-7.2 0-13.4 3.1-17.7 8.1z"/><path fill="#FBBC05" d="M24 45c5.6 0 10.5-1.9 14.3-5.1l-6.6-5.4C29.7 36.9 27 38 24 38c-6.1 0-10.7-2.9-13.7-7.1l-7 5.4C6.6 41.9 14.1 45 24 45z"/><path fill="#EA4335" d="M44.5 20H24v8.5h11.7c-1.1 3.1-4.1 5.5-7.7 5.5-4.6 0-8.4-3.8-8.4-8.5s3.8-8.5 8.4-8.5c2.5 0 4.7.9 6.3 2.4l6.4-6.4C38.1 7.1 31.5 4 24 4c-10.5 0-19 8.5-19 19s8.5 19 19 19c10.5 0 19-8.5 19-19 0-1.3-.1-2.7-.3-4z"/></g></svg>
         Sign in with Google
       </button>
     </div>
     <div class="mt-8 text-gray-400 text-xs">© 2025 Lush Patisserie</div>
+  </div>
+  <div id="loader">
+    <svg class="animate-spin h-8 w-8 text-orange-500" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+      <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+      <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+    </svg>
+  </div>
+  <div class="w-full flex justify-end items-center px-6 py-3 bg-white shadow-sm border-b">
+    <p id="greetingText" class="text-sm text-gray-600 font-medium"></p>
   </div>
 
   <!-- ================= LOADER (SPINNER) ================= -->
@@ -184,7 +180,7 @@
   </div>
 
   <!-- ================= SIDEBAR NAVIGATION ================= -->
-  <aside id="sidebar" style="background-color: #F7F5F2;" class="w-64 border-r border-orange-100 shadow-md p-4 flex flex-col h-screen fixed left-0 top-0 bottom-0 transition-all duration-300 overflow-y-auto z-40">
+   <aside id="sidebar" style="background-color: #F7F5F2;" class="w-64 border-r border-orange-100 shadow-md p-4 flex flex-col h-screen fixed left-0 top-0 bottom-0 transition-all duration-300 overflow-y-auto z-40">
     <!-- ====== Brand Logo & Sidebar Toggle ====== -->
     <div class="flex items-center space-x-2 mb-6 p-4">
       <button id="sidebarToggle" class="md:hidden text-2xl focus:outline-none" aria-label="Toggle sidebar">☰</button>
