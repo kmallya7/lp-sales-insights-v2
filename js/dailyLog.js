@@ -422,11 +422,21 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // --- 16. Event: Change summary date picker (loads summary for selected date) ---
-  document.getElementById("summary-date").addEventListener("change", (e) => {
-    if (e.target.value) {
-      loadDailySummary(e.target.value);
+document.getElementById("summary-date").addEventListener("change", (e) => {
+  const val = e.target.value;
+  if (val) {
+    // A date was picked: show that day
+    loadDailySummary(val);
+  } else {
+    // Date cleared: show all entries for the currently selected month
+    // If we somehow don't have lastSelectedMonth, fall back to the month input value
+    const monthStr = lastSelectedMonth || document.getElementById("summary-month").value;
+    if (monthStr) {
+      loadMonthlySummary(monthStr);
     }
-  });
+  }
+});
+
 
   // --- 17. Event: Form submit (add or update entry) ---
   document.getElementById("daily-log-form").addEventListener("submit", async (e) => {

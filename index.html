@@ -135,6 +135,32 @@
       height: 100% !important;
       display: block;
     }
+
+    /* Sidebar nav: keep labels on one line and avoid wrapping */
+#sidebarNav .nav-link .sidebar-label {
+  white-space: nowrap;         /* do not break into multiple lines */
+  overflow: hidden;            /* safety if text ever exceeds width */
+  text-overflow: ellipsis;     /* show ellipsis instead of wrapping */
+  flex: 1 1 auto;              /* let label take available space */
+}
+
+/* Ensure icon doesn’t steal width from the label */
+#sidebarNav .nav-link svg {
+  flex: 0 0 auto;
+}
+
+/* Slightly reduce left/right padding on active to avoid wrap due to border */
+#sidebarNav .nav-link.active {
+  padding-left: 0.5rem;   /* was px-3 → reduce a bit to compensate border-left */
+  padding-right: 0.5rem;
+  border-left-width: 4px; /* retain your accent border */
+}
+
+/* Optional: give nav-link a bit more internal space without increasing sidebar width */
+#sidebarNav .nav-link {
+  min-width: 0; /* allows flex children to shrink and prevents unexpected wrapping */
+}
+
     html { box-sizing: border-box; -webkit-text-size-adjust: 100%; }
     *, *::before, *::after { box-sizing: inherit; }
   </style>
