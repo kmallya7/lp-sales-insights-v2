@@ -82,6 +82,8 @@
 }
 
 
+
+
     /* subtle micro-animations for sections */
     .page-section { opacity:0; transform: translateY(8px); transition: opacity .36s ease, transform .36s ease; pointer-events:none; }
     .page-section.show { opacity:1; transform: translateY(0); pointer-events:auto; }
@@ -89,10 +91,34 @@
     /* loader */
     #loader { display:none; position:fixed; top:50%; left:50%; transform:translate(-50%,-50%); z-index:60; }
 
-    /* sidebar collapsed helper (keeps same classes you use) */
-    .sidebar-collapsed { width:4rem !important; min-width:4rem !important; max-width:4rem !important; transition: width 220ms; }
-    .sidebar-collapsed .sidebar-label{ display:none !important; }
-    .sidebar-collapsed .nav-link{ justify-content:center; padding-left:0.5rem; padding-right:0.5rem; }
+    .sidebar-collapsed {
+  width: 4rem !important;
+  min-width: 4rem !important;
+  max-width: 4rem !important;
+  transition: width 220ms cubic-bezier(.4,0,.2,1);
+  overflow-x: hidden;
+}
+.sidebar-collapsed .sidebar-label {
+  opacity: 0;
+  width: 0;
+  padding: 0 !important;
+  margin: 0 !important;
+  pointer-events: none;
+  transition: opacity 180ms cubic-bezier(.4,0,.2,1);
+  display: inline-block !important;
+}
+#sidebar {
+  transition: width 220ms cubic-bezier(.4,0,.2,1);
+}
+#sidebar .nav-link {
+  transition: padding 220ms cubic-bezier(.4,0,.2,1), background 200ms, color 200ms, transform 150ms;
+}
+.sidebar-collapsed .nav-link {
+  justify-content: center;
+  padding-left: 0.5rem;
+  padding-right: 0.5rem;
+  text-align: center;
+}
 
     /* print styles: keep original rules working */
     @media print {
@@ -185,6 +211,11 @@
 
   <!-- ================= SIDEBAR NAVIGATION ================= -->
   <aside id="sidebar" style="background-color: #F7F5F2;" class="w-64 border-r border-orange-100 shadow-md p-4 flex flex-col h-screen fixed left-0 top-0 bottom-0 transition-all duration-300 overflow-y-auto z-40">
+    
+    <!-- Sidebar Overlay for Mobile -->
+<div id="sidebarOverlay" class="fixed inset-0 bg-black bg-opacity-30 z-30 hidden md:hidden"></div>
+
+    
     <!-- ====== Brand Logo & Sidebar Toggle ====== -->
     <div class="flex items-center space-x-2 mb-6 p-4">
       <button id="sidebarToggle" class="md:hidden text-2xl focus:outline-none" aria-label="Toggle sidebar">☰</button>
@@ -270,7 +301,7 @@
     </nav>
 
     <!-- ====== Quick Add Button (Floating) ====== -->
-    <button id="quickAddBtn" class="fixed bottom-8 left-72 z-50 bg-orange-600 text-white rounded-full shadow-lg w-12 h-12 flex items-center justify-center text-3xl hover:bg-orange-700 transition-all duration-200" title="Quick Add" style="display:none;">+</button>
+<button id="quickAddBtn" class="fixed bottom-8 left-1/2 md:left-72 transform -translate-x-1/2 md:translate-x-0 z-50 bg-orange-600 text-white rounded-full shadow-lg w-12 h-12 flex items-center justify-center text-3xl hover:bg-orange-700 transition-all duration-200" title="Quick Add" style="display:none;">+</button>
 
     <!-- ====== User Info & Logout ====== -->
     <div id="userInfo" class="hidden items-center gap-2 p-4">
@@ -292,7 +323,8 @@
       <div class="flex flex-col gap-8 w-full max-w-full px-2 md:px-8 py-6 md:py-10">
 
         <!-- ====== Batch Calculator ====== -->
-        <section id="batchCalculator" class="flex-1 min-w-0 w-full glass rounded-xl p-4 md:p-10 mb-8 lg:mb-0">
+        <section id="batchCalculator" class="flex-1 min-w-0 w-full glass rounded-xl p-2 sm:p-4 md:p-10 mb-8 lg:mb-0">
+
           <h2 class="text-2xl font-bold mb-4 text-orange-700">Batch Calculator</h2>
           <form class="space-y-8">
             <div>
@@ -362,8 +394,10 @@
         </section>
 
         <!-- ====== Daily Logs Section ====== -->
-        <section id="dailyLog" class="flex-1 min-w-0 w-full glass rounded-xl p-4 md:p-10 space-y-6">
-          <h2 class="text-4xl font-extrabold mb-6 text-orange-800 tracking-tight">Daily Logs</h2>
+        <section id="dailyLog" class="flex-1 min-w-0 w-full glass rounded-xl p-2 sm:p-4 md:p-10 space-y-6">
+
+          <h2 class="text-xl sm:text-2xl md:text-4xl font-extrabold mb-6 text-orange-800 tracking-tight">Daily Logs</h2>
+
           <form class="space-y-8">
             <div>
               <label class="block text-lg font-medium mb-2" for="logDate">Date</label>
@@ -599,16 +633,17 @@
   <div class="flex-1 bg-white rounded-xl shadow p-6">
     <h2 class="text-lg font-semibold text-slate-700 text-center mb-2">Saved Ingredients</h2>
     <div class="overflow-x-auto">
-      <table class="min-w-full bg-white rounded-lg shadow">
+  <table class="min-w-full bg-white rounded-lg shadow">
         <thead>
-          <tr class="bg-indigo-50">
-            <th class="py-2 px-4 text-left">Name</th>
-            <th class="py-2 px-4 text-left">Size</th>
-            <th class="py-2 px-4 text-left">Unit</th>
-            <th class="py-2 px-4 text-left">Cost (₹)</th>
-            <th class="py-2 px-4 text-left">Actions</th>
-          </tr>
-        </thead>
+  <tr class="bg-indigo-50">
+    <th class="py-2 px-4 text-left">Name</th>
+    <th class="py-2 px-4 text-left hidden sm:table-cell">Size</th>
+    <th class="py-2 px-4 text-left hidden sm:table-cell">Unit</th>
+    <th class="py-2 px-4 text-left">Cost (₹)</th>
+    <th class="py-2 px-4 text-left">Actions</th>
+  </tr>
+</thead>
+
         <tbody id="ingredientsTableBody">
           <!-- Ingredients will be listed here by JS -->
         </tbody>
@@ -693,15 +728,16 @@
       window.BakingCalculator.ingredients.push(ing);
       // Table row
       const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td class="py-2 px-4">${ing.name}</td>
-        <td class="py-2 px-4">${ing.packageSize}</td>
-        <td class="py-2 px-4">${ing.packageUnit}</td>
-        <td class="py-2 px-4">${ing.packageCost}</td>
-        <td class="py-2 px-4">
-          <button class="deleteBtn bg-red-500 text-white px-2 py-1 rounded" data-id="${ing.id}">Delete</button>
-        </td>
-      `;
+     tr.innerHTML = `
+  <td class="py-2 px-4">${ing.name}</td>
+  <td class="py-2 px-4 hidden sm:table-cell">${ing.packageSize}</td>
+  <td class="py-2 px-4 hidden sm:table-cell">${ing.packageUnit}</td>
+  <td class="py-2 px-4">${ing.packageCost}</td>
+  <td class="py-2 px-4">
+    <button class="deleteBtn bg-red-500 text-white px-2 py-1 rounded" data-id="${ing.id}">Delete</button>
+  </td>
+`;
+
       tableBody.appendChild(tr);
       // Dropdown option
       const opt = document.createElement("option");
@@ -829,18 +865,22 @@
     });
 
     // Sidebar toggle/collapse logic
-    const sidebar = document.getElementById("sidebar");
-    const sidebarToggle = document.getElementById("sidebarToggle");
-    let isCollapsed = false;
-    sidebarToggle?.addEventListener("click", () => {
-      if (window.innerWidth < 769) {
-        sidebar.classList.toggle("open");
-      } else {
-        isCollapsed = !isCollapsed;
-        sidebar.classList.toggle("sidebar-collapsed", isCollapsed);
-        document.getElementById("quickAddBtn").style.display = isCollapsed ? "none" : "block";
-      }
-    });
+  const sidebarOverlay = document.getElementById("sidebarOverlay");
+sidebarToggle?.addEventListener("click", () => {
+  if (window.innerWidth < 769) {
+    sidebar.classList.toggle("open");
+    sidebarOverlay.classList.toggle("hidden", !sidebar.classList.contains("open"));
+  } else {
+    isCollapsed = !isCollapsed;
+    sidebar.classList.toggle("sidebar-collapsed", isCollapsed);
+    document.getElementById("quickAddBtn").style.display = isCollapsed ? "none" : "block";
+  }
+});
+sidebarOverlay.addEventListener("click", () => {
+  sidebar.classList.remove("open");
+  sidebarOverlay.classList.add("hidden");
+});
+
 
     // Tooltips for icons when sidebar is collapsed
     document.querySelectorAll("#sidebarNav .nav-link").forEach(link => {

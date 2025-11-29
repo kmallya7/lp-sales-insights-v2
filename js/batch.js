@@ -107,11 +107,44 @@ document.addEventListener("DOMContentLoaded", () => {
     <div id="preset-loading" class="hidden flex items-center gap-2 text-gray-500 text-sm mb-2 animate-pulse">
       <!-- ... -->
     </div>
-    <div id="preset-list" class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-6"></div>
+    <div class="mb-3 flex items-center gap-3">
+  <input
+    id="preset-search"
+    type="text"
+    placeholder="Search batches..."
+    class="w-full p-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 transition"
+  />
+  <button id="clear-search" class="px-3 py-2 rounded-lg bg-gray-200 hover:bg-gray-300 text-gray-800">
+    Clear
+  </button>
+</div>
+<div
+  id="preset-list"
+  class="divide-y divide-gray-200 bg-white rounded-xl border shadow-sm"
+  style="max-height: 280px; overflow-y: auto;"
+></div>
+
   </div>
 </div>
+              <style>
+        /* Global smooth scroll */
+        html {
+          scroll-behavior: smooth;
+        }
+
+        /* Brief highlight to draw attention to updated fields */
+        .flash-highlight {
+          animation: flash-bg 900ms ease-in-out 1;
+        }
+        @keyframes flash-bg {
+          0% { box-shadow: 0 0 0 0 rgba(59,130,246,0.5); background-color: rgba(219,234,254,0.6); }
+          100% { box-shadow: none; background-color: transparent; }
+        }
+      </style>
     </section>
   `;
+
+
 
   // Reference to the database (assumed to be set up elsewhere)
   const db = window.db;
@@ -208,63 +241,115 @@ document.addEventListener("DOMContentLoaded", () => {
   };
 
   // Load and display presets
+    // Compact list + search cache
+  let cachedPresets = [];
+
+  function renderPresetList(items) {
+    const presetList = document.getElementById("preset-list");
+    if (!presetList) return;
+
+    if (!items.length) {
+      presetList.innerHTML = `<p class="p-4 text-sm text-gray-500">No saved batches${cachedPresets.length ? " match your search." : " yet."}</p>`;
+      return;
+    }
+
+    presetList.innerHTML = items
+      .map(d => {
+        const safeId = d.__id;
+        const name = d.name;
+        const cost = Number(d.cost).toFixed(2);
+        const price = Number(d.price).toFixed(2);
+        const qty = Number(d.qty);
+
+        return `
+          <div class="flex items-center justify-between p-4 hover:bg-gray-50 cursor-pointer group" onclick='window.applyPreset(${JSON.stringify({ cost: d.cost, price: d.price, qty: d.qty })});'>
+            <div class="min-w-0">
+              <span class="font-medium text-gray-900 truncate group-hover:underline" title="${name}">${name}</span>
+              <div class="text-xs text-gray-500 mt-0.5">₹${price} • ₹${cost} • qty ${qty}</div>
+            </div>
+            <div class="relative ml-4" onclick="event.stopPropagation();">
+              <button onclick="toggleDropdown('${safeId}');" class="p-2 rounded-md hover:bg-gray-200 focus:outline-none focus:ring-2 focus:ring-blue-500" title="More actions">
+                <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                  <circle cx="12" cy="5" r="1.5"></circle>
+                  <circle cx="12" cy="12" r="1.5"></circle>
+                  <circle cx="12" cy="19" r="1.5"></circle>
+                </svg>
+              </button>
+              <div id="dropdown-${safeId}" class="hidden absolute right-0 mt-2 w-44 bg-white border rounded-xl shadow-lg z-10">
+                <button class="flex items-center w-full px-4 py-2 text-sm text-yellow-600 hover:bg-yellow-50 rounded-lg"
+                        onclick='editPreset("${safeId}", ${JSON.stringify(d)}); closeDropdown("${safeId}");'>
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13z"/>
+                  </svg>
+                  Edit
+                </button>
+                <button class="flex items-center w-full px-4 py-2 text-sm text-red-500 hover:bg-red-50 rounded-lg"
+                        onclick='deletePreset("${safeId}", "${name}"); closeDropdown("${safeId}");'>
+                  <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
+                  </svg>
+                  Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        `;
+      })
+      .join("");
+  }
+
   async function loadPresets() {
     showPresetLoading();
     const presetList = document.getElementById("preset-list");
-    presetList.innerHTML = "";
+    if (presetList) presetList.innerHTML = "";
+
     try {
       const snapshot = await db.collection("batchPresets").orderBy("createdAt", "desc").get();
-      if (snapshot.empty) {
-        presetList.innerHTML = `<p class='text-sm text-gray-500'>No saved batches yet.</p>`;
-      } else {
-        snapshot.forEach(doc => {
-          const d = doc.data();
-          const card = document.createElement("div");
-          card.className = "bg-white p-5 rounded-xl border shadow-lg hover:shadow-2xl transition flex flex-col gap-3 h-full cursor-pointer group relative";
-          card.innerHTML = `
-            <div class="flex justify-between items-start mb-2">
-              <span class="font-semibold text-gray-900 truncate group-hover:underline" title="${d.name}">${d.name}</span>
-              <div class="relative">
-                <button onclick="toggleDropdown('${doc.id}'); event.stopPropagation();" class="p-2 rounded-full hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-blue-500" title="More actions" aria-haspopup="true" aria-expanded="false">
-                  <svg class="w-5 h-5 text-gray-600" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                    <circle cx="12" cy="5" r="1.5"/>
-                    <circle cx="12" cy="12" r="1.5"/>
-                    <circle cx="12" cy="19" r="1.5"/>
-                  </svg>
-                </button>
-                <div id="dropdown-${doc.id}" class="hidden absolute right-0 mt-2 w-44 bg-white border rounded-xl shadow-lg z-10">
-                  <button class="flex items-center w-full px-4 py-2 text-sm text-yellow-600 hover:bg-yellow-50 rounded-lg" onclick='editPreset("${doc.id}", ${JSON.stringify(d)}); closeDropdown("${doc.id}"); event.stopPropagation();'>
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M15.232 5.232l3.536 3.536M9 13l6.586-6.586a2 2 0 112.828 2.828L11.828 15.828a2 2 0 01-2.828 0L9 13z"/>
-                    </svg>
-                    Edit
-                  </button>
-                  <button class="flex items-center w-full px-4 py-2 text-sm text-red-500 hover:bg-red-50 rounded-lg" onclick='deletePreset("${doc.id}", "${d.name}"); closeDropdown("${doc.id}"); event.stopPropagation();'>
-                    <svg class="w-4 h-4 mr-2" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
-                      <path stroke-linecap="round" stroke-linejoin="round" d="M6 18L18 6M6 6l12 12"/>
-                    </svg>
-                    Delete
-                  </button>
-                </div>
-              </div>
-            </div>
-            <div class="text-sm text-gray-600 flex flex-col gap-1">
-              <span>Cost: <span class="font-medium text-gray-900">₹${d.cost}</span></span>
-              <span>Price: <span class="font-medium text-gray-900">₹${d.price}</span></span>
-              <span>Qty: <span class="font-medium text-gray-900">${d.qty}</span></span>
-            </div>
-          `;
-          card.addEventListener('click', () => {
-            window.applyPreset(d);
-          });
-          presetList.appendChild(card);
-        });
-      }
+      cachedPresets = [];
+      snapshot.forEach(doc => {
+        const d = doc.data();
+        cachedPresets.push({ __id: doc.id, ...d });
+      });
+      renderPresetList(cachedPresets);
     } catch (e) {
-      presetList.innerHTML = `<p class='text-sm text-red-500'>Failed to load presets.</p>`;
+      if (presetList) {
+        presetList.innerHTML = `<p class='p-4 text-sm text-red-500'>Failed to load presets.</p>`;
+      }
     }
     hidePresetLoading();
   }
+
+  // Search wiring
+  const presetSearch = document.getElementById("preset-search");
+  const clearSearchBtn = document.getElementById("clear-search");
+
+  function applyFilter() {
+    const q = (presetSearch?.value || "").trim().toLowerCase();
+    if (!q) {
+      renderPresetList(cachedPresets);
+      return;
+    }
+    const filtered = cachedPresets.filter(p =>
+      (p.name || "").toLowerCase().includes(q)
+      || String(p.price).includes(q)
+      || String(p.cost).includes(q)
+      || String(p.qty).includes(q)
+    );
+    renderPresetList(filtered);
+  }
+
+  if (presetSearch) {
+    presetSearch.addEventListener("input", applyFilter);
+  }
+  if (clearSearchBtn) {
+    clearSearchBtn.addEventListener("click", () => {
+      if (!presetSearch) return;
+      presetSearch.value = "";
+      applyFilter();
+      presetSearch.focus();
+    });
+  }
+
 
   // Save as preset
   document.getElementById("save-preset-btn").addEventListener("click", async () => {
@@ -287,13 +372,47 @@ document.addEventListener("DOMContentLoaded", () => {
     loadPresets();
   });
 
-  // Apply preset to form
-  window.applyPreset = (data) => {
-    document.getElementById("cost").value = data.cost;
-    document.getElementById("price").value = data.price;
-    document.getElementById("qty").value = data.qty;
+    // Apply preset to form + smooth scroll + visual cue
+    window.applyPreset = (data) => {
+    const costEl = document.getElementById("cost");
+    const priceEl = document.getElementById("price");
+    const qtyEl = document.getElementById("qty");
+    const formEl = document.getElementById("batch-form");
+    const presetSectionEl = document.getElementById("preset-section");
+
+    // Set values
+    costEl.value = data.cost;
+    priceEl.value = data.price;
+    qtyEl.value = data.qty;
+
+    // Recalculate first
     calculateAndDisplay();
+
+    // Collapse presets to reduce page height (prevents jumpy scroll)
+    if (presetSectionEl && presetSectionEl.style.maxHeight !== "0") {
+      hidePresets();
+    }
+
+    // Smooth scroll to form (use window scrollTo with offset for reliability)
+    if (formEl) {
+            const scroller = document.scrollingElement || document.documentElement;
+      const rect = formEl.getBoundingClientRect();
+      const targetY = window.scrollY + rect.top - 16;
+      scroller.scrollTo({ top: targetY, behavior: "smooth" });
+
+    }
+
+    // Highlight fields
+    [costEl, priceEl, qtyEl].forEach(el => {
+      el.classList.remove("flash-highlight");
+      void el.offsetWidth;
+      el.classList.add("flash-highlight");
+    });
+
+    costEl.focus();
   };
+
+
 
   // Delete preset with confirmation
   window.deletePreset = async (id, name) => {

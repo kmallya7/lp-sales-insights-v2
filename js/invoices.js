@@ -52,6 +52,7 @@ document.addEventListener("DOMContentLoaded", () => {
             <textarea id="clientAddress" class="w-full p-2 border rounded" placeholder="Client Address"></textarea>
             <input type="text" id="clientPhone" class="w-full p-2 border rounded" placeholder="Client Phone">
             <input type="email" id="clientEmail" class="w-full p-2 border rounded" placeholder="Contact">
+
           </div>
         </div>
         <table class="w-full text-sm border mb-4">
@@ -101,41 +102,50 @@ document.addEventListener("DOMContentLoaded", () => {
       </section>
       <!-- All Invoices Section -->
       <section id="allInvoicesSection" class="bg-white p-6 rounded shadow max-w-5xl mx-auto mt-10 print:hidden">
-        <h2 class="text-xl font-bold mb-4 text-orange-900">All Invoices</h2>
-        <div id="invoiceControlsRow" class="flex flex-row gap-4 mb-4 items-end w-full">
-          <input
-            type="month"
-            id="filterMonthYear"
-            class="p-2 border rounded flex-1 min-w-[160px] max-w-[200px] h-10"
-            style="height: 40px;"
-            aria-label="Filter by month"
-          />
-          <input
-            type="text"
-            id="invoiceSearchBox"
-            class="p-2 border rounded flex-1 min-w-[180px] max-w-[260px] h-10"
-            placeholder="Search by invoice #, client, date..."
-            style="height: 40px;"
-            aria-label="Search invoices"
-          />
-          <select
-            id="sortInvoicesBy"
-            class="p-2 border rounded flex-1 min-w-[160px] max-w-[220px] h-10"
-            style="height: 40px;"
-            aria-label="Sort invoices"
-          >
-            <option value="invoiceNumber-desc">Invoice # (desc)</option>
-            <option value="invoiceNumber-asc">Invoice # (asc)</option>
-            <option value="invoiceDate-desc" selected>Date (newest)</option>
-            <option value="invoiceDate-asc">Date (oldest)</option>
-            <option value="client-asc">Client (A-Z)</option>
-            <option value="client-desc">Client (Z-A)</option>
-            <option value="total-desc">Total (high-low)</option>
-            <option value="total-asc">Total (low-high)</option>
-          </select>
-        </div>
-        <div id="invoicesList" class="overflow-x-auto"></div>
-      </section>
+  <h2 class="text-xl font-bold mb-4 text-orange-900">All Invoices</h2>
+  <div id="invoiceControlsRow" class="flex flex-row gap-4 mb-4 items-end w-full">
+    <input
+      type="month"
+      id="filterMonthYear"
+      class="p-2 border rounded flex-1 min-w-[160px] max-w-[200px] h-10"
+      style="height: 40px;"
+      aria-label="Filter by month"
+    />
+    <input
+      type="text"
+      id="invoiceSearchBox"
+      class="p-2 border rounded flex-1 min-w-[180px] max-w-[260px] h-10"
+      placeholder="Search by invoice #, client, date..."
+      style="height: 40px;"
+      aria-label="Search invoices"
+    />
+    <select
+      id="sortInvoicesBy"
+      class="p-2 border rounded flex-1 min-w-[160px] max-w-[220px] h-10"
+      style="height: 40px;"
+      aria-label="Sort invoices"
+    >
+      <option value="invoiceNumber-desc">Invoice # (desc)</option>
+      <option value="invoiceNumber-asc">Invoice # (asc)</option>
+      <option value="invoiceDate-desc" selected>Date (newest)</option>
+      <option value="invoiceDate-asc">Date (oldest)</option>
+      <option value="client-asc">Client (A-Z)</option>
+      <option value="client-desc">Client (Z-A)</option>
+      <option value="total-desc">Total (high-low)</option>
+      <option value="total-asc">Total (low-high)</option>
+    </select>
+  </div>
+
+  <div id="pendingInvoicesCard" class="mt-2 p-3 rounded border bg-orange-50 text-sm">
+    <div class="flex items-center justify-between">
+      <div><strong>Pending invoices</strong> (Daily Logs not invoiced for this month): <span id="pendingCount">0</span></div>
+      <button id="openPendingList" class="px-3 py-1 bg-orange-600 text-white rounded text-xs">Review</button>
+    </div>
+    <div id="pendingList" class="mt-2 hidden"></div>
+  </div>
+
+  <div id="invoicesList" class="overflow-x-auto"></div>
+</section>
     `;
   }
 
@@ -143,6 +153,19 @@ document.addEventListener("DOMContentLoaded", () => {
     duration: 2500,
     position: { x: 'Center', y: 'top' }
   });
+
+  // Re-run prefill when arriving via hash navigation (from Daily Logs)
+window.addEventListener("hashchange", () => {
+  if (window.location.hash.startsWith("#invoicePrintArea")) {
+    // Delay slightly to ensure invoice UI is rendered
+    setTimeout(() => {
+      if (typeof window.prefillInvoiceFromDailyLog === "function") {
+        window.prefillInvoiceFromDailyLog();
+      }
+    }, 100);
+  }
+});
+
 
   // 1A. ADD PRINT-SAFE AND RESPONSIVE CSS
   // -------------------------------------
@@ -160,16 +183,17 @@ document.addEventListener("DOMContentLoaded", () => {
       }
     }
     #filterMonthYear, #invoiceSearchBox, #sortInvoicesBy {
-      height: 40px;
-      min-width: 160px;
-      max-width: 260px;
-      font-size: 1rem;
-      box-sizing: border-box;
-    }
-    #filterMonthYear:focus, #invoiceSearchBox:focus, #sortInvoicesBy:focus {
-      border-color: #fb923c;
-      box-shadow: 0 0 0 1px #fb923c;
-    }
+  height: 40px;
+  min-width: 160px;
+  max-width: 260px;
+  font-size: 1rem;
+  box-sizing: border-box;
+}
+#filterMonthYear:focus, #invoiceSearchBox:focus, #sortInvoicesBy:focus {
+  border-color: #fb923c;
+  box-shadow: 0 0 0 1px #fb923c;
+}
+
     thead {
       position: sticky;
       top: 0;
@@ -400,47 +424,59 @@ document.addEventListener("DOMContentLoaded", () => {
   // 4. SAVE INVOICE TO FIRESTORE
   // ----------------------------
   document.addEventListener("click", function(e) {
-    if (e.target && e.target.id === "saveInvoiceBtn") {
-      const invoiceData = {
-        invoiceNumber: document.getElementById("invoiceNumber").value.trim(),
-        invoiceDate: document.getElementById("invoiceDate").value,
-        dueDate: document.getElementById("dueDate").value,
-        client: {
-          name: document.getElementById("clientName").value.trim(),
-          address: document.getElementById("clientAddress").value.trim(),
-          phone: document.getElementById("clientPhone").value.trim(),
-          email: document.getElementById("clientEmail").value.trim()
-        },
-        items: [],
-        notes: document.getElementById("invoiceNotes").value.trim(),
-        subtotal: document.getElementById("subtotal").textContent,
-        total: document.getElementById("total").textContent,
-        createdAt: new Date()
+  if (e.target && e.target.id === "saveInvoiceBtn") {
+    const selectedDailyLogId = window.currentDailyLogIdForInvoice || null;
+
+    const invoiceData = {
+      invoiceNumber: document.getElementById("invoiceNumber").value.trim(),
+      invoiceDate: document.getElementById("invoiceDate").value,
+      dueDate: document.getElementById("dueDate").value,
+      client: {
+        name: document.getElementById("clientName").value.trim(),
+        address: document.getElementById("clientAddress").value.trim(),
+        phone: document.getElementById("clientPhone").value.trim(),
+        email: document.getElementById("clientEmail").value.trim()
+      },
+      items: [],
+      notes: document.getElementById("invoiceNotes").value.trim(),
+      subtotal: document.getElementById("subtotal").textContent,
+      total: document.getElementById("total").textContent,
+      createdAt: new Date(),
+      dailyLogId: selectedDailyLogId || window.currentDailyLogIdForInvoice || null
+    };
+
+    itemsBody.querySelectorAll("tr").forEach(row => {
+      const item = {
+        name: row.querySelector("textarea.item-name").value,
+        qty: parseFloat(row.querySelector(".qty").value) || 0,
+        price: parseFloat(row.querySelector(".price").value) || 0,
+        amount: row.querySelector(".amount").textContent
       };
+      invoiceData.items.push(item);
+    });
 
-      itemsBody.querySelectorAll("tr").forEach(row => {
-        const item = {
-          name: row.querySelector("textarea.item-name").value,
-          qty: parseFloat(row.querySelector(".qty").value) || 0,
-          price: parseFloat(row.querySelector(".price").value) || 0,
-          amount: row.querySelector(".amount").textContent
-        };
-        invoiceData.items.push(item);
+    db.collection("invoices").add(invoiceData)
+      .then(async (docRef) => {
+        notyf.success("Invoice saved successfully!");
+        document.getElementById("successSound")?.play();
+        loadAllInvoices();
+        resetInvoiceForm();
+
+        // Link back to dailyLog if set
+        if (invoiceData.dailyLogId) {
+          await db.collection("dailyLogs").doc(invoiceData.dailyLogId).update({
+            invoiceId: docRef.id
+          });
+          window.currentDailyLogIdForInvoice = null;
+        }
+      })
+      .catch(err => {
+        console.error("Error saving invoice:", err);
+        notyf.error("Failed to save invoice.");
       });
+  }
+});
 
-      db.collection("invoices").add(invoiceData)
-        .then(() => {
-          notyf.success("Invoice saved successfully!");
-          document.getElementById("successSound")?.play();
-          loadAllInvoices();
-          resetInvoiceForm();
-        })
-        .catch(err => {
-          console.error("Error saving invoice:", err);
-          notyf.error("Failed to save invoice.");
-        });
-    }
-  });
 
   // 5. DOWNLOAD AS PNG (dom-to-image)
   // ---------------------------------
@@ -510,6 +546,42 @@ document.addEventListener("DOMContentLoaded", () => {
       window.print();
     }
   });
+
+  async function loadCandidateDailyLogs() {
+  const date = document.getElementById("invoiceDate")?.value || "";
+  const client = document.getElementById("clientName")?.value?.trim() || "";
+  const select = document.getElementById("linkDailyLogSelect");
+  if (!select || !date || !client) return;
+
+  // Fetch logs for date range around selected date and same client
+  try {
+    const snap = await db.collection("dailyLogs")
+      .where("date", "==", date)
+      .get();
+
+    const options = [];
+    snap.forEach(doc => {
+      const d = doc.data();
+      // Simple client-name linkage: list logs for this date and client
+const sameClient = (d.client || "").trim().toLowerCase() === client.toLowerCase();
+if (sameClient) {
+  const total = (d.totalRevenue ?? 0).toFixed?.(2) ?? String(d.totalRevenue ?? 0);
+  options.push({ id: doc.id, date: d.date, client: d.client, total });
+}
+    });
+
+    select.innerHTML = '<option value="">— Optional: select a daily log to link —</option>';
+    options.forEach(o => {
+      const opt = document.createElement("option");
+      opt.value = o.id;
+      opt.textContent = `${o.date} • ${o.client} • ₹${o.total}`;
+      select.appendChild(opt);
+    });
+  } catch (err) {
+    console.error("Failed to load candidate daily logs:", err);
+  }
+}
+
 
   // 7. ALL INVOICES TABLE (VIEW, PRINT, DELETE, FILTER, SORT, SEARCH, PAGINATION)
   // -----------------------------------------------------------------------------
@@ -674,6 +746,111 @@ document.addEventListener("DOMContentLoaded", () => {
     }
   }
 
+ async function loadPendingDailyLogsForMonth(monthStr) {
+  const [year, month] = monthStr.split("-");
+  const startDate = `${year}-${month}-01`;
+  const endDate = new Date(parseInt(year, 10), parseInt(month, 10), 0);
+  const endDateStr = `${year}-${month}-${String(endDate.getDate()).padStart(2, "0")}`;
+
+  // Fetch logs for the month
+  const logsSnap = await db.collection("dailyLogs")
+    .where("date", ">=", startDate)
+    .where("date", "<=", endDateStr)
+    .get();
+
+  const logs = [];
+  logsSnap.forEach(doc => {
+    logs.push({ id: doc.id, ...doc.data() });
+  });
+
+  // Fetch all invoices once
+  const invSnap = await db.collection("invoices").get();
+  const invoicesByClient = {};
+  invSnap.forEach(doc => {
+    const d = doc.data();
+    const name = (d.client?.name || "").trim().toLowerCase();
+    if (!name) return;
+    if (!invoicesByClient[name]) invoicesByClient[name] = [];
+    invoicesByClient[name].push(d);
+  });
+
+  // Pending = logs whose client has no invoices (by name)
+  const pending = logs.filter(l => {
+    const key = (l.client || "").trim().toLowerCase();
+    return !(invoicesByClient[key] && invoicesByClient[key].length > 0);
+  });
+
+  const countEl = document.getElementById("pendingCount");
+  const listEl = document.getElementById("pendingList");
+  if (countEl) countEl.textContent = String(pending.length);
+  if (listEl) {
+    if (!pending.length) {
+      listEl.innerHTML = "<div class='text-gray-600'>No pending invoices for this month.</div>";
+    } else {
+      listEl.innerHTML = pending.map(p => `
+        <div class="flex items-center justify-between border rounded bg-white p-2 mb-1">
+          <div>
+            <div class="font-semibold">${p.client || ""}</div>
+            <div class="text-xs text-gray-600">${p.date}</div>
+          </div>
+          <button class="px-2 py-1 bg-orange-600 text-white rounded text-xs" data-id="${p.id}">Create</button>
+        </div>
+      `).join("");
+
+      listEl.querySelectorAll("button[data-id]").forEach(btn => {
+        btn.addEventListener("click", () => {
+          const id = btn.dataset.id;
+          if (typeof window.createInvoiceFromDailyLog === "function") {
+            window.createInvoiceFromDailyLog(id);
+          } else {
+            (async () => {
+              const doc = await firebase.firestore().collection("dailyLogs").doc(id).get();
+              if (!doc.exists) return alert("Daily log not found.");
+              const d = doc.data();
+              localStorage.setItem("invoicePrefill", JSON.stringify({
+                dailyLogId: id,
+                client: d.client,
+                items: d.items,
+                date: d.date,
+                notes: d.notes,
+                total: d.totalRevenue,
+              }));
+              window.location.hash = "#invoicePrintArea";
+              setTimeout(() => {
+                if (typeof window.prefillInvoiceFromDailyLog === "function") {
+                  window.prefillInvoiceFromDailyLog();
+                }
+              }, 150);
+            })();
+          }
+        });
+      });
+    }
+  }
+}
+
+document.getElementById("openPendingList")?.addEventListener("click", async () => {
+  const listEl = document.getElementById("pendingList");
+  if (!listEl) return;
+  const isHidden = listEl.classList.toggle("hidden");
+  if (!isHidden) {
+    const monthStr = document.getElementById("filterMonthYear")?.value || new Date().toISOString().slice(0,7);
+    await loadPendingDailyLogsForMonth(monthStr);
+  }
+});
+
+// Trigger load when month filter changes and on initial load
+document.addEventListener("change", async function(e) {
+  if (e.target && e.target.id === "filterMonthYear") {
+    await loadPendingDailyLogsForMonth(e.target.value);
+  }
+});
+(async () => {
+  const initialMonth = document.getElementById("filterMonthYear")?.value || new Date().toISOString().slice(0,7);
+  await loadPendingDailyLogsForMonth(initialMonth);
+})();
+
+
   function loadAllInvoices() {
     const invoicesList = document.getElementById("invoicesList");
     if (!invoicesList) return;
@@ -804,10 +981,11 @@ document.addEventListener("DOMContentLoaded", () => {
 // --- CLIENT AUTOCOMPLETE ---
 let allClients = [];
 async function fetchClients() {
-  const snap = await db.collection("clients").get();
+  const snap = await firebase.firestore().collection("clients").get();
   allClients = snap.docs.map(doc => ({ id: doc.id, ...doc.data() }));
 }
 fetchClients();
+
 
 // Create dropdown element
 const clientNameInput = document.getElementById("clientName");
@@ -888,3 +1066,36 @@ dropdown.addEventListener("mousedown", async function(e) {
 clientNameInput.addEventListener("blur", function() {
   setTimeout(() => { dropdown.style.display = "none"; }, 150);
 });
+// --- 0. Prefill invoice from dailyLog ---
+window.prefillInvoiceFromDailyLog = function() {
+  const prefill = JSON.parse(localStorage.getItem("invoicePrefill") || "{}");
+  if (!prefill.dailyLogId) return;
+
+  // If addRow or invoiceItems aren’t ready yet, retry shortly
+  if (typeof addRow !== "function" || !document.getElementById("invoiceItems")) {
+    setTimeout(window.prefillInvoiceFromDailyLog, 100);
+    return;
+  }
+
+  document.getElementById("clientName").value = prefill.client || "";
+  document.getElementById("invoiceDate").value = prefill.date || "";
+  document.getElementById("invoiceNotes").value = prefill.notes || "";
+
+  const itemsTbody = document.getElementById("invoiceItems");
+  itemsTbody.innerHTML = "";
+
+  (prefill.items || []).forEach(item => addRow({
+    name: item.name,
+    qty: item.qty,
+    price: item.revenue, // Use revenue as price for invoice
+    amount: (item.qty * item.revenue).toFixed(2)
+  }));
+
+  updateTotals();
+
+  window.currentDailyLogIdForInvoice = prefill.dailyLogId;
+  localStorage.removeItem("invoicePrefill");
+};
+
+
+

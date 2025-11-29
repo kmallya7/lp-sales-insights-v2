@@ -68,16 +68,22 @@ document.addEventListener("DOMContentLoaded", () => {
       <div class="flex flex-col md:flex-row gap-10">
         <div class="flex-1 glass-card rounded-2xl shadow-2xl p-6 space-y-7 border border-gray-100">
           <form id="daily-log-form" class="space-y-6">
-            <div class="flex flex-row gap-4 justify-center items-center w-full mb-2">
-              <div class="flex flex-col flex-1">
-                <label for="log-date" class="text-xs text-gray-600 mb-1 font-medium">Date</label>
-                <input type="date" id="log-date" class="p-2 border rounded-xl text-sm text-center focus:ring-2 focus:ring-blue-400 transition" required />
-              </div>
-              <div class="flex flex-col flex-1">
-                <label for="client" class="text-xs text-gray-600 mb-1 font-medium">Client/Order Name</label>
-                <input type="text" id="client" placeholder="Client/Order Name" class="p-2 border rounded-xl text-sm text-center focus:ring-2 focus:ring-blue-400 transition" required />
-              </div>
-            </div>
+
+<div class="flex flex-row gap-4 justify-center items-center w-full mb-2">
+  <div class="flex flex-col flex-1">
+    <label for="log-date" class="text-xs text-gray-600 mb-1 font-medium">Date</label>
+    <input type="date" id="log-date" class="p-2 border rounded-xl text-sm text-center focus:ring-2 focus:ring-blue-400 transition" required />
+  </div>
+  <div class="flex flex-col flex-1">
+    <label for="client" class="text-xs text-gray-600 mb-1 font-medium">Client/Order Name</label>
+    <input type="text" id="client" placeholder="Client/Order Name" class="p-2 border rounded-xl text-sm text-center focus:ring-2 focus:ring-blue-400 transition" required />
+  </div>
+  <div class="flex flex-col flex-1">
+    <label for="invoice-number" class="text-xs text-gray-600 mb-1 font-medium">Invoice Number</label>
+    <input type="text" id="invoice-number" placeholder="e.g. INV-2025-00123" class="p-2 border rounded-xl text-sm text-center focus:ring-2 focus:ring-blue-400 transition" />
+  </div>
+</div>
+
             <div>
               <div class="font-semibold text-gray-700 mb-2 text-base">Items</div>
               <div class="overflow-x-auto rounded-xl border border-gray-200">
@@ -117,28 +123,101 @@ document.addEventListener("DOMContentLoaded", () => {
   ></textarea>
 </div>
 
-            <button type="submit" class="w-full bg-gradient-to-r from-blue-700 to-blue-500 text-white py-3 rounded-xl text-base font-bold flex items-center justify-center gap-2 shadow hover:bg-blue-900 active:scale-95 transition">
-              <span>+</span> Add Entry
-            </button>
+            <div class="flex flex-col sm:flex-row sm:justify-center sm:items-center gap-3">
+  <!-- Add Entry (default visible) -->
+  <button
+    type="submit"
+    id="btn-add-entry"
+    data-action="add"
+    class="flex-1 sm:flex-none min-w-[180px] bg-gradient-to-r from-blue-700 to-blue-500 text-white py-3 rounded-xl text-base font-bold flex items-center justify-center gap-2 shadow hover:bg-blue-900 active:scale-95 transition"
+  >
+    <span>+</span> Add Entry
+  </button>
+
+  <!-- Update Entry (hidden until editing) -->
+  <button
+    type="submit"
+    id="btn-update-entry"
+    data-action="update"
+    class="flex-1 sm:flex-none min-w-[180px] bg-gradient-to-r from-green-700 to-green-500 text-white py-3 rounded-xl text-base font-bold flex items-center justify-center gap-2 shadow hover:bg-green-800 active:scale-95 transition hidden"
+  >
+    ⟳ Update Entry
+  </button>
+
+  <!-- New Entry (switches back to add mode) -->
+  <button
+    type="button"
+    id="btn-new-entry"
+    class="flex-1 sm:flex-none min-w-[180px] bg-gray-200 text-gray-800 py-3 rounded-xl text-base font-bold flex items-center justify-center gap-2 hover:bg-gray-300 active:scale-95 transition"
+    title="Start a fresh entry"
+  >
+    ✚ New Entry
+  </button>
+</div>
+
+
           </form>
         </div>
       </div>
     </section>
     <section id="entries-layer" class="max-w-5xl mx-auto mt-10">
       <div class="glass-card rounded-2xl shadow-2xl p-6 border border-gray-100">
-        <div class="flex flex-col md:flex-row md:items-center md:justify-between gap-6 mb-4">
-          <div class="flex items-center gap-4 flex-wrap">
-            <h3 class="text-lg font-bold">Entries for <span id="log-date-display" class="text-blue-700">[Filter]</span></h3>
-            <label for="summary-month" class="text-sm text-gray-600 font-medium">View Month:</label>
-            <input type="month" id="summary-month" class="p-2 border rounded-xl text-sm focus:ring-2 focus:ring-blue-400 transition" />
-            <label for="summary-date" class="text-sm text-gray-600 font-medium">or Date:</label>
-            <input type="date" id="summary-date" class="p-2 border rounded-xl text-sm focus:ring-2 focus:ring-blue-400 transition" />
-          </div>
-          <div class="flex gap-2">
-            <input type="text" id="client-search" placeholder="Search by client name..." class="p-2 border rounded-xl text-sm focus:ring-2 focus:ring-blue-400 transition min-w-[180px]" />
-          </div>
+        <div class="flex flex-col gap-4 mb-6">
+  <!-- Title row -->
+  <div class="flex items-center gap-2">
+    <h3 class="text-lg font-bold">Entries for</h3>
+    <span id="log-date-display" class="text-blue-700 font-semibold">[Filter]</span>
+  </div>
+
+  <!-- Filters grid -->
+  <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+    <!-- Month -->
+    <div class="flex items-center gap-2">
+      <label for="summary-month" class="text-sm text-gray-600 font-medium">View Month:</label>
+      <input
+        type="month"
+        id="summary-month"
+        class="p-2 border rounded-xl text-sm focus:ring-2 focus:ring-blue-400 transition w-full"
+      />
+    </div>
+
+    <!-- Date -->
+    <div class="flex items-center gap-2">
+      <label for="summary-date" class="text-sm text-gray-600 font-medium">Date:</label>
+      <input
+        type="date"
+        id="summary-date"
+        class="p-2 border rounded-xl text-sm focus:ring-2 focus:ring-blue-400 transition w-full"
+      />
+    </div>
+
+    <!-- Client search -->
+    <div class="flex items-center gap-2">
+      <label for="client-search" class="text-sm text-gray-600 font-medium">Client:</label>
+      <input
+        type="text"
+        id="client-search"
+        placeholder="Search by client name..."
+        class="p-2 border rounded-xl text-sm focus:ring-2 focus:ring-blue-400 transition w-full"
+      />
+    </div>
+
+    <!-- Invoice filter -->
+    <div class="flex items-center gap-2">
+      <label for="invoice-filter" class="text-sm text-gray-600 font-medium">Invoice:</label>
+      <select id="invoice-filter" class="p-2 border rounded-xl text-sm w-full">
+        <option value="all" selected>All</option>
+        <option value="not">Not Invoiced</option>
+        <option value="yes">Invoiced</option>
+      </select>
+      <span id="not-invoiced-count" class="text-xs bg-orange-100 text-orange-800 px-2 py-1 rounded whitespace-nowrap">Not Invoiced: 0</span>
+    </div>
+  </div>
+</div>
+
+
         </div>
-        <div id="log-entries" class="text-sm text-gray-700 bg-gray-50 p-3 rounded-xl border overflow-x-auto">No entries found. Add your first entry above!</div>
+<div id="log-entries" class="mt-4 text-sm text-gray-700 bg-gray-50 p-3 rounded-xl border overflow-x-auto">No entries found. Add your first entry above!</div>
       </div>
     </section>
     <div id="confirm-modal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-40 backdrop-blur-sm hidden">
@@ -180,7 +259,8 @@ document.addEventListener("DOMContentLoaded", () => {
   let currentFilter = "month"; // or "date"
   let deleteEntryId = null;
   let deleteEntryDate = null;
-  const db = window.db;
+  const db = firebase.firestore();
+
 
   // --- 3. Helper: Show/Hide Loading Spinner ---
   function showLoading(show = true) {
@@ -268,11 +348,29 @@ document.addEventListener("DOMContentLoaded", () => {
 });
 
 
-  // --- 11. Helper: Render entries as a table (for entries list) ---
-  function renderEntriesTable(entries, emptyMsg) {
+     // --- 11. Helper: Render entries as a table (for entries list) ---
+  async function renderEntriesTable(entries, emptyMsg) {
     if (!entries.length) {
       return emptyMsg || "No entries found. Add your first entry above!";
     }
+
+    // Build a set of client names present in entries for the active view
+    const clientNames = new Set(entries.map(e => (e.d.client || "").trim().toLowerCase()).filter(Boolean));
+
+    // Fetch invoices for all those clients within the visible date range (month or date)
+    // We’ll do a simple client-name match across all invoices and cache results
+    const invoicesByClient = {};
+    if (clientNames.size > 0) {
+      const allInvoicesSnap = await db.collection("invoices").get();
+      allInvoicesSnap.forEach(doc => {
+        const data = doc.data();
+        const name = (data.client?.name || "").trim().toLowerCase();
+        if (!name) return;
+        if (!invoicesByClient[name]) invoicesByClient[name] = [];
+        invoicesByClient[name].push(data);
+      });
+    }
+
     let html = `
       <div class="overflow-x-auto">
       <table class="w-full text-sm border rounded-lg">
@@ -286,14 +384,21 @@ document.addEventListener("DOMContentLoaded", () => {
             <th class="border p-2">Ingredients (₹)</th>
             <th class="border p-2">Packaging (₹)</th>
             <th class="border p-2">Profit (₹)</th>
-            <th class="border p-2">Notes</th>
-            <th class="border p-2"></th>
+<th class="border p-2">Notes</th>
+<th class="border p-2">Invoice No.</th>
+<th class="border p-2">Invoice Status</th>
+<th class="border p-2"></th>
+
           </tr>
         </thead>
         <tbody>
     `;
+
     entries.forEach(({ docId, d }, entryIdx) => {
-      (d.items || []).forEach((item, itemIdx) => {
+      const clientKey = (d.client || "").trim().toLowerCase();
+      const hasInvoiceForClient = (invoicesByClient[clientKey] || []).length > 0;
+
+      (d.items || []).forEach(item => {
         html += `
           <tr class="${entryIdx % 2 === 0 ? 'bg-white' : 'bg-gray-50'} hover:bg-blue-50 transition">
             <td class="border p-2">${d.client || ""}</td>
@@ -305,6 +410,14 @@ document.addEventListener("DOMContentLoaded", () => {
             <td class="border p-2">₹${item.packaging?.toFixed(2) ?? ""}</td>
             <td class="border p-2 text-green-700 font-semibold">₹${((item.revenue || 0) - ((item.ingredients || 0) + (item.packaging || 0))).toFixed(2)}</td>
             <td class="border p-2">${d.notes || ""}</td>
+<td class="border p-2">${d.invoiceNumber || ""}</td>
+<td class="border p-2">
+  ${hasInvoiceForClient
+    ? `<span class="text-green-700 font-bold">Invoiced</span>`
+    : `<button onclick="createInvoiceFromDailyLog('${docId}')" class="bg-orange-600 text-white px-2 py-1 rounded text-xs font-bold hover:bg-orange-700">Create Invoice</button>`
+  }
+</td>
+
             <td class="border p-2 flex gap-2">
               <button onclick="editEntry('${docId}', ${JSON.stringify(d).replace(/"/g, '&quot;')})" class="text-blue-500 hover:text-blue-700 text-base" title="Edit">
                 <span class="hover:scale-125 transition" aria-label="Edit">✏️</span>
@@ -317,12 +430,15 @@ document.addEventListener("DOMContentLoaded", () => {
         `;
       });
     });
+
     html += `</tbody></table></div>`;
     return html;
   }
 
+
   // --- 12. Load and display summary and entries for a given month ---
   async function loadMonthlySummary(monthStr) {
+  try {
     showLoading(true);
     lastSelectedMonth = monthStr;
     lastSelectedDate = null;
@@ -359,10 +475,15 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("summary-revenue").innerText = `₹${totalRevenue.toFixed(2)}`;
     document.getElementById("summary-cost").innerText = `₹${totalCost.toFixed(2)}`;
     document.getElementById("summary-profit").innerText = `₹${totalProfit.toFixed(2)}`;
-    document.getElementById("log-entries").innerHTML = renderEntriesTable(entries, "No entries found for this month. Add your first entry above!");
+    document.getElementById("log-entries").innerHTML = await renderEntriesTable(entries, "No entries found for this month. Add your first entry above!");
     filterEntriesByClient();
+  } catch (err) {
+    console.error("Monthly summary failed:", err);
+    document.getElementById("log-entries").innerHTML = "Failed to load entries.";
+  } finally {
     showLoading(false);
   }
+}
 
   // --- 13. Load and display summary and entries for a given date ---
   async function loadDailySummary(date) {
@@ -394,10 +515,57 @@ document.addEventListener("DOMContentLoaded", () => {
     document.getElementById("summary-revenue").innerText = `₹${totalRevenue.toFixed(2)}`;
     document.getElementById("summary-cost").innerText = `₹${totalCost.toFixed(2)}`;
     document.getElementById("summary-profit").innerText = `₹${totalProfit.toFixed(2)}`;
-    document.getElementById("log-entries").innerHTML = renderEntriesTable(entries, "No entries found for this date. Add your first entry above!");
-    filterEntriesByClient();
-    showLoading(false);
+document.getElementById("log-entries").innerHTML = await renderEntriesTable(entries, "No entries found for this date. Add your first entry above!");
+filterEntriesByClient();
+showLoading(false);
+
+
+
   }
+
+  // Keep today's entries visible regardless of invoice filter by reloading the current view first
+function applyInvoiceFilterToTable() {
+  // If we're in daily view, re-load today's entries to ensure we’re showing the current day first
+  if (currentFilter === "date") {
+    const today = new Date().toISOString().split("T")[0];
+    document.getElementById("summary-date").value = today;
+    lastSelectedDate = today;
+    loadDailySummary(today);
+  } else {
+    // Month view: reload the current month (from the month control)
+    const monthStr = document.getElementById("summary-month").value || new Date().toISOString().slice(0, 7);
+    lastSelectedMonth = monthStr;
+    loadMonthlySummary(monthStr);
+  }
+
+  // After reload, apply the invoice filter to the rendered table
+  const table = document.querySelector("#log-entries table");
+  if (!table) return;
+
+  const filter = document.getElementById("invoice-filter")?.value || "all";
+  let notInvoiced = 0;
+
+  table.querySelectorAll("tbody tr").forEach(row => {
+    const statusCell = row.querySelector("td:nth-child(11)");
+
+    const isInvoiced = statusCell?.textContent?.includes("Invoiced");
+
+    const show =
+      filter === "all" ? true :
+      filter === "yes" ? !!isInvoiced :
+      filter === "not" ? !isInvoiced : true;
+
+    row.style.display = show ? "" : "none";
+    if (!isInvoiced) notInvoiced += 1;
+  });
+
+  const pill = document.getElementById("not-invoiced-count");
+  if (pill) pill.textContent = `Not Invoiced: ${notInvoiced}`;
+}
+
+document.getElementById("invoice-filter")?.addEventListener("change", applyInvoiceFilterToTable);
+
+
 
   // --- 14. Filter entries by client name in the current view ---
   function filterEntriesByClient() {
@@ -422,86 +590,165 @@ document.addEventListener("DOMContentLoaded", () => {
   });
 
   // --- 16. Event: Change summary date picker (loads summary for selected date) ---
-  document.getElementById("summary-date").addEventListener("change", (e) => {
-    if (e.target.value) {
-      loadDailySummary(e.target.value);
-    }
-  });
+  document.getElementById("summary-date").addEventListener("input", (e) => {
+  const value = e.target.value;
+  if (value) {
+    // A specific date selected → switch to daily view
+    currentFilter = "date";
+    lastSelectedDate = value;
+    lastSelectedMonth = null;
+    loadDailySummary(value);
+  } else {
+    // Date cleared → show the current month's full entries
+    const monthStr = new Date().toISOString().slice(0, 7);
+    currentFilter = "month";
+    lastSelectedMonth = monthStr;
+    lastSelectedDate = null;
+    document.getElementById("summary-month").value = monthStr;
+    loadMonthlySummary(monthStr);
+  }
+});
+
+
 
   // --- 17. Event: Form submit (add or update entry) ---
   document.getElementById("daily-log-form").addEventListener("submit", async (e) => {
-    e.preventDefault();
-    showLoading(true);
-    const date = document.getElementById("log-date").value;
-    const client = document.getElementById("client").value;
-    const notes = document.getElementById("notes").value;
+  e.preventDefault();
+  showLoading(true);
 
-    const items = Array.from(document.querySelectorAll("#items-tbody tr")).map(row => ({
-      name: row.querySelector(".item-name").value,
-      qty: parseInt(row.querySelector(".item-qty").value) || 0,
-      revenue: parseFloat(row.querySelector(".item-revenue").value) || 0,
-      ingredients: parseFloat(row.querySelector(".item-ingredients").value) || 0,
-      packaging: parseFloat(row.querySelector(".item-packaging").value) || 0,
-    }));
+  // Determine action based on clicked button (add/update)
+  const action = e.submitter?.dataset?.action || (editingId ? "update" : "add");
 
-    let totalRevenue = 0, totalCost = 0;
-    items.forEach(item => {
-      totalRevenue += item.revenue;
-      totalCost += item.ingredients + item.packaging;
-    });
-    const profit = totalRevenue - totalCost;
+  const date = document.getElementById("log-date").value;
+  const client = document.getElementById("client").value;
+  const notes = document.getElementById("notes").value;
+  const invoiceNumber = document.getElementById("invoice-number").value.trim();
 
-    if (editingId) {
-      await db.collection("dailyLogs").doc(editingId).update({
-        date, client, items, totalRevenue, totalCost, profit, notes
-      });
-      editingId = null;
-    } else {
-      await db.collection("dailyLogs").add({
-        date, client, items, totalRevenue, totalCost, profit, notes, createdAt: new Date()
-      });
-    }
 
-    document.getElementById("daily-log-form").reset();
-    document.getElementById("items-tbody").innerHTML = "";
-    document.getElementById("calculatedProfit").value = "";
-    addItemRow();
-    const today = new Date().toISOString().split("T")[0];
-    document.getElementById("log-date").value = today;
-    // After adding, reload the current filter
-    if (currentFilter === "date") {
-      loadDailySummary(today);
-    } else {
-      const monthStr = today.slice(0, 7);
-      loadMonthlySummary(monthStr);
-    }
-    showLoading(false);
+  const items = Array.from(document.querySelectorAll("#items-tbody tr")).map(row => ({
+    name: row.querySelector(".item-name").value,
+    qty: parseInt(row.querySelector(".item-qty").value) || 0,
+    revenue: parseFloat(row.querySelector(".item-revenue").value) || 0,
+    ingredients: parseFloat(row.querySelector(".item-ingredients").value) || 0,
+    packaging: parseFloat(row.querySelector(".item-packaging").value) || 0,
+  }));
+
+  let totalRevenue = 0, totalCost = 0;
+  items.forEach(item => {
+    totalRevenue += item.revenue;
+    totalCost += item.ingredients + item.packaging;
+  });
+  const profit = totalRevenue - totalCost;
+
+  if (action === "update" && editingId) {
+  await db.collection("dailyLogs").doc(editingId).update({
+    date, client, items, totalRevenue, totalCost, profit, notes, invoiceNumber
+  });
+  setAddMode();
+} else {
+  const addResult = await db.collection("dailyLogs").add({
+    date, client, items, totalRevenue, totalCost, profit, notes, invoiceNumber, createdAt: new Date()
   });
 
-  // --- 18. On page load: set today's date and load this month's and today's entries ---
-  const today = new Date().toISOString().split("T")[0];
-  const thisMonth = today.slice(0, 7);
-  document.getElementById("log-date").value = today;
-  document.getElementById("summary-month").value = thisMonth;
-  document.getElementById("summary-date").value = today;
-  addItemRow();
-  // Show both month and date entries by default
-  loadMonthlySummary(thisMonth);
-  loadDailySummary(today);
+// Prompt user to create invoice now
+const proceed = confirm("Entry added. Create invoice now?");
+if (proceed) {
+  await window.createInvoiceFromDailyLog(addResult.id);
+}
+
+// After add, remain in add mode
+setAddMode();
+  }
+
+  // Reset form UI
+  document.getElementById("daily-log-form").reset();
+document.getElementById("items-tbody").innerHTML = "";
+document.getElementById("calculatedProfit").value = "";
+document.getElementById("invoice-number").value = "";
+addItemRow();
+const today = new Date().toISOString().split("T")[0];
+document.getElementById("log-date").value = today;
+
+
+  // Reload the current filter (preserve current day or month view)
+if (currentFilter === "date") {
+  const dayToShow = lastSelectedDate || new Date().toISOString().split("T")[0];
+  loadDailySummary(dayToShow);
+} else {
+  const monthToShow = lastSelectedMonth || new Date().toISOString().slice(0, 7);
+  loadMonthlySummary(monthToShow);
+}
+});
+
+function setUpdateMode() {
+  editingId = editingId || null;
+  document.getElementById("btn-add-entry")?.classList.add("hidden");
+  document.getElementById("btn-update-entry")?.classList.remove("hidden");
+}
+
+function setAddMode() {
+  editingId = null;
+  document.getElementById("btn-update-entry")?.classList.add("hidden");
+  document.getElementById("btn-add-entry")?.classList.remove("hidden");
+}
+
+
+  // --- 18. On page load: set today's date and show today's entries by default ---
+const today = new Date().toISOString().split("T")[0];
+const thisMonth = today.slice(0, 7);
+document.getElementById("log-date").value = today;
+document.getElementById("summary-month").value = thisMonth;
+// Show today's entries in the Date picker view
+document.getElementById("summary-date").value = today;
+
+addItemRow();
+
+// Always start by showing today's entries
+currentFilter = "date";
+lastSelectedDate = today;
+lastSelectedMonth = null;
+loadDailySummary(today);
+
 
   // --- 19. Expose edit and delete functions globally for table buttons ---
   window.editEntry = function (id, data) {
-    editingId = id;
-    document.getElementById("log-date").value = data.date;
-    document.getElementById("client").value = data.client;
-    document.getElementById("notes").value = data.notes || "";
-    document.getElementById("items-tbody").innerHTML = "";
-    (data.items || []).forEach(item => addItemRow(item));
-    ensureAtLeastOneItemRow();
-    document.getElementById("calculatedProfit").value = data.profit.toFixed(2);
-    updateProfit();
-    document.getElementById("daily-log-form").scrollIntoView({ behavior: "smooth" });
-  };
+  editingId = id;
+  document.getElementById("log-date").value = data.date;
+  document.getElementById("client").value = data.client;
+  document.getElementById("notes").value = data.notes || "";
+  document.getElementById("invoice-number").value = data.invoiceNumber || "";
+
+  document.getElementById("items-tbody").innerHTML = "";
+  (data.items || []).forEach(item => addItemRow(item));
+  ensureAtLeastOneItemRow();
+  document.getElementById("calculatedProfit").value = (data.profit ?? 0).toFixed(2);
+  updateProfit();
+
+  // Switch buttons: show Update, hide Add
+  setUpdateMode();
+
+  document.getElementById("daily-log-form").scrollIntoView({ behavior: "smooth" });
+};
+
+// New Entry button: reset to add mode and clear form
+document.getElementById("btn-new-entry").addEventListener("click", () => {
+  setAddMode();
+  document.getElementById("daily-log-form").reset();
+document.getElementById("items-tbody").innerHTML = "";
+document.getElementById("calculatedProfit").value = "";
+document.getElementById("invoice-number").value = "";
+addItemRow();
+
+  // Set date to today for convenience
+  const today = new Date().toISOString().split("T")[0];
+  document.getElementById("log-date").value = today;
+});
+
+// Floating Add Entry FAB: make it a shortcut to New Entry
+document.getElementById("fab-add-entry")?.addEventListener("click", () => {
+  document.getElementById("btn-new-entry")?.click();
+});
+
 
   // --- 20. Confirmation Modal for Delete ---
   window.showDeleteModal = function (id, date) {
@@ -515,21 +762,64 @@ document.addEventListener("DOMContentLoaded", () => {
     deleteEntryDate = null;
   });
   document.getElementById("confirm-delete").addEventListener("click", async function () {
-    if (!deleteEntryId) return;
-    showLoading(true);
-    await db.collection("dailyLogs").doc(deleteEntryId).delete();
-    document.getElementById("confirm-modal").classList.add("hidden");
-    // After delete, reload the current filter
-    if (currentFilter === "date" && deleteEntryDate) {
-      loadDailySummary(deleteEntryDate);
-    } else if (currentFilter === "month" && deleteEntryDate) {
-      loadMonthlySummary(deleteEntryDate.slice(0, 7));
-    } else {
-      loadMonthlySummary(thisMonth);
-      loadDailySummary(today);
-    }
-    showLoading(false);
-    deleteEntryId = null;
-    deleteEntryDate = null;
-  });
+  if (!deleteEntryId) return;
+  showLoading(true);
+  await db.collection("dailyLogs").doc(deleteEntryId).delete();
+  document.getElementById("confirm-modal").classList.add("hidden");
+
+ // After delete, reload the current filter and keep daily/month view stable
+if (currentFilter === "date") {
+  const dayToShow = lastSelectedDate || new Date().toISOString().split("T")[0];
+  loadDailySummary(dayToShow);
+} else {
+  const monthToShow = lastSelectedMonth || new Date().toISOString().slice(0, 7);
+  loadMonthlySummary(monthToShow);
+}
+
+  // Return UI to add mode
+  setAddMode();
+
+  showLoading(false);
+  deleteEntryId = null;
+  deleteEntryDate = null;
 });
+});
+
+
+// --- 21. Expose createInvoiceFromDailyLog globally ---
+window.createInvoiceFromDailyLog = async function(dailyLogId) {
+  const docRef = db.collection("dailyLogs").doc(dailyLogId);
+  const doc = await docRef.get();
+  if (!doc.exists) return alert("Daily log not found.");
+  const d = doc.data();
+
+  // Simple client-name check: if any invoice exists for same client, open All Invoices instead of duplicating
+const invSnap = await db.collection("invoices")
+  .where("client.name", "==", (d.client || ""))
+  .limit(1)
+  .get();
+if (!invSnap.empty) {
+  alert("Invoice already exists for this client. Opening All Invoices.");
+  window.location.hash = "#allInvoicesSection";
+  return;
+}
+
+
+  // Prefill via localStorage (existing mechanism)
+  localStorage.setItem("invoicePrefill", JSON.stringify({
+  dailyLogId,
+  client: d.client,
+  items: d.items,
+  date: d.date,
+  notes: d.notes,
+  total: d.totalRevenue,
+  invoiceNumber: d.invoiceNumber || ""
+}));
+
+
+  window.location.hash = "#invoicePrintArea";
+  setTimeout(() => {
+    if (window.prefillInvoiceFromDailyLog) window.prefillInvoiceFromDailyLog();
+  }, 300);
+};
+

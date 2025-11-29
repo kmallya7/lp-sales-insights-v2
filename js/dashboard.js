@@ -693,9 +693,6 @@ async function renderTillDateBarChart() {
   });
 }
 
-
-
-
 function renderEmptyState() {
   $("summary-cards").innerHTML = "";
   $("top-sellers-tbody").innerHTML = "";
